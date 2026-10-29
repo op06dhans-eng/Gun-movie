@@ -66,7 +66,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 .score small { display: block; font-size: calc(var(--fs) * 0.62); color: #ffd98a; }
 .gear { position: absolute; left: 50%; top: calc(8px + var(--fs) * 1.7); transform: translateX(-50%); font-size: calc(var(--fs) * 0.62); color: #cfe3ff; }
 .gear.prop { color: #ffb0a0; }
-.hp { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: calc(18px + min(34vmin, 160px) + 10px); width: min(30vmin, 180px); height: 10px; border-radius: 5px; background: rgba(0,0,0,0.5); }
+.hp { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: 18px; width: min(30vmin, 180px); height: 10px; border-radius: 5px; background: rgba(0,0,0,0.5); }
 .hp u { display: block; height: 100%; border-radius: 5px; background: var(--ok); }
 .hp.low u { background: var(--red); }
 .ammo { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: calc(18px + min(30vmin, 140px) + 14px); font-size: calc(var(--fs) * 1.1); text-align: right; }
@@ -101,7 +101,8 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 #bReload { right: calc(max(18px, env(safe-area-inset-right)) + min(30vmin, 140px) + 14px); bottom: calc(24px + min(17vmin, 84px) + 12px); }
 #bStrike { right: max(18px, env(safe-area-inset-right)); bottom: calc(22px + min(30vmin, 140px) + 14px + var(--fs) * 1.9); border-color: var(--hot); }
 #bStrike.off { opacity: 0.3; }
-.look { position: absolute; left: 40%; top: 0; right: 0; bottom: 0; pointer-events: auto; touch-action: none; }
+.look { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: auto; touch-action: none; }
+.lookhint { position: absolute; left: 6%; bottom: 10%; width: 30%; font-size: calc(var(--fs) * 0.62); color: rgba(255,255,255,0.55); text-align: center; pointer-events: none; }
 .rotate { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #0b0d0e; text-align: center; font-size: clamp(20px, 5vw, 30px); font-weight: 900; padding: 20px; }
 .rotate small { display: block; font-size: 16px; color: var(--muted); margin-top: 10px; }
 /* 老師畫面 */
@@ -173,7 +174,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
     <div class="flash" id="hFlash"></div>
     <div id="hMarks"></div>
     <div class="look" id="look"></div>
-    <div class="stick" id="stick"><i></i></div>
+    <div class="lookhint" id="lookHint">左手在這一側滑動＝瞄準</div>
     <button class="fire" id="bFire">開火</button>
     <button class="tb" id="bAim">瞄準</button>
     <button class="tb" id="bReload">換彈</button>
@@ -2528,7 +2529,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '1.0.4（正式網址 Gun-movie）';
+const VERSION = '1.1.0（移動改由電腦推進、左手瞄準右手開火；換彈分段動作；槍聲分層加殘響；拿掉跳彈聲；規則三改為軍事顧問）';
 const ROOT = 'fs'; // 資料庫根節點
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2565,16 +2566,16 @@ addEventListener('unhandledrejection', (e) => DBG('錯誤：' + (e.reason && e.r
 /* 劇本：A 軍方支援版、B 獨立製片版 */
 const SCRIPTS = {
   A: { name: '軍方支援版', en: 'With military support', gear: 'm4', recon: true, strike: 1, rules: true, mult: 2, civ: 'rescued',
-    rulesText: ['不准打到平民臨演（劇本裡的村民是來求救的）', '不准損毀贊助方的旗幟海報', '不准從鏡頭前後退（撤出拍攝區）'],
-    rulesEn: ['Never hit a civilian extra', 'Never damage the sponsor\'s flag posters', 'Never retreat out of the shot'] },
+    rulesText: ['不准打到平民臨演（劇本裡的村民是來求救的）', '不准損毀贊助方的旗幟海報', '不准打到軍方派來的軍事顧問（穿軍常服、站在路邊）'],
+    rulesEn: ['Never hit a civilian extra', 'Never damage the sponsor\'s flag posters', 'Never hit the military advisers (dress uniform, standing by the road)'] },
   B: { name: '獨立製片版', en: 'Independent production', gear: 'ak', recon: false, strike: 0, rules: false, mult: 1, civ: 'market',
     rulesText: ['沒有審片規則', '但也沒有軍方裝備：只有道具槍，沒有偵察、沒有空襲', '街上有市集，有很多平民'],
     rulesEn: ['No script review', 'No military gear: prop guns only, no recon, no air strike', 'A market street full of civilians'] },
 };
 const WEAPONS = {
-  m4: { name: 'M4 卡賓槍', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 1.9, spread: 1.1, spreadAds: 0.25, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.16, 0.035], view: [0.19, -0.21, -0.43], adsDist: 0.13,
+  m4: { name: 'M4 卡賓槍', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 1.9, spread: 1.1, spreadAds: 0.25, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.16, 0.035], magazine: [0, -0.03, -0.08], view: [0.19, -0.21, -0.43], adsDist: 0.13,
     hands: { right: { pos: [0.022, 0.05, 0.123], fingers: [0, -0.412, -0.911], thumb: [0, 0.911, -0.412], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.05, 0.055, -0.19], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
-  ak: { name: '道具步槍（AK）', model: 'rifle_ak', dmg: 26, head: 2.5, rpm: 560, mag: 30, reload: 2.4, spread: 2.2, spreadAds: 0.7, recoil: 1.2, adsFov: 50, sound: 'ak', muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], view: [0.19, -0.2, -0.42], adsDist: 0.16,
+  ak: { name: '道具步槍（AK）', model: 'rifle_ak', dmg: 26, head: 2.5, rpm: 560, mag: 30, reload: 2.4, spread: 2.2, spreadAds: 0.7, recoil: 1.2, adsFov: 50, sound: 'ak', muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12], view: [0.19, -0.2, -0.42], adsDist: 0.16,
     hands: { right: { pos: [0.022, 0.035, 0.12], fingers: [0, -0.29, -0.96], thumb: [0, 0.96, -0.29], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.035, -0.21], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
 };
 
@@ -3247,7 +3248,7 @@ let PUFFS = null;
 /* =========================================================
    反派臨演（敵人）與平民臨演
    ========================================================= */
-const ENEMIES = [], CIVS = [];
+const ENEMIES = [], CIVS = [], OFFICERS = [];
 let RIFLE_NPC = null; // 給 NPC 用的 AK 網格（共用幾何）
 const AI = { groups: [], spawned: new Set(), killed: 0, alertT: 0, lastShotAt: 0, lastShotPos: new THREE.Vector3() };
 function setupGroups() {
@@ -3349,10 +3350,12 @@ class Civilian {
   face(a, dt, k) { let d = a - this.heading; d = Math.atan2(Math.sin(d), Math.cos(d)); this.heading += d * Math.min(1, dt * k); }
   dispose() { this.c.dispose(); }
 }
-function aiReset() { for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; for (const c of CIVS) c.dispose(); CIVS.length = 0; AI.spawned.clear(); AI.killed = 0; AI.civSpawned = new Set(); }
+function aiReset() { for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const o of OFFICERS) o.c.dispose(); OFFICERS.length = 0; AI.spawned.clear(); AI.killed = 0; AI.civSpawned = new Set(); }
 function aiStart(script) {
   aiReset(); setupGroups();
   if (!ANIMS || !CHAR_SETS.civ.length) return;
+  // 軍事顧問（劇本 A 規則三）：三位穿軍常服的軍官站在路邊看拍攝
+  if (CHAR_SETS.officer.length) for (const [x, z] of [[-7.6, -27], [7.6, -71], [-7.6, -117]]) { const c = new Character('officer'); c.pos.set(x, 0, z); c.root.rotation.y = x < 0 ? Math.PI / 2 + 0.4 : -Math.PI / 2 - 0.4; c.play('Idle_Loop'); OFFICERS.push({ c, pos: c.pos, hits: 0, dead: false }); }
   if (script.civ === 'market') for (let i = 0; i < (MOBILE ? 9 : 12); i++) CIVS.push(new Civilian('market', WORLD.marketPts[i % WORLD.marketPts.length]));
 }
 function aiUpdate(dt, P, script) {
@@ -3369,6 +3372,7 @@ function aiUpdate(dt, P, script) {
   if (script.civ === 'rescued') WORLD.civSpots.forEach((s, i) => { if (!AI.civSpawned.has(i) && P.pos.z < s.to[1] + 26) { AI.civSpawned.add(i); CIVS.push(new Civilian('rescued', s)); } });
   for (const e of ENEMIES) e.update(dt, P);
   for (const c of CIVS) c.update(dt, P);
+  for (const o of OFFICERS) { o.c.update(dt); const a = Math.atan2(P.pos.x - o.pos.x, P.pos.z - o.pos.z); let d = a - o.c.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); o.c.root.rotation.y += d * Math.min(1, dt * 2); }
   // 清掉太久的屍體（手機效能）
   for (let i = ENEMIES.length - 1; i >= 0; i--) if (ENEMIES[i].state === 'dead' && ENEMIES[i].deadT > 25) { ENEMIES[i].dispose(); ENEMIES.splice(i, 1); }
 }
@@ -3378,25 +3382,35 @@ function aiUpdate(dt, P, script) {
    ========================================================= */
 const SFX = (() => {
   let ctx = null, master = null, on = store.get('snd', true); const buf = {};
-  const files = { m4: ['m4_1'], ak: ['ak47_1', 'ak47_2', 'ak47_3', 'ak47_4'], magout: ['mag_out_1'], magin: ['mag_in_1'], bolt: ['bolt_1'], dry: ['dry_fire_1'], rico: ['ricochet'] };
+  const files = { m4: ['m4_1'], ak: ['ak47_1', 'ak47_2', 'ak47_3', 'ak47_4'], magout: ['mag_out_1'], magin: ['mag_in_1'], bolt: ['bolt_1'], dry: ['dry_fire_1'] };
+  let verb = null, verbGain = null;
   async function init() {
     if (ctx) return; ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = on ? 0.8 : 0; master.connect(ctx.destination);
+    // 戶外殘響（街道回音）：合成一段衰減雜訊當脈衝
+    try { const sr = ctx.sampleRate, len = Math.floor(sr * 1.1); const ir = ctx.createBuffer(2, len, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) { const t = i / len; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.6) * (i < sr * 0.02 ? 0.3 : 1); } } verb = ctx.createConvolver(); verb.buffer = ir; verbGain = ctx.createGain(); verbGain.gain.value = 0.35; verb.connect(verbGain); verbGain.connect(master); } catch (_) { verb = null; }
     for (const k in files) for (const f of files[k]) fetch(ASSET + 'sfx/' + f + '.mp3').then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }).then((a) => ctx.decodeAudioData(a)).then((b) => { buf[f] = b; }).catch((e) => DBG('音效失敗 ' + f + ' ' + (e && e.message || '')));
   }
-  function play(name, { vol = 1, rate = 1, delay = 0, lp = 0 } = {}) {
-    if (!ctx || !buf[name]) return; const s = ctx.createBufferSource(); s.buffer = buf[name]; s.playbackRate.value = rate; const g = ctx.createGain(); g.gain.value = vol; s.connect(g);
-    if (lp) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; g.connect(f); f.connect(master); } else g.connect(master);
-    s.start(ctx.currentTime + delay);
+  function play(name, { vol = 1, rate = 1, delay = 0, lp = 0, send = 0 } = {}) {
+    if (!ctx || !buf[name]) return false; const s = ctx.createBufferSource(); s.buffer = buf[name]; s.playbackRate.value = rate; const g = ctx.createGain(); g.gain.value = vol; s.connect(g);
+    let out = g; if (lp) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; g.connect(f); out = f; } out.connect(master); if (send && verb) { const sg = ctx.createGain(); sg.gain.value = send; out.connect(sg); sg.connect(verb); }
+    s.start(ctx.currentTime + delay); return true;
+  }
+  // 槍聲分層：錄音＋低頻衝擊＋短促氣爆，再送一點殘響；每發音高略有不同
+  function gunLayer(sample, { vol = 0.6, punch = 0.5, crack = 0.35, rate = 1, send = 0.5 } = {}) {
+    if (!ctx) return; const ok = play(sample, { vol, rate: rate * (0.96 + R() * 0.08), send });
+    const t0 = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(42, t0 + 0.09); const og = ctx.createGain(); og.gain.setValueAtTime(punch, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.16); o.connect(og); og.connect(master); o.start(t0); o.stop(t0 + 0.18);
+    const n = ctx.createBufferSource(); const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.09), ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (R() * 2 - 1) * Math.pow(1 - i / d.length, 4); n.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.7; const ng = ctx.createGain(); ng.gain.value = ok ? crack : crack * 1.8; n.connect(f); f.connect(ng); ng.connect(master); if (verb) { const sg = ctx.createGain(); sg.gain.value = 0.5; ng.connect(sg); sg.connect(verb); } n.start(t0);
   }
   const pick = (k) => files[k][Math.floor(R() * files[k].length)];
   function tone(f, t, { type = 'sine', vol = 0.2, decay = true } = {}) { if (!ctx) return; const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = vol; if (decay) g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t); o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime + t); }
   function noise(t, { vol = 0.3, lp = 800, hp = 60 } = {}) { if (!ctx) return; const n = ctx.createBufferSource(); const b = ctx.createBuffer(1, ctx.sampleRate * t, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (R() * 2 - 1) * (1 - i / d.length) ** 2; n.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; const g = ctx.createGain(); g.gain.value = vol; n.connect(f); f.connect(h); h.connect(g); g.connect(master); n.start(); }
   return {
     init, resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
-    shot(w) { play(pick(w === 'm4' ? 'm4' : 'ak'), { vol: 0.55, rate: 0.97 + R() * 0.06 }); },
-    enemyShot(dist) { const v = clamp(0.5 - dist / 120, 0.05, 0.5); play(pick('ak'), { vol: v, rate: 0.9 + R() * 0.1, lp: dist > 30 ? 2500 : 0 }); },
-    dry() { play('dry_fire_1', { vol: 0.5 }); }, reload() { play('mag_out_1', { vol: 0.6 }); play('mag_in_1', { vol: 0.6, delay: 0.9 }); play('bolt_1', { vol: 0.5, delay: 1.5 }); },
-    rico() { if (R() < 0.35) play('ricochet', { vol: 0.25, rate: 0.9 + R() * 0.3 }); },
+    shot(w) { gunLayer(pick(w === 'm4' ? 'm4' : 'ak'), w === 'm4' ? { vol: 0.75, punch: 0.45, crack: 0.3, rate: 1.0 } : { vol: 0.8, punch: 0.6, crack: 0.25, rate: 0.95 }); },
+    enemyShot(dist) { const v = clamp(0.55 - dist / 110, 0.05, 0.55); play(pick('ak'), { vol: v, rate: 0.88 + R() * 0.1, lp: dist > 30 ? 2200 : 0, send: 0.8 }); },
+    dry() { play('dry_fire_1', { vol: 0.5 }); }, magOut() { play('mag_out_1', { vol: 0.7, rate: 0.95 }); }, magIn() { play('mag_in_1', { vol: 0.8 }); }, bolt() { play('bolt_1', { vol: 0.7 }); },
+    impact() { noise(0.05, { vol: 0.08, lp: 1800, hp: 200 }); },
     hit() { tone(1800, 0.06, { type: 'square', vol: 0.12 }); }, kill() { tone(900, 0.12, { type: 'square', vol: 0.12 }); tone(1350, 0.16, { type: 'square', vol: 0.1 }); },
     hurt() { noise(0.18, { vol: 0.25, lp: 400 }); tone(90, 0.25, { vol: 0.25 }); },
     bad() { tone(220, 0.35, { type: 'sawtooth', vol: 0.15 }); tone(160, 0.5, { type: 'sawtooth', vol: 0.15 }); },
@@ -3542,22 +3556,29 @@ class Player {
     // 視角
     const sens = (MOBILE ? 0.0045 : 0.0022) * (this.ads ? 0.55 : 1);
     this.yaw -= INPUT.look.dx * sens; this.pitch = clamp(this.pitch - INPUT.look.dy * sens, -1.2, 1.2); INPUT.look.dx = INPUT.look.dy = 0;
-    // 移動
-    let mx = INPUT.mx, mz = INPUT.my; const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
-    const sprint = l > 0.92 && !this.ads && mz > 0.6; const sp = (this.ads ? 2.2 : sprint ? 5.6 : 3.8);
-    const fx = -Math.sin(this.yaw), fz = -Math.cos(this.yaw);
-    const vx = (fx * mz + fz * mx) * sp, vz = (fz * mz - fx * mx) * sp;
-    this.vel.x = lerp(this.vel.x, vx, Math.min(1, dt * 12)); this.vel.z = lerp(this.vel.z, vz, Math.min(1, dt * 12));
+    // 移動：由電腦帶著往前推進（鍵盤有按才手動）。前方 38 公尺內還有反派活著就停下，清掉再走
+    let mx = INPUT.mx, mz = INPUT.my; const manual = Math.hypot(mx, mz) > 0.1;
+    let vx, vz; const fx = -Math.sin(this.yaw), fz = -Math.cos(this.yaw);
+    if (manual) { const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; } const sp = this.ads ? 2.2 : 3.8; vx = (fx * mz + fz * mx) * sp; vz = (fz * mz - fx * mx) * sp; this.hold = false; }
+    else {
+      const blocked = ENEMIES.some((e) => e.state !== 'dead' && e.pos.z < this.pos.z + 2 && this.pos.z - e.pos.z < 38);
+      const atEnd = this.pos.z <= WORLD.END_Z + 3; this.hold = blocked || atEnd;
+      const sp = this.hold ? 0 : (this.ads ? 1.0 : 1.6);
+      const laneX = Math.sin(-this.pos.z / 18) * 2.2; // 沿街慢慢左右偏，靠近掩體
+      vx = clamp((laneX - this.pos.x) * 0.8, -1, 1) * (this.hold ? 0 : 1); vz = -sp;
+    }
+    this.vel.x = lerp(this.vel.x, vx, Math.min(1, dt * 6)); this.vel.z = lerp(this.vel.z, vz, Math.min(1, dt * 6));
     this.pos.x += this.vel.x * dt; this.pos.z += this.vel.z * dt; collideXZ(this.pos, 0.42);
-    const speed = Math.hypot(this.vel.x, this.vel.z); this.moving = speed > 0.8; this.bob += dt * speed * 2.2;
-    this.sprinting = sprint && speed > 4;
-    // 後退出鏡（劇本 A 規則）：退到起點後方
-    if (this.script.rules && this.pos.z > 9.5) { this.violRetreatT += dt; if (this.violRetreatT > 1.2) { this.violRetreatT = -5; violation('retreat'); } } else if (this.violRetreatT > 0) this.violRetreatT = 0; else if (this.violRetreatT < 0) this.violRetreatT = Math.min(0, this.violRetreatT + dt);
+    const speed = Math.hypot(this.vel.x, this.vel.z); this.moving = speed > 0.5; this.bob += dt * speed * 2.2; this.sprinting = false;
     // 瞄準
     this.ads = INPUT.ads && !this.sprinting; this.adsK = lerp(this.adsK, this.ads ? 1 : 0, Math.min(1, dt * 10));
     // 換彈
-    if (this.reloading > 0) { this.reloading -= dt; if (this.reloading <= 0) { this.ammo = w.mag; } }
-    else if ((INPUT.reload || (this.ammo === 0 && INPUT.fire)) && this.ammo < w.mag) { this.reloading = w.reload; SFX.reload(); INPUT.reload = false; }
+    if (this.reloading > 0) {
+      const before = 1 - this.reloading / w.reload; this.reloading -= dt; const k = 1 - this.reloading / w.reload;
+      if (before < 0.30 && k >= 0.30) SFX.magOut(); if (before < 0.62 && k >= 0.62) SFX.magIn(); if (before < 0.84 && k >= 0.84) SFX.bolt();
+      if (this.reloading <= 0) { this.ammo = w.mag; }
+    }
+    else if ((INPUT.reload || (this.ammo === 0 && INPUT.fire)) && this.ammo < w.mag) { this.reloading = w.reload; INPUT.reload = false; }
     INPUT.reload = false;
     // 開火
     this.fireT -= dt;
@@ -3576,6 +3597,7 @@ class Player {
     let best = rayWorld(ro, rd, 300), kind = 'world', obj = null, part = null;
     for (const e of ENEMIES) { if (e.state === 'dead') continue; const h = e.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'enemy'; obj = e; part = h.part; } }
     for (const c of CIVS) { if (c.dead) continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'civ'; obj = c; part = h.part; } }
+    for (const o of OFFICERS) { if (o.dead) continue; const h = o.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'officer'; obj = o; part = h.part; } }
     for (const p of WORLD.posters) { const b = { minX: p.x - 0.12, maxX: p.x + 0.12, minZ: p.z - 0.8, maxZ: p.z + 0.8, y0: p.y - 1, y1: p.y + 1 }; const t = rayAABB(ro, rd, b); if (t >= 0 && t < best + 0.2) { best = t; kind = 'poster'; obj = p; } }
     const hitP = ro.clone().addScaledVector(rd, best);
     if (kind === 'enemy') {
@@ -3587,10 +3609,13 @@ class Player {
     } else if (kind === 'civ') {
       const killed = obj.damage(w.dmg, part); this.stats.civ++; PUFFS.burst(hitP, 5, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
       if (this.script.rules) violation('civ'); else { banner('打到平民臨演了', 'bad', 1200); SFX.bad(); }
+    } else if (kind === 'officer') {
+      obj.hits = (obj.hits || 0) + 1; obj.c.play('Hit_Chest', { loop: false }); setTimeout(() => { if (!obj.dead) obj.c.play('Idle_Loop'); }, 400); PUFFS.burst(hitP, 5, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
+      if (this.script.rules) { if (obj.hits === 1) violation('officer'); else { this.stats.score = Math.max(0, this.stats.score - 50); banner('又打到軍官　−50', 'bad', 900); } } else { banner('打到導演請來的軍事顧問了', 'bad', 1200); SFX.bad(); }
     } else if (kind === 'poster') {
       obj.hit++; PUFFS.burst(hitP, 8, { spread: 1.2, up: 1.2, size: 0.2, c: [0.8, 0.75, 0.6] });
-      if (this.script.rules && obj.hit === 1) violation('poster'); else if (this.script.rules) { this.stats.score = Math.max(0, this.stats.score - 50); banner('又打到海報　−50', 'bad', 900); } else SFX.rico();
-    } else { PUFFS.burst(hitP, 7, { spread: 1.5, up: 1.6, size: 0.22 }); SFX.rico(); }
+      if (this.script.rules && obj.hit === 1) violation('poster'); else if (this.script.rules) { this.stats.score = Math.max(0, this.stats.score - 50); banner('又打到海報　−50', 'bad', 900); } 
+    } else { PUFFS.burst(hitP, 7, { spread: 1.5, up: 1.6, size: 0.22 }); SFX.impact(); }
     onShot();
   }
   aimDir(spreadDeg) {
@@ -3611,16 +3636,35 @@ class Player {
   updateView(dt) {
     const w = this.w, m = this.mesh; if (!m) return;
     const hip = V(...w.view); const sight = V(...w.sight);
+    // 換彈動作進度 0..1：槍放低並向內轉，讓玩家看得到彈匣
+    const rk = this.reloading > 0 ? 1 - this.reloading / w.reload : 0;
+    const lowK = rk > 0 ? Math.sin(Math.min(1, Math.min(rk / 0.18, (1 - rk) / 0.16)) * Math.PI / 2) : 0;
     // 瞄準：把準星點移到鏡頭中心前方 adsDist
     const adsPos = V(-sight.x, -sight.y, -sight.z - w.adsDist);
     const p = hip.lerp(adsPos, this.adsK);
     const bobA = this.moving ? (this.sprinting ? 0.018 : 0.008) * (1 - this.adsK * 0.8) : 0.002;
     p.x += Math.sin(this.bob) * bobA; p.y += Math.abs(Math.cos(this.bob)) * bobA * 1.2 - this.kick * 0.03 * (1 - this.adsK * 0.5); p.z += this.kick * 0.05;
-    m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004, this.sprinting ? 0.35 : 0, this.sprinting ? -0.25 : 0);
-    if (this.sprinting) { m.position.y -= 0.08; m.position.x += 0.06; }
+    // 換彈時把槍拉近身體中央、槍口抬高並向左翻，讓彈匣與左手都在畫面裡
+    p.y += lowK * 0.03; p.x -= lowK * 0.08; p.z += lowK * 0.03;
+    m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004 + lowK * 0.18, lowK * 0.3, -lowK * 0.6);
     m.updateMatrixWorld(true);
     this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion);
-    if (this.arms) this.arms.update(m, w.hands, this.reloading > 0 ? clamp(Math.sin(this.reloading / w.reload * Math.PI) * 1.4, 0, 1) : 0);
+    if (this.arms) {
+      let hands = w.hands;
+      if (rk > 0) {
+        // 左手：先到彈匣（抽出、往下帶走），再回到彈匣（裝入），然後到槍機拉柄，最後回護木
+        const mag = w.magazine || [0, -0.03, -0.08]; const L = w.hands.left; const lp = L.pos;
+        const seg = (a, b, t) => clamp((rk - a) / (b - a), 0, 1);
+        let tgt, fingers = L.fingers, thumb = L.thumb, curl = L.curl;
+        if (rk < 0.3) { const t = seg(0.12, 0.3, rk); tgt = [lerp(lp[0], mag[0], t), lerp(lp[1], mag[1] - 0.02, t), lerp(lp[2], mag[2], t)]; }
+        else if (rk < 0.46) { const t = seg(0.3, 0.46, rk); tgt = [mag[0], mag[1] - 0.02 - t * 0.22, mag[2] + t * 0.08]; }
+        else if (rk < 0.64) { const t = seg(0.46, 0.64, rk); tgt = [mag[0], mag[1] - 0.24 + t * 0.22, mag[2] + 0.08 - t * 0.08]; }
+        else if (rk < 0.84) { const t = seg(0.64, 0.74, rk) - seg(0.76, 0.84, rk); tgt = [lerp(mag[0], 0.03, t), lerp(mag[1] - 0.02, 0.08, t), lerp(mag[2], 0.12, t)]; fingers = [0, -1, 0]; thumb = [0, 0, -1]; curl = [[40, 60, 60], 70, 75, 80]; }
+        else { const t = seg(0.84, 1, rk); tgt = [lerp(mag[0], lp[0], t), lerp(mag[1] - 0.02, lp[1], t), lerp(mag[2], lp[2], t)]; }
+        hands = { right: w.hands.right, left: { ...L, pos: tgt, fingers, thumb, curl: rk >= 0.3 && rk < 0.64 ? [[60, 70, 70], 70, 75, 80] : curl } };
+      }
+      this.arms.update(m, hands, 0);
+    }
     camera.fov = lerp(72, w.adsFov, this.adsK); camera.updateProjectionMatrix();
   }
 }
@@ -3632,7 +3676,7 @@ const ME = { pid: store.get('pid', null) || (() => { const p = Math.random().toS
 let META = {}, PLAYERS = {}, RES = null, PREM = null;
 const G = { mode: 'menu', endsAt: 0, script: SCRIPTS.A, practice: false };
 let P = null; // Player
-const VIOL_TEXT = { civ: ['打到平民臨演！', 'You hit a civilian extra'], poster: ['損毀贊助方旗幟海報！', 'You damaged the sponsor\'s poster'], retreat: ['後退出鏡！', 'You retreated out of the shot'] };
+const VIOL_TEXT = { civ: ['打到平民臨演！', 'You hit a civilian extra'], poster: ['損毀贊助方旗幟海報！', 'You damaged the sponsor\'s poster'], officer: ['打到軍事顧問！', 'You hit a military adviser'] };
 function show(id) { for (const s of document.querySelectorAll('.scr')) s.hidden = s.id !== id; }
 function hideAll() { for (const s of document.querySelectorAll('.scr')) s.hidden = true; }
 let bannerTO = 0;
@@ -3692,7 +3736,7 @@ function waitScreen() {
   G.mode = 'wait'; hideAll(); show('scrWait'); const t = TEAMS[ME.team]; const s = SCRIPTS[META.script || 'A'];
   $('waitCard').innerHTML = `<h1 style="color:${t.c}">${t.name}劇組　${ME.no} 號演員</h1><p>等導演（老師）喊「開拍」。</p>
   <div class="rules ${s.rules ? '' : 'b'}"><p><b>這一條的劇本：${s.name}</b>　<span class="small">${s.en}</span></p>${s.rulesText.map((r, i) => `<p>・${r}<br><span class="small">${s.rulesEn[i]}</span></p>`).join('')}</div>
-  <p class="small">操作：左手搖桿移動（推到底＝衝刺），右半邊螢幕滑動瞄準，右下開火。打到反派臨演 +100 票房${s.mult > 1 ? '（軍方支援：×2）' : ''}。</p>
+  <p class="small">操作：鏡頭會自己沿街推進，前面有反派就停下。左手在螢幕左半邊滑動瞄準，右手開火、瞄準、換彈。打到反派臨演 +100 票房${s.mult > 1 ? '（軍方支援：×2）' : ''}。</p>
   <button class="btn" id="bPractice">單人練習（不計分，老師開拍時自動停止）</button>
   <div class="pick" style="grid-template-columns:1fr 1fr"><button id="qBtn" style="--c:#888">畫質：${QUALITY === 'high' ? '高畫質' : '省電'}<span>卡頓就切省電</span></button><button id="sBtn" style="--c:#888">音效：${SFX.on ? '開' : '關'}<span>教室可關</span></button></div>`;
   $('bPractice').onclick = () => startTake(true);
@@ -3707,7 +3751,7 @@ function startTake(practice) {
   G.script = SCRIPTS[META.script || 'A']; G.endsAt = practice ? NET.now() + TAKE_SEC * 1000 : META.endsAt;
   P.start(G.script); aiStart(G.script); renderGear(); SFX.init(); SFX.resume(); SFX.clap();
   banner('Action！', 'info', 1200, G.script.name + ' · ' + G.script.en); statDirty = true;
-  $('hObj').textContent = G.script.rules ? '往前推進，清掉街上的反派臨演；守住審片規則' : '往前推進，清掉反派臨演；街上有市集，小心平民';
+  $('hObj').textContent = G.script.rules ? '鏡頭沿街推進，清掉反派臨演；守住審片規則' : '鏡頭沿街推進，清掉反派臨演；街上有市集，小心平民';
   renderRotate();
 }
 function endTake(reason) {
@@ -3764,7 +3808,7 @@ function studentInit() {
 function onMeta() {
   if (ME.team < 0) return;
   const ph = META.phase;
-  if (ph === 'count') { if (G.mode === 'take' && G.practice) { G.mode = 'wait'; aiReset(); $('hudS').hidden = true; } if (G.mode !== 'count') { G.mode = 'count'; hideAll(); show('scrCount'); const s = SCRIPTS[META.script || 'A']; $('countCard').innerHTML = `<h1>準備開拍</h1><p>劇本：${s.name}　<span class="small">${s.en}</span></p><h1 id="cnt" style="font-size:72px">—</h1><p class="small">手機橫放，左手搖桿、右手瞄準</p>`; SFX.init(); renderRotate(); } }
+  if (ph === 'count') { if (G.mode === 'take' && G.practice) { G.mode = 'wait'; aiReset(); $('hudS').hidden = true; } if (G.mode !== 'count') { G.mode = 'count'; hideAll(); show('scrCount'); const s = SCRIPTS[META.script || 'A']; $('countCard').innerHTML = `<h1>準備開拍</h1><p>劇本：${s.name}　<span class="small">${s.en}</span></p><h1 id="cnt" style="font-size:72px">—</h1><p class="small">手機橫放，左手瞄準、右手開火</p>`; SFX.init(); renderRotate(); } }
   else if (ph === 'take') { if (G.mode !== 'take' || G.practice) startTake(false); }
   else if (ph === 'cut' || ph === 'prem') { if (G.mode === 'take' && !G.practice) endTake('cut'); else if (G.mode === 'wait') { /* 停在等待 */ } }
   else if (ph === 'lobby') { if (G.mode === 'take' && !G.practice) endTake('cut'); if (G.mode !== 'take') waitScreen(); }
@@ -3783,6 +3827,7 @@ function studentTick(dt) {
   $('hHp').className = 'hp' + (P.hp < 35 ? ' low' : ''); $('hHp').firstElementChild.style.width = Math.max(0, P.hp) + '%';
   $('hDmg').style.opacity = P.alive ? clamp(P.hurtT * 1.6, 0, 0.9) + (P.hp < 35 ? 0.35 : 0) : 0;
   $('hCross').classList.toggle('ads', P.adsK > 0.6);
+  if (P.hold !== P.holdShown) { P.holdShown = P.hold; $('hObj').textContent = P.hold ? (P.pos.z <= WORLD.END_Z + 3 ? '已到街尾：守住陣地到喊卡' : '前方有反派：清掉才會繼續推進') : '鏡頭推進中…'; }
   renderMarks();
   // 傳位置與成績
   if (!G.practice) { ME.sendT -= dt; if (ME.sendT <= 0) { ME.sendT = 0.2; NET.set('pos/' + ME.pid, [Math.round(P.pos.x * 10) / 10, Math.round(P.pos.z * 10) / 10, Math.round(P.yaw * 100) / 100, P.alive ? 1 : 0, ME.team]); } ME.statT -= dt; if (statDirty && ME.statT <= 0) { ME.statT = 1; sendStat(); } }
@@ -3803,12 +3848,8 @@ function renderMarks() {
 }
 /* ---------- 觸控與鍵盤 ---------- */
 function setupInput() {
-  const stick = $('stick'), knob = stick.firstElementChild; let sid = null, sc = null;
-  const stickMove = (t) => { const r = stick.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = (t.clientX - cx) / (r.width / 2), dy = (t.clientY - cy) / (r.height / 2); const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; } INPUT.mx = dx; INPUT.my = -dy; knob.style.transform = `translate(${dx * r.width * 0.3}px, ${dy * r.height * 0.3}px)`; };
-  stick.addEventListener('pointerdown', (e) => { sid = e.pointerId; stick.setPointerCapture(sid); stickMove(e); }); stick.addEventListener('pointermove', (e) => { if (e.pointerId === sid) stickMove(e); });
-  const stickEnd = (e) => { if (e.pointerId !== sid) return; sid = null; INPUT.mx = INPUT.my = 0; knob.style.transform = ''; }; stick.addEventListener('pointerup', stickEnd); stick.addEventListener('pointercancel', stickEnd);
   const look = $('look'); let lid = null, lx = 0, ly = 0;
-  look.addEventListener('pointerdown', (e) => { if (lid !== null) return; lid = e.pointerId; lx = e.clientX; ly = e.clientY; look.setPointerCapture(lid); });
+  look.addEventListener('pointerdown', (e) => { if (lid !== null) return; $('lookHint').hidden = true; lid = e.pointerId; lx = e.clientX; ly = e.clientY; look.setPointerCapture(lid); });
   look.addEventListener('pointermove', (e) => { if (e.pointerId !== lid) return; INPUT.look.dx += e.clientX - lx; INPUT.look.dy += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
   const lookEnd = (e) => { if (e.pointerId === lid) lid = null; }; look.addEventListener('pointerup', lookEnd); look.addEventListener('pointercancel', lookEnd);
   const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); };
@@ -4054,7 +4095,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, violation, SCRIPTS, camera, scene, renderer, MODELS };
+window.__T = { get OFFICERS() { return OFFICERS; }, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, violation, SCRIPTS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
