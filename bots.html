@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>假學生連線預演</title>
+<style>
+:root { --bg: #111416; --card: #1b2023; --line: #3a4246; --fg: #f2f4f3; --muted: #aab5b0; --ok: #3fd17a; --warn: #ffb15a; --bad: #ff5a4e; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-weight: 700; }
+main { max-width: 980px; margin: 0 auto; padding: 18px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+h1 { margin: 0; font-size: 32px; font-weight: 900; }
+h2 { margin: 0 0 6px; font-size: 22px; font-weight: 900; }
+p { margin: 0; font-size: 17px; line-height: 1.6; color: #dfe6e3; }
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-size: 18px; font-weight: 900; min-height: 48px; padding: 6px 16px; border-radius: 10px; border: 2px solid var(--line); background: #2a3135; color: var(--fg); cursor: pointer; }
+button.on { border-color: var(--warn); background: #6b4a1f; }
+button.go { border-color: var(--ok); background: #1f5a36; }
+button.stop { border-color: var(--bad); background: #5a231f; }
+button:disabled { opacity: 0.4; cursor: default; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.stats div { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; text-align: center; }
+.stats b { display: block; font-size: 30px; }
+.stats span { font-size: 15px; color: var(--muted); }
+#verdict { font-size: 20px; line-height: 1.6; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+td, th { border-bottom: 1px solid var(--line); padding: 3px 6px; text-align: left; }
+th { color: var(--muted); }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+a { color: #8fc4ff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>假學生連線預演：片場：戰爭片拍攝中</h1>
+  <div class="card">
+    <h2>怎麼用</h2>
+    <p>1. 先打開老師畫面：<a href="https://op06dhans-eng.github.io/Gun-movie/" target="_blank">https://op06dhans-eng.github.io/Gun-movie/</a>（另開一個分頁，或用教室電腦開）。</p>
+    <p>2. 在這裡選人數，按「開始」。假學生會像真的手機一樣連上線、自己選劇組，老師畫面上的人數會跟著增加。</p>
+    <p>3. 在老師畫面按「開拍」。假學生會沿著街道往前走、開槍、偶爾違規，老師畫面上就能看到彩色圓點與票房。</p>
+    <p>4. 下面會即時顯示流量。玩完按「停止並移除假學生」，他們會從劇組中消失。</p>
+    <p class="warn">重要：這一頁請用「另一台電腦」或「另一個瀏覽器視窗」打開，老師畫面要一直留在螢幕最前面。瀏覽器會暫停被切到後面的分頁，老師畫面一被蓋住遊戲就會停下來。</p>
+    <p class="warn">注意：假學生會佔用真正的隊伍名額，上課前記得先移除。同一個資料庫最多同時 100 個連線，三款遊戲共用。</p>
+  </div>
+  <div class="card">
+    <h2>人數與劇組</h2>
+    <div class="row" id="nRow"></div>
+    <div class="row" id="tRow"></div>
+    <div class="row"><button class="go" id="bGo">開始</button><button class="stop" id="bStop" disabled>停止並移除假學生</button><span id="state" class="muted"></span></div>
+  </div>
+  <div class="card">
+    <h2>即時狀況</h2>
+    <div class="stats">
+      <div><b id="sConn">0</b><span>已連上線</span></div>
+      <div><b id="sJoin">0</b><span>已加入劇組</span></div>
+      <div><b id="sPlay">0</b><span>正在拍攝</span></div>
+            <div><b id="sKB">0</b><span>每位學生上傳（KB／秒，估計）</span></div>
+      <div><b id="sHour">0</b><span>全班估計（MB／每分鐘，估計）</span></div>
+    </div>
+    <div id="verdict"></div>
+    <p class="muted" style="color:var(--muted);font-size:15px">這款遊戲學生之間不互傳畫面，每支手機只上傳自己的位置（每秒 5 次）與成績（每秒最多 1 次），老師電腦收全班的。流量遠低於另外兩款。</p>
+  </div>
+  <div class="card"><h2>每位假學生</h2><table id="tbl"></table></div>
+</main>
+<script type="module">
+const GAME = 'film', ROOT = 'fs', CH = 'film-set-local';
+const CFG = { apiKey: 'AIzaSyCtxZmkrZ8tcCONC5DQbEU5ySlos9i-a8o', authDomain: 'drone-swarm-class.firebaseapp.com', databaseURL: 'https://drone-swarm-class-default-rtdb.asia-southeast1.firebasedatabase.app', projectId: 'drone-swarm-class', storageBucket: 'drone-swarm-class.firebasestorage.app', messagingSenderId: '528664638395', appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e' };
+const LOCAL = new URLSearchParams(location.search).has('local');
+const TEAMS = ['紅組', '藍組', '綠組', '黃組'];
+const $ = (id) => document.getElementById(id);
+const R = Math.random;
+let N = 20, TEAMMODE = 'even';
+/* ---------- 連線：每位假學生各自一條連線（跟真的手機一樣） ---------- */
+let A = null, D = null;
+async function makeNet(i) {
+  if (LOCAL) return makeLocalNet();
+  if (!A) { A = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'); D = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js'); }
+  const app = A.initializeApp(CFG, 'bot' + i + '-' + Date.now()); const db = D.getDatabase(app);
+  const Rf = (p) => D.ref(db, p ? ROOT + '/' + p : ROOT); let offset = 0;
+  const NET = {
+    online: false, app, now: () => Date.now() + offset,
+    set: (p, v) => D.set(Rf(p), v).catch(() => {}), remove: (p) => D.remove(Rf(p)).catch(() => {}),
+    push: (p, v) => { const r = D.push(Rf(p)); D.set(r, v).catch(() => {}); },
+    on: (p, cb) => D.onValue(Rf(p), (s) => cb(s.val())),
+    onChild(p, h) { const u = []; if (h.added) u.push(D.onChildAdded(Rf(p), (s) => h.added(s.key, s.val()))); if (h.changed) u.push(D.onChildChanged(Rf(p), (s) => h.changed(s.key, s.val()))); return () => u.forEach(f => f()); },
+    onDisconnectRemove: (p) => D.onDisconnect(Rf(p)).remove(),
+    close: () => { try { D.goOffline(db); } catch (_) {} try { A.deleteApp(app); } catch (_) {} },
+  };
+  D.onValue(D.ref(db, '.info/serverTimeOffset'), (s) => { offset = s.val() || 0; });
+  D.onValue(D.ref(db, '.info/connected'), (s) => { NET.online = !!s.val(); });
+  return NET;
+}
+// 同一台電腦練習用（網址加 ?local）：跟遊戲的「練習連線模式」一樣用分頁互傳
+function makeLocalNet() {
+  const ch = new BroadcastChannel(CH); let tree = {}; const subs = new Set();
+  const parts = (p) => p.split('/').filter(Boolean); const clone = (v) => (v === null || v === undefined) ? null : JSON.parse(JSON.stringify(v));
+  const getAt = (p) => { let n = tree; for (const k of parts(p)) { if (n === null || typeof n !== 'object') return null; n = n[k]; if (n === undefined) return null; } return n; };
+  function setAt(p, v) { const ks = parts(p); if (!ks.length) { tree = clone(v) || {}; return; } let n = tree; for (let i = 0; i < ks.length - 1; i++) { if (n[ks[i]] === null || typeof n[ks[i]] !== 'object') n[ks[i]] = {}; n = n[ks[i]]; } const last = ks[ks.length - 1]; if (v === null || v === undefined) delete n[last]; else n[last] = clone(v); }
+  const related = (a, b) => { const X = parts(a), Y = parts(b); const n = Math.min(X.length, Y.length); for (let i = 0; i < n; i++) if (X[i] !== Y[i]) return false; return true; };
+  function apply(op) {
+    const touched = [...subs].filter(s => related(s.path, op.path)); const before = touched.map(s => JSON.stringify(getAt(s.path)));
+    if (op.t === 'set') setAt(op.path, op.v); else if (op.t === 'update') for (const k in op.v) setAt(op.path + '/' + k, op.v[k]); else if (op.t === 'root') tree = clone(op.v) || {};
+    touched.forEach((s, i) => { const nowV = getAt(s.path); const nowS = JSON.stringify(nowV); if (nowS === before[i]) return; if (s.kind === 'value') { s.cb(clone(nowV)); return; } const prev = before[i] === 'null' ? {} : JSON.parse(before[i]); const cur = nowV && typeof nowV === 'object' ? nowV : {}; for (const k in cur) { if (!(k in prev)) s.added && s.added(k, clone(cur[k])); else if (JSON.stringify(prev[k]) !== JSON.stringify(cur[k])) s.changed && s.changed(k, clone(cur[k])); } });
+  }
+  const send = (op) => { apply(op); try { ch.postMessage(op); } catch (_) {} };
+  const id = Math.random().toString(36).slice(2); const offs = [];
+  ch.onmessage = (e) => { const m = e.data; if (!m) return; if (m.sync === 'req') return; if (m.sync === 'full') { if (m.to === id) apply({ t: 'root', path: '', v: m.v }); return; } apply(m); };
+  ch.postMessage({ sync: 'req', id });
+  return {
+    online: true, now: () => Date.now(),
+    set: (path, v) => send({ t: 'set', path, v }), remove: (path) => send({ t: 'set', path, v: null }),
+    push: (path, v) => send({ t: 'set', path: path + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), v }),
+    on(path, cb) { const s = { path, kind: 'value', cb }; subs.add(s); queueMicrotask(() => cb(clone(getAt(path)))); return () => subs.delete(s); },
+    onChild(path, h) { const s = { path, kind: 'child', ...h }; subs.add(s); return () => subs.delete(s); },
+    onDisconnectRemove(p) { offs.push(p); },
+    close() { for (const p of offs) try { ch.postMessage({ t: 'set', path: p, v: null }); } catch (_) {} ch.close(); },
+  };
+}
+
+
+/* ---------- 共用的統計 ---------- */
+const ST = { bytes: 0, t0: performance.now(), upd: [], lastUpd: 0, playing: 0 };
+const BOTS = [];
+function teamFor(i) { return TEAMMODE === 'even' ? i % 4 : +TEAMMODE; }
+/* ---------- 片場的假學生：沿街推進、開槍、偶爾違規 ---------- */
+function filmBot(b) {
+  const net = b.net; let META = {}, S = null, sendT = 0, statT = 0, take = -1;
+  for (const p of ['players/', 'pos/', 'req/', 'ans/', 'stat/']) net.onDisconnectRemove(p + b.pid);
+  net.remove('ans/' + b.pid); net.set('req/' + b.pid, { team: b.team, at: net.now(), no: 0 });
+  net.on('players/' + b.pid, (p) => { if (p && p.call) { b.call = p.call; b.joined = true; b.no = p.no; } });
+  net.on('meta', (m) => { META = m || {}; if (META.phase === 'take' && take !== META.take) { take = META.take; S = { x: (R() - 0.5) * 6, z: 6, yaw: 0, sp: 1.2 + R() * 1.6, score: 0, k: 0, sh: 0, hi: 0, v: 0, c: 0, d: 0, h: 0, lost: 0, alive: 1 }; } if (META.phase !== 'take' && META.phase !== 'count') S = null; });
+  // 老師資料更新間隔：看 res（只有第一位算）
+  net.on('res', (v) => { if (v) ST.bytes += JSON.stringify(v).length; });
+  b.tick = (dt) => {
+    b.playing = !!(S && META.phase === 'take');
+    if (!S || META.phase !== 'take') return;
+    S.z -= S.sp * dt; if (S.z < -140) S.z = -140; S.x += (R() - 0.5) * 2 * dt; S.x = Math.max(-5.5, Math.min(5.5, S.x)); S.yaw = Math.sin(performance.now() / 1500 + b.i) * 0.6;
+    if (R() < dt * 0.6) { S.sh += 3; if (R() < 0.5) { S.hi++; if (R() < 0.5) { S.k++; S.score += 200; } } }
+    if (R() < dt * 0.02 && !S.lost) { S.lost = 1; S.v++; S.c++; net.push('ev', { t: net.now(), team: b.team, no: b.no || 0, kind: 'civ', pid: b.pid }); }
+    if (R() < dt * 0.03) { S.d++; }
+    b.info = `${Math.round(-S.z)} 公尺　票房 ${S.score}`;
+    sendT -= dt; if (sendT <= 0) { sendT = 0.2; net.set('pos/' + b.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, Math.round(S.yaw * 100) / 100, 1, b.team]); }
+    statT -= dt; if (statT <= 0) { statT = 1.5; net.set('stat/' + b.pid, { s: S.score, k: S.k, sh: S.sh, hi: S.hi, v: S.v, c: S.c, d: S.d, h: S.h, g: S.lost ? 0 : 1, rt: 1500, z: Math.round(S.z), t: b.team, no: b.no || 0, at: net.now() }); }
+  };
+  b.stop = () => { for (const p of ['players/', 'req/', 'ans/', 'pos/', 'stat/']) net.remove(p + b.pid); };
+}
+/* ---------- 介面 ---------- */
+const nRow = $('nRow'); for (const n of [5, 10, 20, 40, 60]) { const bt = document.createElement('button'); bt.textContent = n + ' 人'; bt.className = n === N ? 'on' : ''; bt.onclick = () => { N = n; [...nRow.children].forEach((c) => c.classList.toggle('on', c === bt)); }; nRow.appendChild(bt); }
+const tRow = $('tRow'); for (const [k, label] of [['even', '平均分到四組'], ['0', '全部紅組'], ['1', '全部藍組'], ['2', '全部綠組'], ['3', '全部黃組']]) { const bt = document.createElement('button'); bt.textContent = label; bt.className = k === TEAMMODE ? 'on' : ''; bt.onclick = () => { TEAMMODE = k; [...tRow.children].forEach((c) => c.classList.toggle('on', c === bt)); }; tRow.appendChild(bt); }
+let running = false, raf = 0, last = 0;
+$('bGo').onclick = async () => {
+  if (running) return; running = true; $('bGo').disabled = true; $('bStop').disabled = false; $('state').textContent = '連線中…'; ST.bytes = 0; ST.t0 = performance.now();
+  for (let i = 0; i < N; i++) { const b = { i, pid: 'bot' + Math.random().toString(36).slice(2, 9), team: teamFor(i), joined: false, playing: false, info: '' }; b.net = await makeNet(i); filmBot(b); BOTS.push(b); await new Promise((r) => setTimeout(r, 120)); }
+  $('state').textContent = `${BOTS.length} 位假學生已上線`; last = performance.now(); loop();
+};
+$('bStop').onclick = () => { running = false; cancelAnimationFrame(raf); for (const b of BOTS) { try { b.stop(); } catch (_) {} setTimeout(() => { try { b.net.close && b.net.close(); } catch (_) {} }, 800); } BOTS.length = 0; $('bGo').disabled = false; $('bStop').disabled = true; $('state').textContent = '已移除'; render(); };
+function loop() { if (!running) return; const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now; for (const b of BOTS) b.tick(dt); render(); raf = requestAnimationFrame(loop); }
+function render() {
+  $('sConn').textContent = BOTS.filter((b) => b.net.online).length; $('sJoin').textContent = BOTS.filter((b) => b.joined).length; $('sPlay').textContent = BOTS.filter((b) => b.playing).length;
+  const sec = (performance.now() - ST.t0) / 1000; const perStu = (N * 5 * 60 + 2 * 40) / 1024; // 每位學生每秒：位置 5 次 × 全班 N 人約 60 位元組（老師不轉播，學生彼此不收）→ 實際幾乎只有上傳
+  $('sKB').textContent = '≈0.3'; $('sHour').textContent = (N * 0.3 * 60 / 1024).toFixed(2); 
+  const tb = $('tbl'); if (tb) tb.innerHTML = '<tr><th>#</th><th>劇組</th><th>狀態</th><th>資訊</th></tr>' + BOTS.map((b) => `<tr><td>${b.i + 1}</td><td>${TEAMS[b.team]}</td><td class="${b.joined ? 'ok' : 'warn'}">${b.joined ? (b.playing ? '拍攝中' : '已加入') : '等待'}</td><td>${b.info}</td></tr>`).join('');
+}
+render();
+</script>
+</body>
+</html>
