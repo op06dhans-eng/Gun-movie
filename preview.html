@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" id="vp" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b0d0e">
 <title>片場：戰爭片拍攝中</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2529,7 +2529,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '1.1.0（移動改由電腦推進、左手瞄準右手開火；換彈分段動作；槍聲分層加殘響；拿掉跳彈聲；規則三改為軍事顧問）';
+const VERSION = '1.1.1（修正 iPhone 連點開火時畫面被放大）';
 const ROOT = 'fs'; // 資料庫根節點
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3847,7 +3847,22 @@ function renderMarks() {
   }
 }
 /* ---------- 觸控與鍵盤 ---------- */
+// iPhone 的 Safari 不理會 user-scalable=no：連點按鈕會被當成「點兩下放大」。這裡把放大全部擋掉，萬一已經放大就還原
+function noZoom() {
+  const stop = (e) => { e.preventDefault(); };
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick']) document.addEventListener(ev, stop, { passive: false });
+  let lastEnd = 0;
+  document.addEventListener('touchend', (e) => { const now = performance.now(); if (now - lastEnd < 350) e.preventDefault(); lastEnd = now; }, { passive: false });
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+  // 遊戲畫面上的按鈕與瞄準區：觸碰一開始就擋掉瀏覽器預設動作（放大、捲動、長按選字）
+  for (const id of ['bFire', 'bAim', 'bReload', 'bStrike', 'look']) $(id).addEventListener('touchstart', stop, { passive: false });
+  const vp = $('vp'); const base = vp.getAttribute('content');
+  const reset = () => { const vv = window.visualViewport; if (vv && Math.abs(vv.scale - 1) > 0.01) { vp.setAttribute('content', base.replace('maximum-scale=1', 'maximum-scale=1.01')); requestAnimationFrame(() => vp.setAttribute('content', base)); window.scrollTo(0, 0); } };
+  if (window.visualViewport) { visualViewport.addEventListener('resize', reset); visualViewport.addEventListener('scroll', () => { if (visualViewport.offsetLeft || visualViewport.offsetTop) window.scrollTo(0, 0); }); }
+  setInterval(reset, 1000);
+}
 function setupInput() {
+  noZoom();
   const look = $('look'); let lid = null, lx = 0, ly = 0;
   look.addEventListener('pointerdown', (e) => { if (lid !== null) return; $('lookHint').hidden = true; lid = e.pointerId; lx = e.clientX; ly = e.clientY; look.setPointerCapture(lid); });
   look.addEventListener('pointermove', (e) => { if (e.pointerId !== lid) return; INPUT.look.dx += e.clientX - lx; INPUT.look.dy += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
