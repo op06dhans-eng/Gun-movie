@@ -2570,7 +2570,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.1.0（掩體系統：自動進掩體、準心對到可換掩體、蹲下躲／探身射擊；室內救人質：攻入民宅逐間清除；敵人改為頭巾蒙面、拿 AK；3 倍瞄準鏡）';
+const VERSION = '2.1.1（敵人的 AK 改成槍口朝向目標：瞄準時對準同學、移動時朝前、待命時槍口朝下）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3313,6 +3313,7 @@ function tintedMaterial(name, mat, tint) {
   const m = mat.clone(); m.envMapIntensity = 0.45; m.roughness = 0.95; if (tint) m.color.copy(tint);
   TINTED[key] = m; return m;
 }
+const _rp = new THREE.Vector3(), _rf = new THREE.Vector3(), _rw = new THREE.Vector3(), _rz = new THREE.Vector3(), _rx = new THREE.Vector3(), _ry = new THREE.Vector3(), _rg = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _rq2 = new THREE.Quaternion();
 class Character {
   constructor(name, { tint = null, outfit = false } = {}) {
     const g = MODELS[name]; this.name = name;
@@ -3339,9 +3340,27 @@ class Character {
     this.cur = a; this.curName = n;
   }
   attachRifle(mesh) {
-    const w = this.b('Wrist.R'); const holder = new THREE.Group(); holder.position.fromArray(this.extras.grip.R);
-    // 槍握在右手：槍口沿手掌前方（與 mini-cry 相同的握法，用固定旋轉近似）
-    holder.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2)); holder.add(mesh); w.add(holder); this.rifle = mesh; this.rifleHolder = holder;
+    // 手掌位置用一個掛在右手腕上的空物件追蹤；槍本身掛在人物根節點，每一格依瞄準方向擺正（槍口朝目標，不再跟著手腕橫著拿）
+    const w = this.b('Wrist.R'); const holder = new THREE.Group(); holder.position.fromArray(this.extras.grip.R); w.add(holder);
+    this.root.add(mesh); this.rifle = mesh; this.rifleHolder = holder; this.aimDir = new THREE.Vector3(0, -0.5, 1).normalize();
+  }
+  // mode：'aim'（朝 target 瞄準）、'low'（槍口朝下前方，待命）、'run'（水平朝前）、'drop'（倒地）
+  aimRifle(mode, target) {
+    const m = this.rifle; if (!m) return; this.root.updateMatrixWorld(true);
+    const palm = this.rifleHolder.getWorldPosition(_rp); const fwd = _rf.set(Math.sin(this.root.rotation.y), 0, Math.cos(this.root.rotation.y));
+    let want;
+    if (mode === 'aim' && target) want = _rw.subVectors(target, palm).normalize();
+    else if (mode === 'run') want = _rw.copy(fwd).setY(-0.15).normalize();
+    else if (mode === 'drop') want = _rw.copy(fwd).setY(-1.2).normalize();
+    else want = _rw.copy(fwd).setY(-0.65).normalize();
+    this.aimDir.lerp(want, mode === 'aim' ? 0.35 : 0.2).normalize();
+    // 槍的座標：-z＝槍口方向，+y＝上
+    const z = _rz.copy(this.aimDir).negate(); const x = _rx.crossVectors(_up, z).normalize(); const y = _ry.crossVectors(z, x);
+    _rm.makeBasis(x, y, z); _rq.setFromRotationMatrix(_rm);
+    _rq2.copy(this.root.quaternion).invert(); m.quaternion.copy(_rq2).multiply(_rq);
+    // 讓槍的握把（槍身座標 0.02, 0.035, 0.12）落在手掌上
+    _rg.set(0.02, 0.035, 0.12).applyQuaternion(_rq); palm.sub(_rg);
+    m.position.copy(this.root.worldToLocal(palm));
   }
   update(dt) { this.mixer.update(dt); }
   // 命中盒：頭、軀幹、腿（世界座標膠囊）
@@ -3516,7 +3535,7 @@ function roofSpot(side, z) {
   const b = WORLD.buildings.find((b) => b.side === side && !b.plaza && z <= b.z0 - 1 && z >= b.z1 + 1); if (!b) return null;
   return { x: side * (b.x0 + 0.9), y: b.h, z };
 }
-const _ld = new THREE.Vector3();
+const _ld = new THREE.Vector3(), _aimT = new THREE.Vector3();
 // 找一個從玩家看得到的新位置：往玩家方向走幾步、左右偏一點，挑第一個看得到的
 function visibleSpot(pos, P, dist) {
   const e = P.peekEye(); const fx = (P.pos.x - pos.x) / dist, fz = (P.pos.z - pos.z) / dist; const c = new THREE.Vector3();
@@ -3554,7 +3573,7 @@ class Enemy {
     return false;
   }
   update(dt, P) {
-    this.c.update(dt);
+    this.c.update(dt); this.updateRifle(P);
     if (this.state === 'dead') { this.deadT += dt; return; }
     if (this.state === 'gone') return;
     const toP = V(P.pos.x - this.pos.x, 0, P.pos.z - this.pos.z); const dist = toP.length(); const want = Math.atan2(toP.x, toP.z);
@@ -3592,6 +3611,14 @@ class Enemy {
     }
   }
   face(a, dt, k) { let d = a - this.heading; d = Math.atan2(Math.sin(d), Math.cos(d)); this.heading += d * Math.min(1, dt * k); }
+  // 槍口方向：開火、探身時對準同學；移動時朝前；待命時槍口朝下前方
+  updateRifle(P) {
+    if (!this.c.rifle || !this.c.root.visible) return; const n = this.c.curName;
+    if (this.state === 'dead') this.c.aimRifle('drop');
+    else if (this.state === 'move' || this.state === 'leave') this.c.aimRifle('run');
+    else if (n === 'Pistol_Aim_Neutral' || n === 'Crouch_Idle_Aim' || n === 'Hit_Chest' || n === 'Hit_Head') this.c.aimRifle('aim', P.eye(_aimT));
+    else this.c.aimRifle('low');
+  }
   fire(P, dist) {
     const m = this.muzzle(); const eye = P.eye();
     const dir = eye.clone().sub(m); const L = dir.length(); dir.divideScalar(L);
@@ -4586,7 +4613,7 @@ function frame() {
     for (const e of ENEMIES) if (e.c.flash) flashTick(e.c.flash, dt);
     tracersTick(dt); if (PUFFS) PUFFS.update(dt);
     // 等待畫面也畫一下場景（靜態背景）
-    if (G.mode !== 'take') { for (const e of ENEMIES) e.c.update(dt); for (const c of CIVS) c.c.update(dt); for (const h of HOSTAGES) h.c.update(dt); }
+    if (G.mode !== 'take') { for (const e of ENEMIES) { e.c.update(dt); e.c.aimRifle('low'); } for (const c of CIVS) c.c.update(dt); for (const h of HOSTAGES) h.c.update(dt); }
   } else { teacherTick(dt); sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); }
   // 學生還沒開拍時（選組、等待、結果畫面蓋住場景）不必每格都畫，省電也不發燙
   if (ROLE === 'student' && G.mode !== 'take' && (FRAME_N++ % 6) !== 0) return;
@@ -4601,7 +4628,7 @@ function warmUp() {
   const show = (o) => { if (!o) return; shown.push([o, o.visible]); o.visible = true; };
   camera.position.set(0, 1.6, 6); camera.rotation.set(0, 0, 0); camera.updateMatrixWorld(true);
   let i = 0; const all = [...POOL.soldier, ...POOL.civ];
-  for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); if (c.flash) { show(c.flash); } i++; }
+  for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); c.aimRifle('low'); if (c.flash) { show(c.flash); } i++; }
   if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); }
   if (WORLD.bomb) show(WORLD.bomb.g);
   for (const t of TRACERS) show(t.m);
