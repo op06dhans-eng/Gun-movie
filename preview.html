@@ -2593,7 +2593,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.2.0（全班對抗老師：老師可當黑鴉指揮官下指令，或親自上屋頂當狙擊手；翻牌新增敵人形象的揭露與研究資料）';
+const VERSION = '2.2.1（屋頂槍手改站在屋頂最外緣，不再被屋頂邊緣擋住；被擋住超過 3 秒會沿屋頂移到看得到的位置）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2870,9 +2870,9 @@ function matFor(m) {
 function building(x, z, depth, w, h, floors, style, side) {
   block(depth, h, w, style, x, 0, z, { top: 'concrete2' });
   // 女兒牆、屋頂雜物
-  block(depth + 0.3, 0.5, w + 0.3, 'concrete', x, h, z, { collide: false, top: 'concrete' });
-  if (rnd() < 0.5) block(1.6, 1.4, 1.6, 'corrugated', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3), { collide: false, top: 'rust' });
-  if (rnd() < 0.4) block(2.2, 0.8, 1.2, 'metal', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3), { collide: false });
+  block(depth + 0.3, 0.5, w + 0.3, 'concrete', x, h, z, { top: 'concrete' }); // 屋頂邊緣也算遮擋（判斷屋頂槍手看不看得到）
+  if (rnd() < 0.5) block(1.6, 1.4, 1.6, 'corrugated', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3), { top: 'rust' });
+  if (rnd() < 0.4) block(2.2, 0.8, 1.2, 'metal', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3));
   // 面街的那一面：窗戶、門、雨棚（facade 貼圖本身有窗）
   const fx = x - side * depth / 2 - side * 0.01, ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
   if (style !== 'facade') {
@@ -3556,7 +3556,7 @@ function fleeRoute(x, z) {
 const MS = { zone: 0, arrived: false, moving: false, t0: 0, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] };
 function roofSpot(side, z) {
   const b = WORLD.buildings.find((b) => b.side === side && !b.plaza && z <= b.z0 - 1 && z >= b.z1 + 1); if (!b) return null;
-  return { x: side * (b.x0 + 0.9), y: b.h, z };
+  return { x: side * (b.x0 + 0.35), y: b.h, z, b }; // 站在屋頂最外緣，從街上看得到上半身
 }
 const _ld = new THREE.Vector3(), _aimT = new THREE.Vector3();
 // 找一個從玩家看得到的新位置：往玩家方向走幾步、左右偏一點，挑第一個看得到的
@@ -3574,6 +3574,12 @@ function indoorSpot(e, P) {
   const Z = ZONES[e.zone]; const eye = P.peekEye(); let best = null, bd = 1e9;
   for (const [x, z] of Z.spots || []) { _ld.set(x, 1.4, z).sub(eye); const L = _ld.length(); _ld.divideScalar(L); if (rayWorld(eye, _ld, L) < L - 0.3) continue; const d = Math.hypot(x - e.pos.x, z - e.pos.z); if (d < bd) { bd = d; best = V(x, 0, z); } }
   return best || e.pos.clone();
+}
+// 屋頂槍手被擋住：沿著屋頂邊緣找一個從同學探身位置看得到的點
+function roofVisible(e, P) {
+  const eye = P.peekEye(); const side = e.pos.x > 0 ? 1 : -1; const b = WORLD.buildings.find((b) => b.side === side && !b.plaza && e.pos.z <= b.z0 && e.pos.z >= b.z1); if (!b) return null;
+  for (const dz of [3, -3, 6, -6, 9, -9]) { const z = e.pos.z + dz; if (z > b.z0 - 0.8 || z < b.z1 + 0.8) continue; _ld.set(e.pos.x, e.pos.y + 1.3, z).sub(eye); const L = _ld.length(); _ld.divideScalar(L); if (rayWorld(eye, _ld, L) >= L - 0.4) return V(e.pos.x, e.pos.y, z); }
+  return null;
 }
 class Enemy {
   constructor(c, spec, zone) {
@@ -3611,12 +3617,13 @@ class Enemy {
     if (this.state === 'move') {
       const d = V(this.at.x - this.pos.x, 0, this.at.z - this.pos.z); const l = d.length();
       if (l < 0.4 || (this.stuckT || 0) > 0.8) { if (this.k === 'cover') { this.state = 'cover'; this.c.play('Crouch_Idle_Aim'); this.burstT = 0.5 + R() * 0.8; } else { this.state = 'stand'; this.c.play('Pistol_Aim_Neutral'); this.burstT = 0.3 + R() * 0.5; } this.exposedAt = performance.now(); }
-      else { d.divideScalar(l); const sp = this.k === 'rush' ? 4.6 : 3.4; const ox = this.pos.x, oz = this.pos.z; this.pos.x += d.x * sp * dt; this.pos.z += d.z * sp * dt; this.face(Math.atan2(d.x, d.z), dt, 8); collideXZ(this.pos, 0.35); const moved = Math.hypot(this.pos.x - ox, this.pos.z - oz); this.stuckT = moved < sp * dt * 0.3 ? (this.stuckT || 0) + dt : 0; }
+      else { d.divideScalar(l); const sp = this.k === 'rush' ? 4.6 : this.k === 'roof' ? 2.2 : 3.4; const ox = this.pos.x, oz = this.pos.z; this.pos.x += d.x * sp * dt; this.pos.z += d.z * sp * dt; this.face(Math.atan2(d.x, d.z), dt, 8); if (this.k !== 'roof') collideXZ(this.pos, 0.35); const moved = Math.hypot(this.pos.x - ox, this.pos.z - oz); this.stuckT = moved < sp * dt * 0.3 ? (this.stuckT || 0) + dt : 0; }
       this.c.root.rotation.y = this.heading; return;
     }
     this.face(want, dt, 5); this.c.root.rotation.y = this.heading;
     // 防止卡關：站起來時從玩家位置看不到（被車、牆整個擋住）超過 3 秒，就往玩家方向換一個看得到的位置
     if (active) { this.visT = (this.visT || 0) - dt; if (this.visT <= 0) { this.visT = 0.5; const e = P.peekEye(); _ld.set(this.pos.x, this.pos.y + 1.5, this.pos.z).sub(e); const L = _ld.length(); _ld.divideScalar(L); const seen = rayWorld(e, _ld, L) >= L - 0.4; this.hidT = seen ? 0 : (this.hidT || 0) + 0.5;
+      if (this.hidT >= 3 && this.k === 'roof') { this.hidT = 0; const s = roofVisible(this, P); if (s) { this.at.copy(s); this.state = 'move'; this.stuckT = 0; this.c.play('Walk_Aim'); this.peek = 0; return; } }
       if (this.hidT >= 3 && this.k !== 'roof' && this.k !== 'guard') { this.hidT = 0; this.at.copy(this.inside ? indoorSpot(this, P) : visibleSpot(this.pos, P, dist)); this.state = 'move'; this.stuckT = 0; this.c.play('Jog_Aim'); this.peek = 0; return; } } }
     if (!active) { if (this.curAim !== 'idle') { this.curAim = 'idle'; this.c.play(this.state === 'cover' ? 'Crouch_Idle_Aim' : 'Idle_Rifle'); } this.peek = 0; return; }
     this.curAim = '';
@@ -3626,7 +3633,6 @@ class Enemy {
       if (this.shotT <= 0 && this.shots > 0) { this.shots--; this.shotT = 0.14; this.fire(P, dist); }
       if (this.peek <= 0) {
         if (this.state === 'cover') { this.c.play('Crouch_Idle_Aim'); this.burstT = 1.0 + R() * 1.3; }
-        else if (this.k === 'roof' && R() < 0.35) { this.c.play('Crouch_Idle_Aim'); this.burstT = 1.2 + R() * 1.0; }
         else { this.c.play('Pistol_Aim_Neutral'); this.burstT = 1.1 + R() * 1.4; }
       }
     } else if (this.burstT <= 0) {
