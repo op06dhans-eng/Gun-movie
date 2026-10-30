@@ -107,6 +107,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 .mark.dim { opacity: 0.35; }
 .mark.hos { border-top-color: rgba(70,230,120,0.95); } .mark.hos span { color: #9fe8bb; }
 .mark.civ { border-top-color: rgba(120,200,255,0.85); } .mark.civ span { color: #bfefff; font-size: 11px; }
+.mark.boss { border-top-color: #ffd23a; border-left-width: 13px; border-right-width: 13px; border-top-width: 18px; } .mark.boss span { color: #ffe27a; font-size: 15px; }
 .mark.cov { border: 2px solid rgba(255,255,255,0.55); width: 16px; height: 16px; border-radius: 4px; transform-origin: center; background: rgba(0,0,0,0.25); }
 .mark.cov span { color: #e8eef0; font-size: 11px; bottom: 20px; }
 .mark.cov.on { border-color: #7ad0ff; width: 24px; height: 24px; background: rgba(60,160,230,0.35); } .mark.cov.on span { color: #bfe7ff; font-size: 15px; }
@@ -151,6 +152,12 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
 .board div { min-width: 150px; border-radius: 12px; padding: 8px 12px; background: rgba(8,10,12,0.8); border-top: 6px solid var(--c); font-weight: 900; }
 .board b { display: block; font-size: 30px; }
 .board span { display: block; font-size: 13px; color: #dfe5e2; font-weight: 700; }
+.pts { font-size: 16px; color: #fff; } .pts b { font-size: 26px; color: var(--hot); } .pts span { font-size: 12px; color: var(--muted); margin-left: 8px; }
+.cmds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cmds button { text-align: left; padding: 8px; border-radius: 10px; border: 2px solid #8a2b22; background: rgba(140,30,20,0.25); color: #fff; }
+.cmds button b { display: block; font-size: 16px; } .cmds button span { font-size: 12px; color: #e4c9c4; } .cmds button:disabled { opacity: 0.35; }
+.sninfo { position: absolute; left: 16px; bottom: 16px; padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,0.6); font-size: 16px; } .sninfo b { display: block; font-size: 20px; color: #ffd23a; } .sninfo span { display: block; }
+#tSnX.hit::before, #tSnX.hit::after { background: var(--red); }
 .tlab { position: absolute; transform: translate(-50%, -100%); padding: 1px 7px; border-radius: 6px; background: var(--c); color: #000; font-size: 14px; font-weight: 900; white-space: nowrap; pointer-events: none; }
 .ttimer { position: absolute; left: calc(clamp(300px, 24vw, 420px) + 24px); top: 10px; font-size: 40px; font-weight: 900; color: #fff; text-shadow: 0 0 4px #000; pointer-events: none; }
 .ttimer small { display: block; font-size: 16px; text-align: center; color: var(--film); }
@@ -173,6 +180,15 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
 .prem .reveal div { border-radius: 16px; padding: 18px 22px; background: #15181a; border: 2px solid #333; }
 .prem .reveal h2 { margin: 0 0 10px; font-size: clamp(22px, 2.6vw, 36px); color: var(--film); }
 .prem .reveal p { font-size: clamp(16px, 1.8vw, 26px); }
+.prem img.lineup { max-width: min(100%, 1100px); max-height: 58vh; border-radius: 14px; border: 3px solid #333; margin: 10px 0; }
+.prem .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 10px 0; } .prem .two img { width: 100%; border-radius: 12px; border: 3px solid #333; } .prem .two p { margin: 4px 0; }
+.prem .quote { font-size: clamp(26px, 3.4vw, 48px); font-weight: 900; color: #fff; background: #1b1310; border-left: 10px solid var(--red); padding: 18px 26px; border-radius: 12px; margin: 16px auto 20px; max-width: 1050px; text-align: left; }
+.prem .quote small { display: block; font-size: clamp(14px, 1.4vw, 20px); color: #aab5b0; margin-top: 10px; font-weight: 700; }
+.prem .reveal3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 16px; text-align: left; }
+.prem .reveal3 div { border-radius: 16px; padding: 16px 18px; background: #15181a; border: 2px solid #333; }
+.prem .reveal3 h2 { margin: 0 0 8px; font-size: clamp(22px, 2.4vw, 34px); color: var(--film); }
+.prem .reveal3 p { font-size: clamp(15px, 1.55vw, 23px); }
+.prem p.src { font-size: clamp(12px, 1.1vw, 16px); color: #8f9a96; font-weight: 500; }
 .prem .ad { border: 4px solid var(--film); border-radius: 18px; padding: 30px; background: linear-gradient(160deg, #1a1a1a, #000); }
 .prem .ad h1 { font-size: clamp(40px, 7vw, 100px); letter-spacing: 0.1em; }
 .prem .ad .sub { font-size: clamp(18px, 2vw, 30px); color: var(--film); letter-spacing: 0.3em; }
@@ -227,6 +243,13 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
     <div class="ttimer" id="tTimer" hidden></div>
     <div class="board" id="tBoard"></div>
     <div id="tLabels"></div>
+    <div id="tSn" hidden>
+      <div class="scope" id="tSnScope"><svg viewBox="-100 -56.25 200 112.5" preserveAspectRatio="xMidYMid slice"><defs><mask id="scm2"><rect x="-200" y="-200" width="400" height="400" fill="#fff"/><circle r="47" fill="#000"/></mask></defs><rect x="-200" y="-200" width="400" height="400" fill="#050605" mask="url(#scm2)"/><circle r="47" fill="none" stroke="#1c1d1b" stroke-width="2.2"/><g stroke="#0b0b0b" stroke-width="0.4"><line x1="-47" y1="0" x2="-3" y2="0"/><line x1="3" y1="0" x2="47" y2="0"/><line x1="0" y1="-47" x2="0" y2="-3"/><line x1="0" y1="3" x2="0" y2="47"/></g><circle r="0.6" fill="#e33"/></svg></div>
+      <div class="cross" id="tSnX"></div>
+      <div class="dmg" id="tSnDmg"></div>
+      <div class="sninfo" id="tSnInfo"></div>
+      <div class="deskhint" id="tSnHint"><b>點一下畫面開始</b><span>滑鼠移動：轉動視角　右鍵按住：站起來用瞄準鏡</span><span>左鍵：開火　R：換彈　1／2：換屋頂　C：回到指揮官</span></div>
+    </div>
   </div>
 </div>
 <div id="load"><div><b>城市反恐：破曉行動</b><small id="loadMsg">載入素材中…</small><i><u id="loadBar"></u></i></div></div>
@@ -2570,7 +2593,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.1.1（敵人的 AK 改成槍口朝向目標：瞄準時對準同學、移動時朝前、待命時槍口朝下）';
+const VERSION = '2.2.0（全班對抗老師：老師可當黑鴉指揮官下指令，或親自上屋頂當狙擊手；翻牌新增敵人形象的揭露與研究資料）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3671,6 +3694,7 @@ function aiReset() {
   for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const h of HOSTAGES) h.dispose(); HOSTAGES.length = 0;
   Object.assign(MS, { zone: 0, arrived: false, moving: false, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] });
   if (WORLD.bomb) WORLD.bomb.show('--:--');
+  vsReset();
 }
 function spawnEnemy(spec, zone) {
   let at = spec.at;
@@ -3699,7 +3723,7 @@ function zoneArrive() {
   MS.arrived = true; MS.moving = false; MS.zoneT = 0; const Z = ZONES[MS.zone];
   if (Z.hostStart && !MS.hostOn) { MS.hostOn = true; MS.hostT = G.diff.hostage; }
   if (Z.bomb && !MS.bombOn) { MS.bombOn = true; MS.bombT = G.diff.bomb; }
-  onZone();
+  vsArrive(); onZone();
 }
 function zoneAlive(i) { return ENEMIES.some((e) => e.zone === i && e.alive) || (MS.zone === i && MS.pending.some((p) => !p.done)); }
 function aiUpdate(dt, P) {
@@ -3726,14 +3750,97 @@ function aiUpdate(dt, P) {
   if (Z.defuse && MS.arrived) {
     MS.defusing = INPUT.defuse && P.alive && P.reloading <= 0 && P.coverId === 'D4' && !P.target;
     if (MS.defusing) {
-      if (!MS.ambush) { MS.ambush = true; const sp = [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -126 }]; for (let i = 0; i < G.diff.defuseAmbush; i++) spawnEnemy({ ...sp[i], t: 0 }, MS.zone); onAmbush(); }
+      if (!MS.ambush) { MS.ambush = true; const sp = [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -126 }]; for (let i = 0; i < G.diff.defuseAmbush + VS.ambush; i++) spawnEnemy({ ...sp[i % 2], z: sp[i % 2].z - Math.floor(i / 2) * 6, t: 0 }, MS.zone); onAmbush(); }
       MS.defuse += dt / 4; if (MS.defuse >= 1) { MS.defuse = 1; MS.done = true; if (WORLD.bomb) WORLD.bomb.show('已拆除', '#3fd17a'); onBomb(true); }
     }
   }
   for (const e of ENEMIES) e.update(dt, P);
+  bossUpdate(dt);
   for (const c of CIVS) c.update(dt);
   for (const h of HOSTAGES) h.update(dt);
   for (let i = ENEMIES.length - 1; i >= 0; i--) if (ENEMIES[i].state === 'dead' && ENEMIES[i].deadT > 30) { ENEMIES[i].dispose(); ENEMIES.splice(i, 1); }
+}
+
+/* =========================================================
+   全班對抗老師（學生這一端）
+   老師是黑鴉指揮官：可以下指令（增援、屋頂狙擊手、催促押人質、炸彈加速、拆彈伏擊），
+   也可以親自上屋頂當狙擊手（學生看得到「老師」，可以反擊）
+   ========================================================= */
+// 老師的狙擊點（右側屋頂）
+const NESTS = [{ name: '街口屋頂', side: 1, z: -47 }, { name: '街尾屋頂', side: 1, z: -112 }];
+function nestPos(i, out = new THREE.Vector3()) { const n = NESTS[i] || NESTS[0]; const r = roofSpot(n.side, n.z); return r ? out.set(r.x, r.y, r.z) : out.set(n.side * 9.9, 8, n.z); }
+// 老師指令在每一段要派出的人（in：室內）
+const REINF = [
+  [{ k: 'rush', from: [-1, -40], at: [-0.6, -20] }, { k: 'rush', from: [5, -42], at: [2.2, -24] }],
+  [{ k: 'rush', from: [-5, -66], at: [-2.5, -46] }, { k: 'rush', from: [-1, -68], at: [-0.5, -54] }],
+  [{ k: 'rush', from: [14.2, -86], at: [14.2, -78.8], in: 1 }, { k: 'rush', from: [14.2, -87], at: [18, -76.6], in: 1 }],
+  [{ k: 'rush', from: [19.5, -89.6], at: [15.4, -86], in: 1 }, { k: 'rush', from: [20, -89.6], at: [14.2, -90.5], in: 1 }],
+  [{ k: 'stand', at: [21.9, -84.4], in: 1 }, { k: 'stand', at: [22.2, -93.6], in: 1 }],
+  [{ k: 'rush', from: [-2, -128], at: [-1, -104] }, { k: 'rush', from: [3, -130], at: [1.2, -108] }],
+  [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -128 }],
+];
+const ROOFS = [{ side: 1, z: -20 }, { side: 1, z: -60 }, null, null, null, { side: -1, z: -108 }, { side: 1, z: -128 }];
+const VS = { tp: null, boss: null, queue: [], pen: { host: 0, bomb: 0 }, ambush: 0, thitN: null, tshotN: null, tdownN: null, bossFlash: 0 };
+const CMD_TEXT = { reinf: ['老師派出增援！', '兩名武裝分子正衝過來'], roof: ['老師派出屋頂狙擊手！', '注意上方'], hurry: ['老師催促看守押走人質！', '人質時限 −15 秒'], bombfast: ['老師讓炸彈加速！', '炸彈倒數 −10 秒'], ambush: ['老師在炸彈旁埋伏！', '拆彈時會多一名屋頂槍手'] };
+function vsReset() { VS.queue.length = 0; VS.pen.host = 0; VS.pen.bomb = 0; VS.ambush = 0; if (VS.boss) { VS.boss.dispose(); VS.boss = null; } }
+function applyCmd(c) {
+  if (G.mode !== 'take' || G.practice || MS.done) return;
+  const t = CMD_TEXT[c.k]; if (t) banner(t[0], 'bad', 2200, t[1]);
+  if (c.k === 'hurry') { if (MS.hostState === 'held') { if (MS.hostOn) MS.hostT = Math.max(5, MS.hostT - 15); else VS.pen.host += 15; } return; }
+  if (c.k === 'bombfast') { if (MS.bombOn) MS.bombT = Math.max(5, MS.bombT - 10); else VS.pen.bomb += 10; return; }
+  if (c.k === 'ambush') { VS.ambush++; return; }
+  if (MS.arrived && !MS.moving) vsSpawn(c.k, MS.zone); else VS.queue.push(c.k);
+}
+function vsSpawn(k, z) {
+  if (k === 'roof' && ROOFS[z]) { spawnEnemy({ k: 'roof', ...ROOFS[z] }, z); return; }
+  for (const s of REINF[z] || []) spawnEnemy({ ...s }, z);
+}
+// 到了新的一段：先補上排隊中的增援，再套用催促／加速
+function vsArrive() {
+  while (VS.queue.length) vsSpawn(VS.queue.shift(), MS.zone);
+  if (MS.hostOn && VS.pen.host) { MS.hostT = Math.max(5, MS.hostT - VS.pen.host); VS.pen.host = 0; }
+  if (MS.bombOn && VS.pen.bomb) { MS.bombT = Math.max(5, MS.bombT - VS.pen.bomb); VS.pen.bomb = 0; }
+}
+/* ---------- 屋頂上的「老師」 ---------- */
+const _bp = new THREE.Vector3(), _bt = new THREE.Vector3();
+function bossOn() { const tp = VS.tp; return !!(tp && tp.m === 'sn' && G.mode === 'take' && !G.practice); }
+function bossExposed() { return bossOn() && VS.tp.a && !VS.tp.dn; }
+function bossUpdate(dt) {
+  if (!bossOn()) { if (VS.boss) VS.boss.root.visible = false; return; }
+  if (!VS.boss) { const c = takeChar('soldier'); if (!c) return; VS.boss = c; if (c.wrap) c.wrap.traverse((o) => { if (o.isMesh) o.material = wrapTexture('red'); }); }
+  const c = VS.boss, tp = VS.tp; c.root.visible = true; nestPos(tp.n, c.pos);
+  c.root.rotation.y = tp.y + Math.PI;
+  c.play(tp.dn ? 'Death01' : tp.a ? 'Pistol_Aim_Neutral' : 'Crouch_Idle_Aim', tp.dn ? { loop: false, fade: 0.1 } : undefined);
+  c.update(dt);
+  _bt.set(0, 0, -1).applyEuler(new THREE.Euler(tp.p, tp.y, 0, 'YXZ')).multiplyScalar(20).add(c.pos).add(V(0, 1.5, 0));
+  c.aimRifle(tp.dn ? 'drop' : tp.a ? 'aim' : 'low', _bt);
+  if (c.flash) flashTick(c.flash, dt);
+}
+function bossMuzzle(out) { const c = VS.boss; if (c && c.rifle) return out.set(0, 0.1, -0.5).applyMatrix4(c.rifle.matrixWorld); return nestPos(VS.tp ? VS.tp.n : 0, out).add(V(0, 1.4, 0)); }
+// 老師開槍：學生畫面上屋頂閃火光、聽到槍聲、看到曳光
+function onTeacherShot(v) {
+  if (!v || v.n === VS.tshotN) return; const first = VS.tshotN === null; VS.tshotN = v.n; if (first || !bossOn() || !P) return;
+  const m = bossMuzzle(_bp); const d = m.distanceTo(P.pos); if (VS.boss && VS.boss.flash) flashOn(VS.boss.flash, 0.06);
+  if (d < 120) { SFX.enemyShot(d); if (v.x !== undefined) tracer(m, V(v.x, v.y, v.z)); }
+}
+// 老師打中我
+function onTeacherHit(v) {
+  if (!v || v.n === VS.thitN) return; const first = VS.thitN === null; VS.thitN = v.n; if (first || !P || G.mode !== 'take' || G.practice) return;
+  if (P.exposure() === 0) return; // 已經縮回掩體
+  P.hurt(v.d, nestPos(VS.tp ? VS.tp.n : 0, new THREE.Vector3()).add(V(0, 1.5, 0))); banner('被老師狙擊！', 'bad', 1400, '屋頂上的狙擊手：縮回掩體，或探身反擊');
+}
+// 有人擊倒了老師
+function onTeacherDown(v) {
+  if (!v || v.n === VS.tdownN) return; const first = VS.tdownN === null; VS.tdownN = v.n; if (first || G.mode !== 'take' || G.practice) return;
+  if (v.pid === ME.pid) { P.stats.tk = (P.stats.tk || 0) + 1; P.addScore(500); banner('你擊倒了老師！　+500', 'good', 2600); SFX.good(); onShot(); }
+  else banner(`${TEAMS[v.t]?.name || ''} ${v.no} 號擊倒了老師！`, 'good', 2200);
+}
+function vsListen() {
+  NET.on('tp', (v) => { VS.tp = v; });
+  NET.on('cmd', (all) => { if (!all) return; for (const k in all) { const c = all[k]; if (VS.seen && VS.seen.has(k)) continue; (VS.seen || (VS.seen = new Set())).add(k); if (c && NET.now() - c.at < 6000) applyCmd(c); } });
+  NET.on('tshot', onTeacherShot);
+  NET.on('thit/' + ME.pid, onTeacherHit);
+  NET.on('tdown', onTeacherDown);
 }
 
 /* =========================================================
@@ -3952,7 +4059,7 @@ function buildScope() {
   return g;
 }
 const INPUT = { look: { dx: 0, dy: 0 }, fire: false, ads: false, reload: false, defuse: false };
-const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0 });
+const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0, tk: 0 });
 class Player {
   constructor() {
     this.pos = V(0, 0, 6); this.yaw = 0; this.pitch = 0; this.vel = V(0, 0, 0); this.hp = 100; this.alive = true; this.ngT = 0; this.hurtT = 0; this.regenT = 0;
@@ -4045,8 +4152,13 @@ class Player {
     for (const e of ENEMIES) { if (!e.alive) continue; const h = e.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'enemy'; obj = e; part = h.part; } }
     for (const c of CIVS) { if (c.dead || c.state === 'gone') continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'civ'; obj = c; part = h.part; } }
     for (const c of HOSTAGES) { if (c.dead || c.state === 'gone') continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'hostage'; obj = c; part = h.part; } }
+    if (VS.boss && bossExposed()) { const h = VS.boss.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'boss'; part = h.part; } }
     const hitP = ro.clone().addScaledVector(rd, best);
-    if (kind === 'enemy') {
+    if (kind === 'boss') {
+      this.stats.hits++; if (part === 'head') this.stats.headshots++; hitmark(false); SFX.hit(); banner(part === 'head' ? '命中老師頭部！' : '命中老師！', 'good', 700);
+      NET.push('th', { pid: ME.pid, t: ME.team, no: ME.no, d: part === 'head' ? 60 : part === 'limb' ? 15 : 25, at: NET.now() });
+      PUFFS.burst(hitP, 6, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
+    } else if (kind === 'enemy') {
       this.stats.hits++; if (part === 'head') this.stats.headshots++;
       const killed = obj.damage(w.dmg, part); hitmark(killed);
       if (killed) { this.stats.kills++; const pts = part === 'head' ? PTS.head : PTS.kill; this.addScore(pts); SFX.kill(); banner(part === 'head' ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); } else SFX.hit();
@@ -4209,7 +4321,7 @@ function resultHTML(title, msg) {
   return `<h1>${title}</h1><p>${msg}</p>
   <div class="stat"><div><b>${s.score}</b><small>分數</small></div><div><b>${grade(s)}</b><small>評等</small></div><div><b>${s.kills}</b><small>擊倒（爆頭 ${s.headshots}）</small></div>
   <div><b>${acc}%</b><small>命中率</small></div><div><b>${s.hr}／3</b><small>救出人質</small></div><div><b>${s.bomb === 1 ? '成功' : s.bomb === -1 ? '引爆' : '未完成'}</b><small>拆彈</small></div>
-  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>`;
+  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>${s.tk ? `<p><b style="color:#ffd23a">擊倒老師 ${s.tk} 次</b></p>` : ''}`;
 }
 function endTake(reason) {
   if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; if (document.pointerLockElement) document.exitPointerLock(); renderDeskHint(); INPUT.fire = false; INPUT.defuse = false; MS.defusing = false;
@@ -4223,14 +4335,14 @@ function endTake(reason) {
 }
 function sendStat(force) {
   if (!P || G.practice || ME.team < 0) return; const s = P.stats;
-  NET.set('stat/' + ME.pid, { s: s.score, k: s.kills, sh: s.shots, hi: s.hits, h: s.headshots, d: s.deaths, c: s.civ, hh: s.hh, hr: s.hr, b: s.bomb, ft: s.ft, z: MS.zone, t: ME.team, no: ME.no, at: NET.now() });
+  NET.set('stat/' + ME.pid, { s: s.score, k: s.kills, sh: s.shots, hi: s.hits, h: s.headshots, d: s.deaths, c: s.civ, hh: s.hh, hr: s.hr, b: s.bomb, ft: s.ft, tk: s.tk || 0, z: MS.zone, t: ME.team, no: ME.no, at: NET.now() });
   statDirty = false;
 }
 // 老師翻牌時：手機顯示自己的成績
 function showMine() { if (G.mode === 'take' || !P) return; hideAll(); show('scrRes'); $('resCard').innerHTML = resultHTML('請看大螢幕', `${TEAMS[ME.team]?.name || ''}　${ME.no} 號隊員的成績`); }
 function studentInit() {
   if (!NET.local && location.protocol !== 'file:') followLobby();
-  ROLE = 'student'; show('scrJoin'); renderPick();
+  ROLE = 'student'; show('scrJoin'); renderPick(); vsListen();
   for (const k of ['N', 'H']) $('solo' + k).onclick = () => { if (ME.team < 0) { ME.team = 0; ME.no = 1; } META.diff = k; G.solo = true; startTake(true); };
   $('joinMsg').textContent = NET.local ? '練習連線模式：老師畫面要開在同一台電腦的另一個分頁。' : '選好組別後，等老師開始任務。';
   NET.on('players', (p) => {
@@ -4295,7 +4407,7 @@ function studentTick(dt) {
   const canDefuse = Z.defuse && MS.arrived && !MS.done && P.coverId === 'D4' && !P.target; setHidden('bDefuse', !canDefuse); if (canDefuse) setStyle('bDefuse', 'background', `conic-gradient(rgba(63,209,122,0.75) ${Math.round(MS.defuse * 360)}deg, rgba(0,0,0,0.4) 0deg)`);
   renderMarks(dt); renderHurtDir();
   // 傳位置與成績
-  if (!G.practice) { ME.sendT -= dt; if (ME.sendT <= 0) { ME.sendT = 0.2; NET.set('pos/' + ME.pid, [Math.round(P.pos.x * 10) / 10, Math.round(P.pos.z * 10) / 10, Math.round(P.yaw * 100) / 100, P.alive ? 1 : 0, ME.team]); } ME.statT -= dt; if (statDirty && ME.statT <= 0) { ME.statT = 1; sendStat(); } }
+  if (!G.practice) { ME.sendT -= dt; if (ME.sendT <= 0) { ME.sendT = 0.2; NET.set('pos/' + ME.pid, [Math.round(P.pos.x * 10) / 10, Math.round(P.pos.z * 10) / 10, Math.round(P.yaw * 100) / 100, P.alive ? 1 : 0, ME.team, P.exposure() > 0 ? 1 : 0, P.target ? 1 : 0, MS.zone]); } ME.statT -= dt; if (statDirty && ME.statT <= 0) { ME.statT = 1; sendStat(); } }
 }
 // 前往掩體：準心對到這一段可用的掩體（不是現在這個）就跳出按鈕
 const CV = { cand: null, t: 0 }; const _cv = new THREE.Vector3(), _cf = new THREE.Vector3();
@@ -4326,6 +4438,7 @@ function renderMarks(dt) {
   for (const e of ENEMIES) { if (!e.alive || e.zone !== MS.zone || e.state === 'leave' && e.pos.distanceTo(P.pos) > 60) continue; if (recheck || e.los === undefined) e.los = lineOfSight(e, 1.45) || lineOfSight(e, 1.0); items.push([e, e.los ? 'mark' : 'mark dim', e.k === 'guard' ? '看守' : '敵', 1.95]); }
   for (const h of HOSTAGES) if (!h.dead && h.state === 'held' && MS.zone === HOST_ZONE) items.push([h, 'mark hos', '人質', 1.35]);
   for (const c of CIVS) if (!c.dead && c.state !== 'gone' && c.pos.distanceTo(P.pos) < 32) items.push([c, 'mark civ', '平民', 2.0]);
+  if (VS.boss && bossOn() && !VS.tp.dn) items.push([VS.boss, bossExposed() ? 'mark boss' : 'mark boss dim', '老師', 2.2]);
   if (!MS.moving && !P.scoped) for (const id of ZONES[MS.zone].covers) { if (id === P.coverId && !P.target) continue; const c = COVERS[id]; const b = c.box; const o = { pos: _cvm[id] || (_cvm[id] = V((b[0] + b[1]) / 2, 0, (b[2] + b[3]) / 2)) }; items.push([o, id === CV.cand ? 'mark cov on' : 'mark cov', id === CV.cand ? '前往掩體' : '掩體', c.kind === 'side' ? 2.1 : 1.3]); }
   while (host.children.length < items.length) { const d = document.createElement('div'); d.innerHTML = '<span></span>'; host.appendChild(d); }
   for (let i = 0; i < host.children.length; i++) {
@@ -4334,7 +4447,7 @@ function renderMarks(dt) {
     if (_pv.z > 1 || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
     if (d.style.display) d.style.display = ''; if (d.className !== cls) d.className = cls;
     d.style.transform = `translate(${Math.round((_pv.x + 1) / 2 * VW)}px, ${Math.round((1 - _pv.y) / 2 * VH)}px) translate(-50%, -100%)`;
-    const txt = label === '敵' || label === '平民' || label === '掩體' ? label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm' : label; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
+    const txt = label === '敵' || label === '平民' || label === '掩體' || label === '老師' ? label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm' : label; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
   }
 }
 /* ---------- 觸控與鍵盤 ---------- */
@@ -4398,6 +4511,7 @@ function renderPanel() {
   <h2>難度</h2><div class="row">${Object.keys(DIFFS).map((k) => `<button data-d="${k}" class="${TS.diff === k ? 'on' : ''}">${DIFFS[k].name}</button>`).join('')}</div>
   <div class="small">人質時限 ${DIFFS[TS.diff].hostage} 秒，炸彈倒數 ${DIFFS[TS.diff].bomb} 秒${DIFFS[TS.diff].extra ? '，敵人較多、較準' : ''}</div>
   <h2>任務時間</h2><div class="row">${[240, 300, 360].map((s) => `<button data-sec="${s}" class="${TAKE_SEC === s ? 'on' : ''}">${s / 60 | 0}:${String(s % 60).padStart(2, '0')}</button>`).join('')}</div>
+  ${cmdPanelHTML()}
   ${idle ? `<button class="big" id="bStart" ${total && TS.sid ? '' : 'disabled'}>${TS.sid ? '開始任務' : '連線中…'}</button>` : ''}
   ${ph === 'count' || ph === 'take' ? `<button class="big red" id="bCut">結束任務（提前）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bPrem">公布成績（翻牌）</button>` : ''}
@@ -4407,7 +4521,7 @@ function renderPanel() {
   <div class="small">假學生會自己選組、出任務並回報分數，可以走完整個流程到公布成績。</div>
   <h2>現場狀況</h2><div class="tick" id="tTick"></div>
   <div class="row" style="margin-top:auto"><button id="bSnd">音效：${SFX.on ? '開' : '關'}</button><button id="bFs">全螢幕</button></div>`;
-  if ($('qr')) drawQR($('qr'), url);
+  if ($('qr')) drawQR($('qr'), url); bindCmdPanel(p);
   p.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { if (ph === 'take' || ph === 'count') return; TS.diff = b.dataset.d; NET.update('meta', { diff: TS.diff }); renderPanel(); });
   p.querySelectorAll('[data-sec]').forEach((b) => b.onclick = () => { TAKE_SEC = +b.dataset.sec; renderPanel(); });
   if ($('bStart')) $('bStart').onclick = startCount; if ($('bCut')) $('bCut').onclick = () => cut('cut'); if ($('bPrem')) $('bPrem').onclick = () => premiere(0); if ($('bNew')) $('bNew').onclick = newSession;
@@ -4432,16 +4546,16 @@ function handleReq(pid, r) {
 }
 function startCount() {
   TS.take++; TS.phase = 'count'; TS.startAt = NET.now() + COUNT_SEC * 1000; TS.endsAt = TS.startAt + TAKE_SEC * 1000; TS.stats = {}; TS.res = null; TS.premStep = -1;
-  for (const p of ['pos', 'stat', 'ev', 'res', 'prem']) NET.remove(p);
+  for (const p of ['pos', 'stat', 'ev', 'res', 'prem', 'cmd', 'thit', 'tshot', 'tdown', 'th']) NET.remove(p); tpReset(); sendTP();
   NET.set('meta', { sid: TS.sid, phase: 'count', diff: TS.diff, take: TS.take, startAt: TS.startAt, endsAt: TS.endsAt }); claimLobby();
   tLog(-1, `第 ${TS.take} 回合（${DIFFS[TS.diff].name}）倒數開始`); renderPanel(); SFX.init(); SFX.resume();
 }
 function cut() {
-  if (TS.phase !== 'take' && TS.phase !== 'count') return; TS.phase = 'cut';
+  if (TS.phase !== 'take' && TS.phase !== 'count') return; TS.phase = 'cut'; if (TP.mode === 'sn') leaveSniper(); sendTP();
   const teams = TEAMS.map((t, i) => ({ i, name: t.name, score: 0, avg: 0, kills: 0, n: 0, shots: 0, hits: 0, hr: 0, hh: 0, civ: 0, bomb: 0, boom: 0, deaths: 0 })); const rows = [];
   for (const pid in TS.stats) { const s = TS.stats[pid]; const t = teams[s.t]; if (!t) continue; t.score += s.s; t.kills += s.k; t.n++; t.shots += s.sh; t.hits += s.hi; t.hr += s.hr || 0; t.hh += s.hh || 0; t.civ += s.c || 0; t.bomb += s.b === 1 ? 1 : 0; t.boom += s.b === -1 ? 1 : 0; t.deaths += s.d; rows.push({ ...s, pid }); }
   for (const t of teams) t.avg = t.n ? Math.round(t.score / t.n) : 0;
-  TS.res = { teams, rows, diff: TS.diff, take: TS.take, at: NET.now() };
+  TS.res = { teams, rows, diff: TS.diff, take: TS.take, at: NET.now(), teacher: { tk: TP.tk, downs: TP.downs, cmds: TP.cmdN } };
   NET.set('res', { teams, diff: TS.diff, take: TS.take }); NET.update('meta', { phase: 'cut' }); for (const d of TS.dots.values()) d.visible = false;
   tLog(-1, `第 ${TS.take} 回合結束`); renderPanel(); renderBoard(); $('tTimer').hidden = true;
 }
@@ -4449,7 +4563,7 @@ function premiere(step) {
   TS.phase = 'prem'; TS.premStep = step; NET.update('meta', { phase: 'prem' }); NET.set('prem', { step, at: NET.now() });
   const r = TS.res; const d = DIFFS[r.diff]; const order = r.teams.filter((t) => t.n).sort((a, b) => b.avg - a.avg);
   const sum = (k) => r.teams.reduce((a, t) => a + t[k], 0); const N = sum('n'); const rows = r.rows;
-  const nameOf = (s) => `${TEAMS[s.t]?.name || ''} ${s.no} 號`;
+  const nameOf = (s) => `${TEAMS[s.t]?.name || ''} ${s.no} 號`; const tc = r.teacher || {};
   const best = (list, key, cmp) => list.slice().sort(cmp)[0];
   const sharp = best(rows.filter((s) => s.sh >= 15), 0, (a, b) => b.hi / b.sh - a.hi / a.sh);
   const killer = best(rows, 0, (a, b) => b.k - a.k);
@@ -4468,8 +4582,26 @@ function premiere(step) {
       <div style="--c:#ff5a4e"><span>擊倒最多</span><b>${killer ? killer.k : '—'}</b><span>${killer ? nameOf(killer) : ''}</span></div>
       <div style="--c:#3fd17a"><span>最快拆彈</span><b>${fast ? fast.ft + ' 秒' : '—'}</b><span>${fast ? nameOf(fast) : '沒有人拆彈成功'}</span></div>
       <div style="--c:#4ea3ff"><span>零誤傷又拆彈成功</span><b>${clean} 人</b><span>全班 ${N} 人</span></div></div></div>`,
-    `<div class="slide"><h1 class="gold">想一想</h1><p>1. 人質蹲在看守旁邊，你是等看守露出來，還是趕時間直接開槍？</p><p>2. 全班誤傷人質 ${sum('hh')} 次、平民 ${sum('civ')} 次。誤傷大多發生在什麼時候？</p><p>3. 炸彈在倒數，人質也在等：如果只能先顧一個，你怎麼選？</p></div>`,
-    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：M4A1 by TORI106（Sketchfab，CC-BY 4.0）、AKM by LonesomeDucky（OpenGameArt，CC0）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。</div></div>`,
+    `<div class="slide"><h1 class="gold">老師 vs 全班</h1><div class="rank">
+      <div style="--c:#ff5a4e"><span>老師命中同學</span><b>${tc.tk || 0} 次</b><span>屋頂狙擊手</span></div>
+      <div style="--c:#ffc83d"><span>同學擊倒老師</span><b>${tc.downs || 0} 次</b><span>${rows.filter((s) => s.tk).map((s) => nameOf(s)).slice(0, 4).join('、') || '—'}</span></div>
+      <div style="--c:#4ea3ff"><span>老師下的指令</span><b>${tc.cmds || 0} 道</b><span>增援、催促、加速、伏擊</span></div>
+      <div style="--c:#3fd17a"><span>全班擊倒敵人</span><b>${sum('kills')}</b><span>武裝分子</span></div></div></div>`,
+    `<div class="slide"><h1 class="gold">剛才你們打倒了 ${sum('kills')} 個敵人</h1><p>他們長什麼樣子？</p><img class="lineup" src="${ASSET}fx/lineup_enemy.jpg" alt=""><p class="en">頭巾蒙面、拿 AK 步槍。老師扮演的「壞人」也是這樣。</p></div>`,
+    `<div class="slide"><h1 class="gold">那平民和人質呢？</h1><div class="two"><div><img src="${ASSET}fx/lineup_enemy.jpg" alt=""><p>敵人</p></div><div><img src="${ASSET}fx/lineup_civ.jpg" alt=""><p>平民、人質</p></div></div><p>同一條街上：敵人全部是一種長相，被保護的人全部是另一種長相。</p><p class="en">你在遊戲裡是靠什麼分辨敵我？是看手上有沒有槍，還是看穿著？</p></div>`,
+    `<div class="slide"><h1 class="gold">這是老師指定的</h1><div class="quote">「敵人全部都是中東恐怖份子裝扮，拿 AK 步槍。」<small>──老師對做遊戲的 AI 下的指令（2026 年 10 月 30 日）</small></div>
+      <p>做遊戲的 AI 照做了，只提醒了一句：如果平民維持西式便服，玩家會學到「看穿著判斷敵人」。</p><p>老師的選擇：只改敵人。</p><p class="en">設計者自己也會不自覺地重複熟悉的敵人形象。那這個形象是從哪裡來的？</p></div>`,
+    `<div class="slide"><h1>這個形象從哪裡來？</h1><div class="reveal3">
+      <div><h2>電影</h2><p>Shaheen 檢視超過 900 部出現阿拉伯角色的好萊塢劇情片，只有 50 多部（約 5%）沒有阿拉伯反派；英勇的阿拉伯角色只有寥寥幾個。</p><p class="src">Shaheen, Annals of the AAPSS, 2003</p></div>
+      <div><h2>電玩</h2><p>軍事射擊遊戲把中東描繪成永遠在打仗的地方，當地人多半被簡化成恐怖分子，玩家和他們唯一的互動就是戰鬥。</p><p class="src">Höglund, Game Studies, 2008；Šisler, European Journal of Cultural Studies, 2008</p></div>
+      <div><h2>軍方的遊戲</h2><p>美國陸軍 2002 年免費推出射擊遊戲《美國陸軍》（America's Army），政府預計投入約 760 萬美元，用來接觸潛在新兵。設計者說刻意把敵人做得不分族裔：「我們有金髮的壞人，也有黑人壞人。」</p><p class="src">New York Times, 2002；army.mil, 2009</p></div></div>
+      <p class="en">敵人長什麼樣子，是設計出來的選擇，不是理所當然。</p></div>`,
+    `<div class="slide"><h1>現實中的數據</h1><div class="reveal">
+      <div><h2>歐盟 2025 年</h2><p>恐怖攻擊（含未遂）共 45 起：聖戰主義 24 起、左翼與無政府主義 12 起、右翼 5 起、其他 4 起。</p><p>將近一半不是聖戰主義。</p><p class="src">Europol, EU TE-SAT 2026</p></div>
+      <div><h2>美國 2001～2016 年</h2><p>造成死亡的暴力極端主義攻擊 85 起：極右翼 62 起（73%）、激進伊斯蘭主義 23 起（27%）；死亡人數分別是 106 人與 119 人。</p><p class="src">美國政府課責署 GAO-17-300, 2017</p></div></div>
+      <p class="en">這些報告依意識形態分類，沒有記錄攻擊者的長相；「恐怖分子長什麼樣子」不是數據能回答的問題。</p></div>`,
+    `<div class="slide"><h1 class="gold">想一想：軍事娛樂複合體</h1><p>1. 你腦中「恐怖分子」的樣子，是從新聞、電影還是遊戲來的？</p><p>2. 遊戲反覆讓你射擊同一種長相的人，會不會影響你看新聞、看陌生人的方式？</p><p>3. 美國陸軍的招募遊戲刻意不讓敵人有族裔特徵，商業遊戲卻常常相反。為什麼？誰從這樣的形象中得利？</p><p>4. 如果由你設計敵人，你會怎麼做？</p></div>`,
+    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：M4A1 by TORI106（Sketchfab，CC-BY 4.0）、AKM by LonesomeDucky（OpenGameArt，CC0）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。<br><br>研究與數據出處：Jack G. Shaheen, "Reel Bad Arabs: How Hollywood Vilifies a People," Annals of the American Academy of Political and Social Science 588 (2003): 171–193。Vít Šisler, "Digital Arabs: Representation in Video Games," European Journal of Cultural Studies 11(2) (2008): 203–220。Johan Höglund, "Electronic Empire: Orientalism Revisited in the Military Shooter," Game Studies 8(1) (2008)。Brian Kennedy, "Uncle Sam Wants You to Play This Game," The New York Times, 2002-07-11。Europol, EU Terrorism Situation and Trend Report (TE-SAT) 2026。U.S. GAO, GAO-17-300 Countering Violent Extremism (2017)。</div></div>`,
   ];
   const host = $('prem'); host.hidden = false; host.innerHTML = slides[step] + `<div class="step">成績　${step + 1}／${slides.length}</div><div class="nav"><button id="pPrev">← 上一頁</button><button id="pNext">${step < slides.length - 1 ? '下一頁 →' : '結束'}</button></div>`;
   $('pPrev').onclick = () => premiere(Math.max(0, step - 1)); $('pNext').onclick = () => { if (step < slides.length - 1) premiere(step + 1); else { host.hidden = true; TS.phase = 'cut'; NET.update('meta', { phase: 'cut' }); renderPanel(); } };
@@ -4499,7 +4631,9 @@ function fakeTick(dt) {
       else { S.x += dx / l * 4 * dt; S.z += dz / l * 4 * dt; }
       if (S.zone === NZ - 1 && S.wait <= 0) { S.b = R() < 0.75 ? 1 : -1; S.ft = Math.round((NET.now() - S.t0) / 1000); if (S.b === 1) S.s += 500; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.b === 1 ? 'bomb' : 'boom', ft: S.ft, pid: f.pid }); }
     }
-    f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, 1, f.team]); }
+    S.peekT = (S.peekT || 0) - dt; if (S.peekT <= 0) { S.peek = R() < 0.45 ? 1 : 0; S.peekT = 0.6 + R() * 1.6; }
+    if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && R() < dt * 0.12) { const n = nestPos(TP.nest, new THREE.Vector3()); if (Math.hypot(n.x - S.x, n.z - S.z) < 70) NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() }); }
+    f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; const mv = S.wait <= 0 && !S.b ? 1 : 0; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, 1, f.team, mv ? 0 : S.peek, mv, S.zone]); }
     f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
   }
 }
@@ -4531,14 +4665,16 @@ function teacherInit() {
     else newSession();
     NET.on('players', (p) => { TS.players = p || {}; renderPanel(); for (const [pid, d] of TS.dots) if (!TS.players[pid]) { scene.remove(d); TS.dots.delete(pid); } });
     NET.onChild('req', { added: (pid, r) => handleReq(pid, r) });
-    NET.onChild('pos', { added: posIn, changed: posIn, removed: (pid) => { const d = TS.dots.get(pid); if (d) d.visible = false; } });
+    NET.onChild('pos', { added: posIn, changed: posIn, removed: (pid) => { const d = TS.dots.get(pid); if (d) d.visible = false; AV.st.delete(pid); } });
     NET.onChild('stat', { added: (pid, s) => { TS.stats[pid] = s; renderBoard(); }, changed: (pid, s) => { TS.stats[pid] = s; renderBoard(); } });
-    NET.onChild('ev', { added: (key, e) => { NET.remove('ev/' + key); if (!e || TS.phase !== 'take') return; let what = EV_TEXT[e.kind] || e.kind; if (e.kind === 'hr') what = `救出 ${e.n} 名人質`; if (e.kind === 'bomb') what += `（${e.ft} 秒）`; tLog(e.team, `${TEAMS[e.team]?.name} ${e.no} 號：${what}`); } });
+    NET.onChild('th', { added: (k, v) => { NET.remove('th/' + k); teacherHit(v); } });
+    NET.onChild('ev', {  added: (key, e) => { NET.remove('ev/' + key); if (!e || TS.phase !== 'take') return; let what = EV_TEXT[e.kind] || e.kind; if (e.kind === 'hr') what = `救出 ${e.n} 名人質`; if (e.kind === 'bomb') what += `（${e.ft} 秒）`; tLog(e.team, `${TEAMS[e.team]?.name} ${e.no} 號：${what}`); } });
     renderPanel();
   });
+  setupTeacherInput(); NET.set('tp', { m: 'cmd', n: 0 });
   addEventListener('keydown', (e) => { if (TS.phase === 'prem') { if (e.code === 'ArrowRight' || e.code === 'Space') $('pNext')?.click(); if (e.code === 'ArrowLeft') $('pPrev')?.click(); } });
 }
-function posIn(pid, a) { if (!a || TS.phase !== 'take') return; const d = dotFor(pid, a[4]); d.visible = true; d.position.set(a[0], 0, a[1]); d.children[0].material.color.set(a[3] ? (TEAMS[a[4]]?.c || '#fff') : '#555'); }
+function posIn(pid, a) { if (!a || TS.phase !== 'take') return; avatarIn(pid, a); const d = dotFor(pid, a[4]); d.visible = true; d.position.set(a[0], 0, a[1]); d.children[0].material.color.set(a[3] ? (TEAMS[a[4]]?.c || '#fff') : '#555'); }
 function renderLabels() {
   const host = $('tLabels'); const items = [...TS.dots.values()].filter((d) => d.visible);
   while (host.children.length < items.length) host.appendChild(document.createElement('div'));
@@ -4551,10 +4687,139 @@ function renderLabels() {
   }
 }
 function teacherTick(dt) {
-  overviewCamera(dt); renderLabels(); fakeTick(dt);
+  const sn = TP.mode === 'sn' && TS.phase === 'take';
+  if (sn) sniperTick(dt); else overviewCamera(dt);
+  for (const d of TS.dots.values()) if (sn) d.visible = false;
+  avatarsTick(dt); if (sn) avatarLabels(); else renderLabels(); fakeTick(dt);
   const now = NET.now();
+  if (TS.phase === 'take') { TP.ptsT += dt; if (TP.ptsT >= PTS_EVERY) { TP.ptsT = 0; if (TP.pts < PTS_MAX) { TP.pts++; if (TP.mode !== 'sn') renderPanel(); } } }
   if (TS.phase === 'count' && now >= TS.startAt) { TS.phase = 'take'; NET.update('meta', { phase: 'take' }); renderPanel(); tLog(-1, '任務開始'); }
   if (TS.phase === 'count' || TS.phase === 'take') { const left = Math.max(0, (TS.phase === 'count' ? TS.startAt : TS.endsAt) - now); $('tTimer').hidden = false; $('tTimer').innerHTML = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}<small>${TS.phase === 'count' ? '倒數' : '任務進行中　' + DIFFS[TS.diff].name}</small>`; if (TS.phase === 'take' && left <= 0) cut('end'); }
+}
+
+/* =========================================================
+   老師：黑鴉指揮官（下指令）與屋頂狙擊手（第一人稱）
+   老師的電腦是裁判：看到全班同學的位置（每秒 5 次），打中誰就通知誰
+   ========================================================= */
+const TP = { mode: 'cmd', nest: 0, yaw: 0, pitch: -0.12, aim: false, aimK: 0, hp: 100, down: 0, pts: 3, ptsT: 0, sendT: 0, ammo: 10, reload: 0, fireT: 0, shotN: 0, hitN: {}, downN: 0, tk: 0, downs: 0, cmdN: 0, hurtT: 0 };
+const CMDS = [
+  { k: 'reinf', name: '增援槍手', cost: 1, desc: '每位同學所在的區域多 2 名敵人' },
+  { k: 'roof', name: '屋頂狙擊手', cost: 2, desc: '街上的區域多一名屋頂槍手' },
+  { k: 'hurry', name: '催促押走人質', cost: 2, desc: '人質時限 −15 秒' },
+  { k: 'bombfast', name: '炸彈加速', cost: 2, desc: '炸彈倒數 −10 秒' },
+  { k: 'ambush', name: '拆彈伏擊', cost: 1, desc: '拆彈時多一名屋頂槍手' },
+];
+const PTS_MAX = 8, PTS_EVERY = 15;
+function cmdPanelHTML() {
+  if (TS.phase !== 'take' && TS.phase !== 'count') return '';
+  return `<h2>你是黑鴉指揮官</h2><div class="pts">指令點數 <b>${TP.pts}</b>／${PTS_MAX}<span>每 ${PTS_EVERY} 秒 +1</span></div>
+  <div class="cmds">${CMDS.map((c) => `<button data-cmd="${c.k}" ${TP.pts >= c.cost && TS.phase === 'take' ? '' : 'disabled'}><b>${c.name}</b><span>${c.cost} 點・${c.desc}</span></button>`).join('')}</div>
+  <h2>親自上場：屋頂狙擊手</h2><div class="row">${NESTS.map((n, i) => `<button data-nest="${i}">${n.name}</button>`).join('')}</div>
+  <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來用瞄準鏡（同學也打得到你），左鍵開火，R 換彈，C 回到指揮官。</div>`;
+}
+function bindCmdPanel(p) {
+  p.querySelectorAll('[data-cmd]').forEach((b) => b.onclick = () => sendCmd(b.dataset.cmd));
+  p.querySelectorAll('[data-nest]').forEach((b) => b.onclick = () => enterSniper(+b.dataset.nest));
+}
+function sendCmd(k) {
+  const c = CMDS.find((x) => x.k === k); if (!c || TS.phase !== 'take' || TP.pts < c.cost) return;
+  TP.pts -= c.cost; TP.cmdN++; NET.push('cmd', { k, at: NET.now() }); tLog(-1, `老師下令：${c.name}`); SFX.init(); SFX.bad(); renderPanel();
+}
+function tpReset() { Object.assign(TP, { mode: 'cmd', aim: false, aimK: 0, hp: 100, down: 0, pts: 3, ptsT: 0, ammo: 10, reload: 0, tk: 0, downs: 0, cmdN: 0 }); showSniperHUD(false); }
+/* ---------- 全班同學的化身（老師在屋頂上看到的士兵） ---------- */
+const AV = { pool: [], st: new Map() };
+function buildAvatars() {
+  CHAR_SETS.soldier.forEach((n) => { for (let k = 0; k < 6; k++) { if (!MODELS[n]) continue; const c = new Character(n); c.root.visible = false; if (RIFLE_NPC) c.attachRifle(RIFLE_NPC.clone()); c.pid = null; AV.pool.push(c); } });
+}
+function avatarIn(pid, a) {
+  let s = AV.st.get(pid); if (!s) { s = { x: a[0], z: a[1] }; AV.st.set(pid, s); }
+  s.tx = a[0]; s.tz = a[1]; s.yaw = a[2]; s.alive = a[3]; s.team = a[4]; s.peek = a[5] || 0; s.mv = a[6] || 0; s.zone = a[7] || 0; s.at = performance.now();
+}
+const _ap = new THREE.Vector3(), _at = new THREE.Vector3();
+function avatarsTick(dt) {
+  const show = TP.mode === 'sn' && TS.phase === 'take'; const nest = nestPos(TP.nest, _ap);
+  const list = show ? [...AV.st.entries()].filter(([pid]) => TS.players[pid]).sort((a, b) => Math.hypot(a[1].tx - nest.x, a[1].tz - nest.z) - Math.hypot(b[1].tx - nest.x, b[1].tz - nest.z)).slice(0, AV.pool.length) : [];
+  const want = new Set(list.map(([pid]) => pid));
+  for (const c of AV.pool) if (c.pid && !want.has(c.pid)) { c.pid = null; c.root.visible = false; }
+  for (const [pid, s] of list) {
+    let c = AV.pool.find((x) => x.pid === pid); if (!c) { c = AV.pool.find((x) => !x.pid); if (!c) continue; c.pid = pid; c.reset(); s.x = s.tx; s.z = s.tz; }
+    s.x = lerp(s.x, s.tx, Math.min(1, dt * 8)); s.z = lerp(s.z, s.tz, Math.min(1, dt * 8));
+    c.root.visible = true; c.pos.set(s.x, 0, s.z); c.root.rotation.y = s.yaw + Math.PI;
+    const anim = !s.alive ? 'Death01' : s.mv ? 'Jog_Aim' : s.peek ? 'Pistol_Aim_Neutral' : 'Crouch_Idle_Aim';
+    c.play(anim, anim === 'Death01' ? { loop: false, fade: 0.1 } : undefined); c.update(dt);
+    _at.set(-Math.sin(s.yaw), 0, -Math.cos(s.yaw)).multiplyScalar(10).add(c.pos); _at.y = 1.5;
+    c.aimRifle(!s.alive ? 'drop' : s.mv ? 'run' : s.peek ? 'aim' : 'low', _at);
+  }
+}
+/* ---------- 第一人稱狙擊 ---------- */
+function showSniperHUD(on) { $('tSn').hidden = !on; $('tPanel').hidden = on; $('tBoard').hidden = on; if (!on && document.pointerLockElement) document.exitPointerLock(); }
+function enterSniper(i) { if (TS.phase !== 'take') return; TP.mode = 'sn'; TP.nest = i; TP.hp = Math.max(TP.hp, 1); TP.yaw = 2.5; TP.pitch = -0.2; showSniperHUD(true); tLog(-1, `老師上場：${NESTS[i].name}狙擊手`); SFX.init(); SFX.resume(); sendTP(); }
+function leaveSniper() { TP.mode = 'cmd'; TP.aim = false; showSniperHUD(false); renderPanel(); sendTP(); }
+function sendTP() { NET.set('tp', { m: TP.mode === 'sn' && TS.phase === 'take' ? 'sn' : 'cmd', n: TP.nest, y: Math.round(TP.yaw * 100) / 100, p: Math.round(TP.pitch * 100) / 100, a: TP.aim && !TP.down ? 1 : 0, dn: TP.down > 0 ? 1 : 0 }); }
+const TIN = { fire: false, aim: false, dx: 0, dy: 0 };
+function setupTeacherInput() {
+  const locked = () => document.pointerLockElement === canvas;
+  canvas.addEventListener('mousedown', (e) => {
+    if (ROLE !== 'teacher' || TP.mode !== 'sn') return; SFX.resume();
+    if (!locked()) { try { canvas.requestPointerLock(); } catch (_) {} return; }
+    if (e.button === 0) TIN.fire = true; if (e.button === 2) TIN.aim = true;
+  });
+  addEventListener('mouseup', (e) => { if (e.button === 0) TIN.fire = false; if (e.button === 2) TIN.aim = false; });
+  addEventListener('mousemove', (e) => { if (locked() && TP.mode === 'sn') { TIN.dx += e.movementX; TIN.dy += e.movementY; } });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('keydown', (e) => { if (ROLE !== 'teacher' || TP.mode !== 'sn') return; if (e.code === 'KeyC' || e.code === 'Tab') { e.preventDefault(); leaveSniper(); } if (e.code === 'KeyR' && TP.ammo < 10 && TP.reload <= 0) TP.reload = 2.4; if (e.code === 'Digit1') TP.nest = 0; if (e.code === 'Digit2') TP.nest = 1; });
+  document.addEventListener('pointerlockchange', () => { if (!locked()) { TIN.fire = false; TIN.aim = false; } renderSnHUD(); });
+}
+function tpFire() {
+  if (TP.ammo <= 0) { TP.reload = 2.4; return; }
+  TP.ammo--; TP.fireT = 0.28; SFX.shot('ak');
+  const ro = camera.position.clone(); const spread = (TP.aimK > 0.9 ? 0.12 : 2.5) * Math.PI / 180;
+  const rd = V(0, 0, -1).applyEuler(new THREE.Euler(TP.pitch + (R() - 0.5) * spread, TP.yaw + (R() - 0.5) * spread, 0, 'YXZ')).normalize();
+  let best = rayWorld(ro, rd, 300), hit = null, part = null;
+  for (const c of AV.pool) { if (!c.pid || !c.root.visible) continue; const s = AV.st.get(c.pid); if (!s || !s.alive || !(s.peek || s.mv)) continue; const h = c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; hit = c; part = h.part; } }
+  const hp = ro.clone().addScaledVector(rd, best); PUFFS.burst(hp, 6, { spread: 1, up: 1.2, size: 0.2, c: hit ? [0.5, 0.2, 0.15] : [0.55, 0.48, 0.38] });
+  NET.set('tshot', { n: ++TP.shotN, x: Math.round(hp.x * 10) / 10, y: Math.round(hp.y * 10) / 10, z: Math.round(hp.z * 10) / 10, at: NET.now() });
+  if (hit) {
+    const pid = hit.pid; const d = part === 'head' ? 100 : part === 'limb' ? 20 : 34; TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
+    NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid];
+    if (p) tLog(p.team, `老師命中 ${TEAMS[p.team]?.name} ${p.no} 號${part === 'head' ? '（爆頭）' : ''}`);
+    $('tSnX').classList.add('hit'); setTimeout(() => $('tSnX').classList.remove('hit'), 160);
+  }
+}
+function teacherHit(v) {
+  if (!v || TS.phase !== 'take' || TP.mode !== 'sn' || !TP.aim || TP.down > 0) return;
+  TP.hp -= v.d; TP.hurtT = 0.5; SFX.hurt();
+  if (TP.hp <= 0) { TP.down = 8; TP.downs++; TP.aim = false; NET.set('tdown', { pid: v.pid, t: v.t, no: v.no, n: ++TP.downN, at: NET.now() }); tLog(v.t, `${TEAMS[v.t]?.name} ${v.no} 號擊倒了老師！`); sendTP(); }
+}
+function renderSnHUD() {
+  if (TP.mode !== 'sn') return;
+  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・狙擊手</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／10'}　命中同學 ${TP.tk}</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>`;
+  $('tSnHint').hidden = document.pointerLockElement === canvas;
+  $('tSnScope').classList.toggle('on', TP.aimK > 0.85); $('tSnX').hidden = TP.aimK > 0.85;
+  $('tSnDmg').style.opacity = String(TP.down > 0 ? 0.8 : Math.min(0.8, TP.hurtT * 1.6));
+}
+let snHudT = 0;
+function sniperTick(dt) {
+  const sens = 0.0017 * (TP.aimK > 0.5 ? 0.3 : 1); TP.yaw -= TIN.dx * sens; TP.pitch = clamp(TP.pitch - TIN.dy * sens, -1.1, 0.6); TIN.dx = TIN.dy = 0;
+  if (TP.down > 0) { TP.down -= dt; if (TP.down <= 0) { TP.hp = 100; sendTP(); } }
+  TP.aim = TIN.aim && TP.down <= 0 && TP.reload <= 0; TP.aimK = lerp(TP.aimK, TP.aim ? 1 : 0, Math.min(1, dt * 9));
+  if (TP.reload > 0) { TP.reload -= dt; if (TP.reload <= 0) TP.ammo = 10; }
+  TP.fireT -= dt; if (TIN.fire && TP.aimK > 0.8 && TP.fireT <= 0 && TP.reload <= 0) tpFire();
+  TP.hurtT = Math.max(0, TP.hurtT - dt);
+  const n = nestPos(TP.nest, _ap); camera.position.set(n.x, n.y + (TP.down > 0 ? 0.4 : lerp(1.0, 1.62, TP.aimK)), n.z);
+  camera.rotation.set(TP.pitch, TP.yaw, TP.down > 0 ? 0.5 : 0, 'YXZ'); camera.fov = lerp(70, 70 / 4, TP.aimK); camera.updateProjectionMatrix();
+  TP.sendT -= dt; if (TP.sendT <= 0) { TP.sendT = 0.2; sendTP(); }
+  snHudT -= dt; if (snHudT <= 0) { snHudT = 0.15; renderSnHUD(); }
+}
+function avatarLabels() {
+  const host = $('tLabels'); const items = AV.pool.filter((c) => c.pid && c.root.visible);
+  while (host.children.length < items.length) host.appendChild(document.createElement('div'));
+  for (let i = 0; i < host.children.length; i++) {
+    const el = host.children[i]; if (i >= items.length) { el.style.display = 'none'; continue; }
+    const c = items[i]; const p = TS.players[c.pid]; _pv.set(c.pos.x, 2.15, c.pos.z).project(camera);
+    if (_pv.z > 1 || Math.abs(_pv.x) > 1.05 || Math.abs(_pv.y) > 1.05) { el.style.display = 'none'; continue; }
+    el.style.display = ''; el.className = 'tlab'; el.style.setProperty('--c', TEAMS[p?.team]?.c || '#fff'); el.style.left = ((_pv.x + 1) / 2 * VW) + 'px'; el.style.top = ((1 - _pv.y) / 2 * VH) + 'px'; el.textContent = p ? `${TEAMS[p.team]?.name?.[0] || ''}${p.no}` : '';
+  }
 }
 
 /* =========================================================
@@ -4577,7 +4842,7 @@ async function loadAll() {
   FLASH.side = loadTex(ASSET + 'fx/muzzle-side.jpg', true); FLASH.front = loadTex(ASSET + 'fx/muzzle-front.jpg', true); FLASH.side.wrapS = FLASH.side.wrapT = THREE.ClampToEdgeWrapping; FLASH.front.wrapS = FLASH.front.wrapT = THREE.ClampToEdgeWrapping;
   buildWorld();
   $('loadMsg').textContent = '載入人物與道具…';
-  const names = ['anims', 'gclass', 'btr80', ...(ROLE === 'teacher' ? [] : ['rifle_m4', 'rifle_ak', 'arms_military', ...CHAR_SETS.soldier, ...CHAR_SETS.civ])];
+  const names = ['anims', 'gclass', 'btr80', 'rifle_ak', ...CHAR_SETS.soldier, ...(ROLE === 'teacher' ? [] : ['rifle_m4', 'arms_military', ...CHAR_SETS.civ])];
   const gs = await Promise.all(names.map((n) => loadGLB(n).catch(() => null)));
   names.forEach((n, i) => { if (gs[i]) MODELS[n] = gs[i]; });
   await placeDynamic(MODELS);
@@ -4587,7 +4852,7 @@ async function loadAll() {
   PUFFS = new Puffs(MOBILE ? 220 : 400);
   $('loadMsg').textContent = '整理貼圖…';
   await Promise.race([Promise.all(LOADSTAT.tex.map((p) => p.catch(() => {}))), new Promise((r) => setTimeout(r, 20000))]);
-  if (ROLE !== 'teacher' && ANIMS) buildPools();
+  if (ROLE !== 'teacher' && ANIMS) buildPools(); if (ROLE === 'teacher' && ANIMS) buildAvatars();
   $('loadBar').style.width = '100%'; DBG(`載入完成：模型 ${Object.keys(MODELS).length}，失敗 ${LOADSTAT.fail} 項` + (LOADSTAT.failed.length ? '：' + LOADSTAT.failed.join('、') : '')); if (!LOADSTAT.fail && !Q.has('debug')) setTimeout(() => { $('dbg').hidden = true; }, 4000);
 }
 function applyQuality() {
@@ -4614,7 +4879,7 @@ function frame() {
     tracersTick(dt); if (PUFFS) PUFFS.update(dt);
     // 等待畫面也畫一下場景（靜態背景）
     if (G.mode !== 'take') { for (const e of ENEMIES) { e.c.update(dt); e.c.aimRifle('low'); } for (const c of CIVS) c.c.update(dt); for (const h of HOSTAGES) h.c.update(dt); }
-  } else { teacherTick(dt); sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); }
+  } else { teacherTick(dt); if (TP.mode === 'sn') { const n = nestPos(TP.nest, new THREE.Vector3()); sun.position.set(n.x + 30, 60, n.z + 10); sun.target.position.set(n.x - 6, 0, n.z + 20); } else { sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); } }
   // 學生還沒開拍時（選組、等待、結果畫面蓋住場景）不必每格都畫，省電也不發燙
   if (ROLE === 'student' && G.mode !== 'take' && (FRAME_N++ % 6) !== 0) return;
   if (Q.has('norender') && (FRAME_N++ % 40) !== 0) return; // 測試用：只跑遊戲邏輯
@@ -4627,7 +4892,7 @@ function warmUp() {
   const shown = [];
   const show = (o) => { if (!o) return; shown.push([o, o.visible]); o.visible = true; };
   camera.position.set(0, 1.6, 6); camera.rotation.set(0, 0, 0); camera.updateMatrixWorld(true);
-  let i = 0; const all = [...POOL.soldier, ...POOL.civ];
+  let i = 0; const all = [...POOL.soldier, ...POOL.civ, ...AV.pool];
   for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); c.aimRifle('low'); if (c.flash) { show(c.flash); } i++; }
   if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); }
   if (WORLD.bomb) show(WORLD.bomb.g);
@@ -4661,7 +4926,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
