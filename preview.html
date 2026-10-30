@@ -103,6 +103,10 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 #bStrike.off { opacity: 0.3; }
 .look { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: auto; touch-action: none; }
 .lookhint { position: absolute; left: 6%; bottom: 10%; width: 30%; font-size: calc(var(--fs) * 0.62); color: rgba(255,255,255,0.55); text-align: center; pointer-events: none; }
+body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: none !important; }
+.deskhint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(8,10,12,0.85); border: 2px solid var(--film); border-radius: 14px; padding: 16px 22px; text-align: center; pointer-events: none; font-weight: 900; }
+.deskhint b { display: block; font-size: 26px; color: var(--film); margin-bottom: 8px; }
+.deskhint span { display: block; font-size: 17px; color: #e8ece9; font-weight: 700; line-height: 1.7; }
 .rotate { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #0b0d0e; text-align: center; font-size: clamp(20px, 5vw, 30px); font-weight: 900; padding: 20px; }
 .rotate small { display: block; font-size: 16px; color: var(--muted); margin-top: 10px; }
 /* 老師畫面 */
@@ -179,6 +183,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
     <button class="tb" id="bAim">瞄準</button>
     <button class="tb" id="bReload">換彈</button>
     <button class="tb" id="bStrike">呼叫<br>空襲</button>
+    <div class="deskhint" id="deskHint" hidden><b>點一下畫面開始</b><span>滑鼠移動：轉動視角</span><span>左鍵：開火　右鍵按住：瞄準</span><span>R：換彈　Q：呼叫空襲　Esc：放開滑鼠</span></div>
     <div class="ng" id="hNg" hidden>NG！<small>重拍中…</small></div>
   </div>
   <div class="hud" id="hudT" hidden>
@@ -2529,7 +2534,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '1.2.0（修正卡頓：燈數固定、人物開場先建好、預熱、陰影一格只算一次、介面減少重排）';
+const VERSION = '1.3.0（電腦版滑鼠鍵盤操作；換彈改成真的拔出彈匣、換新彈匣、拉槍機）';
 const ROOT = 'fs'; // 資料庫根節點
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2573,9 +2578,11 @@ const SCRIPTS = {
     rulesEn: ['No script review', 'No military gear: prop guns only, no recon, no air strike', 'A market street full of civilians'] },
 };
 const WEAPONS = {
-  m4: { name: 'M4 卡賓槍', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 1.9, spread: 1.1, spreadAds: 0.25, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.16, 0.035], magazine: [0, -0.03, -0.08], view: [0.19, -0.21, -0.43], adsDist: 0.13,
+  m4: { name: 'M4 卡賓槍', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 2.7, spread: 1.1, spreadAds: 0.25, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.16, 0.035], magazine: [0, -0.03, -0.08],
+    magBox: { zMin: -0.135, zMax: -0.02, yMax: 0.035 }, magAxis: [0, -0.9, -0.44], magGrip: [-0.04, -0.03, -0.075], bolt: { a: [-0.038, 0.072, -0.012], b: [-0.03, 0.066, -0.002], fingers: [0.2, -0.3, -0.93], thumb: [0.1, 0.95, -0.3] }, view: [0.19, -0.21, -0.43], adsDist: 0.13,
     hands: { right: { pos: [0.022, 0.05, 0.123], fingers: [0, -0.412, -0.911], thumb: [0, 0.911, -0.412], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.05, 0.055, -0.19], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
-  ak: { name: '道具步槍（AK）', model: 'rifle_ak', dmg: 26, head: 2.5, rpm: 560, mag: 30, reload: 2.4, spread: 2.2, spreadAds: 0.7, recoil: 1.2, adsFov: 50, sound: 'ak', muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12], view: [0.19, -0.2, -0.42], adsDist: 0.16,
+  ak: { name: '道具步槍（AK）', model: 'rifle_ak', dmg: 26, head: 2.5, rpm: 560, mag: 30, reload: 3.0, spread: 2.2, spreadAds: 0.7, recoil: 1.2, adsFov: 50, sound: 'ak', muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12],
+    magBox: { zMin: -0.215, zMax: -0.1, yMax: 0.065 }, magAxis: [0, -0.96, -0.28], magGrip: [-0.04, -0.03, -0.155], bolt: { a: [0.035, 0.125, -0.03], b: [0.035, 0.125, 0.07], fingers: [0.2, -0.5, -0.85], thumb: [-0.9, 0.2, -0.2] }, view: [0.19, -0.2, -0.42], adsDist: 0.16,
     hands: { right: { pos: [0.022, 0.035, 0.12], fingers: [0, -0.29, -0.96], thumb: [0, 0.96, -0.29], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.035, -0.21], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
 };
 
@@ -3547,6 +3554,53 @@ class ViewArms {
 /* =========================================================
    玩家：移動、瞄準、開槍、受傷；第一人稱武器
    ========================================================= */
+/* 彈匣：把模型裡彈匣那一塊三角形切出來，變成可以單獨移動的零件（拔出、丟掉、插入新的） */
+function splitMagazine(root, w) {
+  if (!w.magBox) return null; root.updateMatrixWorld(true);
+  const inv = root.matrixWorld.clone().invert(); const B = w.magBox; const v = new THREE.Vector3();
+  const pivot = new THREE.Group(); pivot.name = 'magPivot'; root.add(pivot); let n = 0;
+  const meshes = []; root.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  for (const mesh of meshes) {
+    const g = mesh.geometry, P = g.attributes.position; const idx = g.index ? g.index.array : null; if (!idx) continue;
+    const rel = inv.clone().multiply(mesh.matrixWorld);
+    // 依位置把頂點合併，找出連在一起的零件；中心落在彈匣範圍、而且往下延伸的那一整塊就是彈匣
+    const pos = new Float32Array(P.count * 3), weld = new Int32Array(P.count), keys = new Map();
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(rel); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; const k = Math.round(v.x * 1e4) + ',' + Math.round(v.y * 1e4) + ',' + Math.round(v.z * 1e4); let id = keys.get(k); if (id === undefined) keys.set(k, (id = keys.size)); weld[i] = id; }
+    const par = new Int32Array(keys.size).map((_, i) => i); const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+    for (let t = 0; t < idx.length; t += 3) { const a = find(weld[idx[t]]), b = find(weld[idx[t + 1]]), c = find(weld[idx[t + 2]]); par[a] = b; par[find(c)] = find(b); }
+    const C = new Map();
+    for (let t = 0; t < idx.length; t += 3) { const r = find(weld[idx[t]]); let c = C.get(r); if (!c) C.set(r, (c = { n: 0, z: 0, y: 0, minY: 1e9 })); c.n++; for (let k = 0; k < 3; k++) { const i = idx[t + k]; c.z += pos[i * 3 + 2] / 3; c.y += pos[i * 3 + 1] / 3; c.minY = Math.min(c.minY, pos[i * 3 + 1]); } }
+    const isMag = new Set(); for (const [r, c] of C) { const cz = c.z / c.n, cy = c.y / c.n; if (c.n >= 40 && cz >= B.zMin && cz <= B.zMax && cy <= B.yMax && c.minY < 0) isMag.add(r); }
+    const keep = [], mag = [];
+    for (let t = 0; t < idx.length; t += 3) (isMag.has(find(weld[idx[t]])) ? mag : keep).push(idx[t], idx[t + 1], idx[t + 2]);
+    if (!mag.length) continue;
+    const gk = g.clone(); gk.setIndex(keep); mesh.geometry = gk;
+    const gm = g.clone(); gm.setIndex(mag); const mm = new THREE.Mesh(gm, mesh.material); mm.applyMatrix4(rel); mm.layers.set(LAYER_VIEW); mm.frustumCulled = false; pivot.add(mm); n += mag.length / 3;
+  }
+  return n ? { pivot, tris: n } : null;
+}
+const easeIO = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const L3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const ADD3 = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+const MAG_HAND = { fingers: [0.55, -0.45, -0.7], thumb: [-0.3, 0.85, -0.4], curl: [[55, 70, 65], 72, 78, 82], thumbCurl: [15, 25, 20], thumbFold: 20 };
+/* 換彈動作（進度 0→1）：左手抓彈匣 → 拔出 → 往下丟掉 → 從腰間拿新的 → 對準插入（拍一下）→ 拉／按槍機 → 回到護木 */
+function reloadPose(w, rk) {
+  const L = w.hands.left, ax = w.magAxis, out = 0.15; const seg = (a, b) => easeIO(clamp((rk - a) / (b - a), 0, 1));
+  const grip = w.magGrip; const below = ADD3([0, 0, 0], ax, out); const pouch = [-0.1, -0.34, 0.16];
+  let off = [0, 0, 0], magVis = true, hand = grip, ori = MAG_HAND, oriK = 1, magRot = 0;
+  if (rk < 0.12) { const t = seg(0.0, 0.12); hand = L3(L.pos, grip, t); oriK = t; }
+  else if (rk < 0.28) { off = L3([0, 0, 0], below, seg(0.12, 0.28)); hand = ADD3(grip, off); }
+  else if (rk < 0.42) { const t = seg(0.28, 0.42); off = L3(below, ADD3(below, pouch), t); magRot = t * 0.9; hand = ADD3(grip, off); }
+  else if (rk < 0.52) { off = ADD3(below, pouch); hand = ADD3(grip, off); magVis = rk > 0.47; }
+  else if (rk < 0.64) { const t = seg(0.52, 0.64); off = L3(ADD3(below, pouch), below, t); magRot = (1 - t) * 0.5; hand = ADD3(grip, off); }
+  else if (rk < 0.72) { const t = seg(0.64, 0.72); off = L3(below, ADD3([0, 0, 0], ax, -0.008), t); hand = ADD3(grip, off); }
+  else if (rk < 0.80) { const t = seg(0.72, 0.80); hand = L3(grip, w.bolt.a, t); ori = { ...MAG_HAND, fingers: w.bolt.fingers, thumb: w.bolt.thumb }; oriK = 1; }
+  else if (rk < 0.86) { const t = seg(0.80, 0.86); hand = L3(w.bolt.a, w.bolt.b, t); ori = { ...MAG_HAND, fingers: w.bolt.fingers, thumb: w.bolt.thumb }; }
+  else { const t = seg(0.86, 1); hand = L3(w.bolt.b, L.pos, t); ori = { ...MAG_HAND, fingers: w.bolt.fingers, thumb: w.bolt.thumb }; oriK = 1 - t; }
+  const n = (a, b) => { const v = L3(a, b, oriK); const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
+  const left = { pos: hand, fingers: n(L.fingers, ori.fingers), thumb: n(L.thumb, ori.thumb), curl: oriK > 0.5 ? ori.curl : L.curl, thumbCurl: oriK > 0.5 ? ori.thumbCurl : L.thumbCurl, thumbFold: oriK > 0.5 ? ori.thumbFold : L.thumbFold };
+  return { left, off, magVis, magRot };
+}
 const INPUT = { mx: 0, my: 0, look: { dx: 0, dy: 0 }, fire: false, ads: false, reload: false, strike: false, keys: {} };
 class Player {
   constructor() {
@@ -3559,6 +3613,7 @@ class Player {
   eye(out = new THREE.Vector3()) { return out.set(this.pos.x, this.pos.y + 1.62, this.pos.z); }
   setupViewModels(models) {
     for (const k of ['m4', 'ak']) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
+    this.mags = {}; for (const k in this.weaponMeshes) this.mags[k] = splitMagazine(this.weaponMeshes[k], WEAPONS[k]);
     this.flash = makeFlash(0.55, LAYER_VIEW); this.vm.add(this.flash); { const L = this.flash.userData.light; this.flash.remove(L); L.layers.enableAll(); this.vm.add(L); this.flashLight = L; } // 燈不放在會隱藏的火光裡：隱藏的燈不算數，燈數一變就要重新編譯
     try { if (models.arms_military) this.arms = new ViewArms(models.arms_military, { shoulder: [0, -0.22, -0.03], yaw: 25, stretch: 1.12, reach: 0.1, pole: [0.6, -1, 0.1], envMap: 0.6 }, this.vm); } catch (e) { console.warn('手臂載入失敗', e); }
     this.setGear(this.gearId);
@@ -3579,7 +3634,7 @@ class Player {
     // 檢查點
     for (const c of WORLD.checkpoints) if (this.pos.z < c + 0.5 && this.checkpoint > c) this.checkpoint = c + 2;
     // 視角
-    const sens = (MOBILE ? 0.0045 : 0.0022) * (this.ads ? 0.55 : 1);
+    const sens = (MOBILE ? 0.0045 : 0.0017) * (this.ads ? 0.55 : 1);
     this.yaw -= INPUT.look.dx * sens; this.pitch = clamp(this.pitch - INPUT.look.dy * sens, -1.2, 1.2); INPUT.look.dx = INPUT.look.dy = 0;
     // 移動：由電腦帶著往前推進（鍵盤有按才手動）。前方 38 公尺內還有反派活著就停下，清掉再走
     let mx = INPUT.mx, mz = INPUT.my; const manual = Math.hypot(mx, mz) > 0.1;
@@ -3600,7 +3655,7 @@ class Player {
     // 換彈
     if (this.reloading > 0) {
       const before = 1 - this.reloading / w.reload; this.reloading -= dt; const k = 1 - this.reloading / w.reload;
-      if (before < 0.30 && k >= 0.30) SFX.magOut(); if (before < 0.62 && k >= 0.62) SFX.magIn(); if (before < 0.84 && k >= 0.84) SFX.bolt();
+      if (before < 0.16 && k >= 0.16) SFX.magOut(); if (before < 0.70 && k >= 0.70) SFX.magIn(); if (before < 0.83 && k >= 0.83) SFX.bolt();
       if (this.reloading <= 0) { this.ammo = w.mag; }
     }
     else if ((INPUT.reload || (this.ammo === 0 && INPUT.fire)) && this.ammo < w.mag) { this.reloading = w.reload; INPUT.reload = false; }
@@ -3670,26 +3725,15 @@ class Player {
     const bobA = this.moving ? (this.sprinting ? 0.018 : 0.008) * (1 - this.adsK * 0.8) : 0.002;
     p.x += Math.sin(this.bob) * bobA; p.y += Math.abs(Math.cos(this.bob)) * bobA * 1.2 - this.kick * 0.03 * (1 - this.adsK * 0.5); p.z += this.kick * 0.05;
     // 換彈時把槍拉近身體中央、槍口抬高並向左翻，讓彈匣與左手都在畫面裡
-    p.y += lowK * 0.03; p.x -= lowK * 0.08; p.z += lowK * 0.03;
-    m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004 + lowK * 0.18, lowK * 0.3, -lowK * 0.6);
+    p.y += lowK * 0.075; p.x -= lowK * 0.11; p.z += lowK * 0.02;
+    m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004 + lowK * 0.22, lowK * 0.35, -lowK * 0.75);
     m.updateMatrixWorld(true);
     this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion); if (this.flashLight) this.flashLight.position.copy(this.flash.position);
-    if (this.arms) {
-      let hands = w.hands;
-      if (rk > 0) {
-        // 左手：先到彈匣（抽出、往下帶走），再回到彈匣（裝入），然後到槍機拉柄，最後回護木
-        const mag = w.magazine || [0, -0.03, -0.08]; const L = w.hands.left; const lp = L.pos;
-        const seg = (a, b, t) => clamp((rk - a) / (b - a), 0, 1);
-        let tgt, fingers = L.fingers, thumb = L.thumb, curl = L.curl;
-        if (rk < 0.3) { const t = seg(0.12, 0.3, rk); tgt = [lerp(lp[0], mag[0], t), lerp(lp[1], mag[1] - 0.02, t), lerp(lp[2], mag[2], t)]; }
-        else if (rk < 0.46) { const t = seg(0.3, 0.46, rk); tgt = [mag[0], mag[1] - 0.02 - t * 0.22, mag[2] + t * 0.08]; }
-        else if (rk < 0.64) { const t = seg(0.46, 0.64, rk); tgt = [mag[0], mag[1] - 0.24 + t * 0.22, mag[2] + 0.08 - t * 0.08]; }
-        else if (rk < 0.84) { const t = seg(0.64, 0.74, rk) - seg(0.76, 0.84, rk); tgt = [lerp(mag[0], 0.03, t), lerp(mag[1] - 0.02, 0.08, t), lerp(mag[2], 0.12, t)]; fingers = [0, -1, 0]; thumb = [0, 0, -1]; curl = [[40, 60, 60], 70, 75, 80]; }
-        else { const t = seg(0.84, 1, rk); tgt = [lerp(mag[0], lp[0], t), lerp(mag[1] - 0.02, lp[1], t), lerp(mag[2], lp[2], t)]; }
-        hands = { right: w.hands.right, left: { ...L, pos: tgt, fingers, thumb, curl: rk >= 0.3 && rk < 0.64 ? [[60, 70, 70], 70, 75, 80] : curl } };
-      }
-      this.arms.update(m, hands, 0);
-    }
+    const mg = this.mags && this.mags[this.gearId];
+    let hands = w.hands;
+    if (rk > 0 && w.magAxis) { const rp = reloadPose(w, rk); hands = { right: w.hands.right, left: rp.left }; if (mg) { mg.pivot.position.set(...rp.off); mg.pivot.rotation.set(rp.magRot, 0, rp.magRot * 0.4); mg.pivot.visible = rp.magVis; } }
+    else if (mg) { mg.pivot.position.set(0, 0, 0); mg.pivot.rotation.set(0, 0, 0); mg.pivot.visible = true; }
+    if (this.arms) this.arms.update(m, hands, 0);
     camera.fov = lerp(72, w.adsFov, this.adsK); camera.updateProjectionMatrix();
   }
 }
@@ -3761,7 +3805,7 @@ function waitScreen() {
   G.mode = 'wait'; hideAll(); show('scrWait'); const t = TEAMS[ME.team]; const s = SCRIPTS[META.script || 'A'];
   $('waitCard').innerHTML = `<h1 style="color:${t.c}">${t.name}劇組　${ME.no} 號演員</h1><p>等導演（老師）喊「開拍」。</p>
   <div class="rules ${s.rules ? '' : 'b'}"><p><b>這一條的劇本：${s.name}</b>　<span class="small">${s.en}</span></p>${s.rulesText.map((r, i) => `<p>・${r}<br><span class="small">${s.rulesEn[i]}</span></p>`).join('')}</div>
-  <p class="small">操作：鏡頭會自己沿街推進，前面有反派就停下。左手在螢幕左半邊滑動瞄準，右手開火、瞄準、換彈。打到反派臨演 +100 票房${s.mult > 1 ? '（軍方支援：×2）' : ''}。</p>
+  <p class="small">${DESKTOP ? '電腦操作：滑鼠移動＝轉視角，左鍵＝開火，右鍵按住＝瞄準，R＝換彈，Q＝呼叫空襲，Esc＝放開滑鼠。鏡頭會自己沿街推進。' : '操作：鏡頭會自己沿街推進，前面有反派就停下。左手在螢幕左半邊滑動瞄準，右手開火、瞄準、換彈。'}打到反派臨演 +100 票房${s.mult > 1 ? '（軍方支援：×2）' : ''}。</p>
   <button class="btn" id="bPractice">單人練習（不計分，老師開拍時自動停止）</button>
   <div class="pick" style="grid-template-columns:1fr 1fr"><button id="qBtn" style="--c:#888">畫質：${QUALITY === 'high' ? '高畫質' : '省電'}<span>卡頓就切省電</span></button><button id="sBtn" style="--c:#888">音效：${SFX.on ? '開' : '關'}<span>教室可關</span></button></div>`;
   $('bPractice').onclick = () => startTake(true);
@@ -3777,10 +3821,10 @@ function startTake(practice) {
   P.start(G.script); aiStart(G.script); renderGear(); SFX.init(); SFX.resume(); SFX.clap();
   banner('Action！', 'info', 1200, G.script.name + ' · ' + G.script.en); statDirty = true;
   $('hObj').textContent = G.script.rules ? '鏡頭沿街推進，清掉反派臨演；守住審片規則' : '鏡頭沿街推進，清掉反派臨演；街上有市集，小心平民';
-  renderRotate();
+  renderRotate(); renderDeskHint();
 }
 function endTake(reason) {
-  if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; INPUT.fire = false; aiReset(); sendStat(true);
+  if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; if (document.pointerLockElement) document.exitPointerLock(); renderDeskHint(); INPUT.fire = false; aiReset(); sendStat(true);
   const s = P.stats; const acc = s.shots ? Math.round(100 * s.hits / s.shots) : 0;
   hideAll(); show('scrRes');
   $('resCard').innerHTML = `<h1>卡！</h1><p>${reason === 'end' ? '這一條拍完了。' : '導演喊卡。'}${G.practice ? '（練習，不計分）' : '等導演公布票房與首映。'}</p>
@@ -3842,6 +3886,10 @@ const HUDC = {}; // 上一次寫入的值
 function setHTML(id, v) { if (HUDC[id] === v) return; HUDC[id] = v; $(id).innerHTML = v; }
 function setStyle(id, k, v) { const key = id + '.' + k; if (HUDC[key] === v) return; HUDC[key] = v; $(id).style[k] = v; }
 function setClass(id, v) { const key = id + '.c'; if (HUDC[key] === v) return; HUDC[key] = v; $(id).className = v; }
+// 電腦（有滑鼠、沒有觸控）：藏起觸控按鈕，改用滑鼠鍵盤
+const DESKTOP = !MOBILE && matchMedia('(hover: hover) and (pointer: fine)').matches;
+if (DESKTOP) document.body.classList.add('desk');
+function renderDeskHint() { const h = $('deskHint'); if (!h) return; h.hidden = !(DESKTOP && G.mode === 'take' && document.pointerLockElement !== canvas); }
 let VW = innerWidth, VH = innerHeight; addEventListener('resize', () => { VW = view.clientWidth; VH = view.clientHeight; });
 function studentTick(dt) {
   if (G.mode === 'count') { const left = Math.max(0, Math.ceil((META.startAt - NET.now()) / 1000)); const c = $('cnt'); if (c) c.textContent = left || 'Action！'; return; }
@@ -3904,13 +3952,18 @@ function setupInput() {
   $('bAim').addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT.ads = !INPUT.ads; $('bAim').classList.toggle('on', INPUT.ads); });
   $('bReload').addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT.reload = true; });
   $('bStrike').addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT.strike = true; });
-  // 鍵盤滑鼠（電腦測試）
-  const K = INPUT.keys; const upd = () => { INPUT.mx = (K.KeyD ? 1 : 0) - (K.KeyA ? 1 : 0); INPUT.my = (K.KeyW ? 1 : 0) - (K.KeyS ? 1 : 0); };
-  addEventListener('keydown', (e) => { K[e.code] = true; upd(); if (e.code === 'KeyR') INPUT.reload = true; if (e.code === 'KeyQ') INPUT.strike = true; if (e.code === 'ShiftLeft') INPUT.mx *= 1; });
-  addEventListener('keyup', (e) => { K[e.code] = false; upd(); });
-  canvas.addEventListener('mousedown', (e) => { if (ROLE !== 'student' || MOBILE) return; if (document.pointerLockElement !== canvas) { canvas.requestPointerLock(); return; } if (e.button === 0) INPUT.fire = true; if (e.button === 2) { INPUT.ads = !INPUT.ads; } SFX.resume(); });
-  addEventListener('mouseup', (e) => { if (e.button === 0) INPUT.fire = false; });
-  addEventListener('mousemove', (e) => { if (document.pointerLockElement === canvas) { INPUT.look.dx += e.movementX * 0.5; INPUT.look.dy += e.movementY * 0.5; } });
+  // 電腦：滑鼠移動＝轉視角，左鍵＝開火，右鍵（按住）＝瞄準，R＝換彈，Q＝空襲。移動仍由電腦帶著推進
+  addEventListener('keydown', (e) => { if (e.repeat) return; if (e.code === 'KeyR') INPUT.reload = true; if (e.code === 'KeyQ') INPUT.strike = true; });
+  const locked = () => document.pointerLockElement === canvas;
+  const lock = () => { try { const r = canvas.requestPointerLock({ unadjustedMovement: true }); if (r && r.catch) r.catch(() => { try { canvas.requestPointerLock(); } catch (_) {} }); } catch (_) { try { canvas.requestPointerLock(); } catch (_) {} } };
+  canvas.addEventListener('mousedown', (e) => {
+    if (ROLE !== 'student' || !DESKTOP || G.mode !== 'take') return; SFX.resume();
+    if (!locked()) { lock(); return; }
+    if (e.button === 0) INPUT.fire = true; if (e.button === 2) INPUT.ads = true;
+  });
+  addEventListener('mouseup', (e) => { if (e.button === 0) INPUT.fire = false; if (e.button === 2 && DESKTOP) INPUT.ads = false; });
+  addEventListener('mousemove', (e) => { if (locked()) { INPUT.look.dx += e.movementX; INPUT.look.dy += e.movementY; } });
+  document.addEventListener('pointerlockchange', () => { if (!locked()) { INPUT.fire = false; if (DESKTOP) INPUT.ads = false; } renderDeskHint(); });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
