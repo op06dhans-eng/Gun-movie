@@ -86,7 +86,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 .flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: #fff; }
 .ng { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; color: #fff; font-size: calc(var(--fs) * 2.4); font-weight: 900; }
 .ng small { font-size: calc(var(--fs) * 0.8); color: #ccc; margin-top: 8px; }
-.mark { position: absolute; transform: translate(-50%, -50%); width: 22px; height: 22px; border: 2px solid rgba(255,80,60,0.9); border-radius: 3px; }
+.mark { position: absolute; left: 0; top: 0; will-change: transform; width: 22px; height: 22px; border: 2px solid rgba(255,80,60,0.9); border-radius: 3px; }
 .mark span { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); font-size: 11px; color: #ffb0a0; white-space: nowrap; }
 .mark.civ { border-color: rgba(120,220,255,0.9); border-radius: 50%; }
 .mark.civ span { color: #bfefff; }
@@ -2529,7 +2529,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '1.1.1（修正 iPhone 連點開火時畫面被放大）';
+const VERSION = '1.2.0（修正卡頓：燈數固定、人物開場先建好、預熱、陰影一格只算一次、介面減少重排）';
 const ROOT = 'fs'; // 資料庫根節點
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2678,7 +2678,7 @@ let seed = 4321;
 const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 const LOADER = new GLTFLoader(); LOADER.setMeshoptDecoder(MeshoptDecoder);
 const TL = new THREE.TextureLoader();
-const LOADSTAT = { n: 0, done: 0, fail: 0, failed: [] };
+const LOADSTAT = { n: 0, done: 0, fail: 0, failed: [], tex: [] };
 function failed(kind, url, why) { LOADSTAT.fail++; if (LOADSTAT.failed.length < 8) LOADSTAT.failed.push(kind + ' ' + url.split('/').slice(-2).join('/') + (why ? '（' + why + '）' : '')); DBG(kind + '失敗 ' + url.split('/').pop() + ' ' + (why || '')); }
 function tick(msg) { LOADSTAT.done++; $('loadBar').style.width = Math.round(100 * LOADSTAT.done / Math.max(1, LOADSTAT.n)) + '%'; if (msg) $('loadMsg').textContent = msg; }
 const loadGLB = (f) => { LOADSTAT.n++; return new Promise((res, rej) => LOADER.load(ASSET + 'models/' + f + '.glb', (g) => { tick(); res(g); }, undefined, (e) => { console.warn('載入失敗', f, e); failed('模型', ASSET + 'models/' + f, e && e.message); tick(); rej(e); })); };
@@ -2686,10 +2686,10 @@ const loadGLB = (f) => { LOADSTAT.n++; return new Promise((res, rej) => LOADER.l
 const loadTex = (url, srgb) => {
   LOADSTAT.n++; const t = new THREE.Texture(); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MOBILE ? 4 : 8;
   const fallback = () => { const c = document.createElement('canvas'); c.width = c.height = 2; const g = c.getContext('2d'); g.fillStyle = srgb ? '#9a9a9a' : '#8080ff'; g.fillRect(0, 0, 2, 2); t.image = c; t.needsUpdate = true; };
-  fetch(url).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then((b) => new Promise((res, rej) => { const img = new Image(); const u = URL.createObjectURL(b); img.onload = () => { URL.revokeObjectURL(u); res(img); }; img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); }; img.src = u; }))
+  const p = fetch(url).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then((b) => new Promise((res, rej) => { const img = new Image(); const u = URL.createObjectURL(b); img.onload = () => { URL.revokeObjectURL(u); res(img); }; img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); }; img.src = u; }))
     .then((img) => { t.image = img; t.needsUpdate = true; tick(); })
     .catch((e) => { failed('貼圖', url, e.message); fallback(); tick(); });
-  return t;
+  LOADSTAT.tex.push(p); return t;
 };
 const TEX = {};
 function pbr(name, rx = 1, ry = rx, opt = {}) {
@@ -3161,7 +3161,9 @@ class Character {
   constructor(name, { tint = null } = {}) {
     const g = MODELS[name]; this.name = name;
     this.root = SkeletonUtils.clone(g.scene); this.root.frustumCulled = false;
-    const mesh = skinnedOf(this.root); mesh.frustumCulled = false; mesh.castShadow = true; mesh.receiveShadow = false;
+    const mesh = skinnedOf(this.root); mesh.castShadow = true; mesh.receiveShadow = false;
+    // 畫面外（含陰影範圍外）的人物不畫：固定的包圍球（站姿到倒地都包得住）
+    mesh.frustumCulled = true; mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.9, 0), 2.3);
     mesh.material = tintedMaterial(name, mesh.material, tint);
     this.mesh = mesh;
     this.b = (n) => boneOf(this.root, n);
@@ -3199,34 +3201,54 @@ class Character {
     t = rayCapsule(ro, rd, sl, wl, 0.08); if (t > 0) return { t, part: 'limb' }; t = rayCapsule(ro, rd, sr, wr, 0.08); if (t > 0) return { t, part: 'limb' };
     return null;
   }
-  dispose() { scene.remove(this.root); this.mixer.stopAllAction(); }
+  // 物件池：開場一次建好，用完藏起來再借出（避免遊戲中途建立人物造成卡頓）
+  reset() { this.mixer.stopAllAction(); this.cur = null; this.curName = null; this.root.rotation.set(0, 0, 0); this.root.visible = true; this.alive = true; }
+  dispose() { this.mixer.stopAllAction(); this.cur = null; this.curName = null; this.root.visible = false; this.busy = false; if (this.flash) flashOff(this.flash); }
+}
+const POOL = { soldier: [], civ: [], officer: [] };
+function buildPools() {
+  const mk = (set, name, opt) => { if (!MODELS[name]) return; const c = new Character(name, opt); c.root.visible = false; c.busy = false; c.set = set; POOL[set].push(c); return c; };
+  CHAR_SETS.soldier.forEach((n, i) => { for (let k = 0; k < 3; k++) { const c = mk('soldier', n, { tint: ENEMY_TINT }); if (c && RIFLE_NPC) { const m = RIFLE_NPC.clone(); c.attachRifle(m); const f = makeFlash(0.5, 0, false); f.position.set(0, 0.1, -0.5); m.add(f); c.flash = f; } } });
+  for (let k = 0; k < 15; k++) mk('civ', CHAR_SETS.civ[k % CHAR_SETS.civ.length]);
+  for (let k = 0; k < 3; k++) mk('officer', 'officer');
+}
+function takeChar(set) {
+  const free = POOL[set].filter((c) => !c.busy); if (!free.length) return null;
+  const c = free[Math.floor(R() * free.length)]; c.busy = true; c.reset(); return c;
 }
 
 /* ---------- 槍口火光與曳光（真實照片去背，CC0／公共領域） ---------- */
 const FLASH = { side: null, front: null, pool: [] };
-function makeFlash(scale = 1, layer = 0) {
-  const matS = new THREE.MeshBasicMaterial({ map: FLASH.side, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, side: THREE.DoubleSide, toneMapped: false });
-  const matF = new THREE.MeshBasicMaterial({ map: FLASH.front, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false });
+// 場景裡的燈數必須固定：燈數一變，所有材質都要重新編譯（手機會卡住）。NPC 的槍口火光共用這一盞燈
+const NPC_LIGHT = new THREE.PointLight('#ffb866', 0, 9, 2); scene.add(NPC_LIGHT);
+let FLASH_MATS = null;
+function makeFlash(scale = 1, layer = 0, withLight = true) {
+  if (!FLASH_MATS) FLASH_MATS = { S: new THREE.MeshBasicMaterial({ map: FLASH.side, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, side: THREE.DoubleSide, toneMapped: false }), F: new THREE.MeshBasicMaterial({ map: FLASH.front, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false }) };
+  const matS = FLASH_MATS.S, matF = FLASH_MATS.F;
   const g = new THREE.Group();
   for (let i = 0; i < 2; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9 * scale, 0.45 * scale), matS); m.position.z = -0.42 * scale; m.rotation.y = Math.PI / 2; m.rotation.x = i * Math.PI / 2; m.userData.side = 1; g.add(m); }
   const f = new THREE.Mesh(new THREE.PlaneGeometry(0.5 * scale, 0.5 * scale), matF); f.position.z = -0.05; g.add(f);
-  const light = new THREE.PointLight('#ffb866', 0, 6, 2); g.add(light); g.userData.light = light;
-  g.visible = false; g.traverse((o) => o.layers.set(layer)); return g;
+  g.traverse((o) => o.layers.set(layer));
+  if (withLight) { const light = new THREE.PointLight('#ffb866', 0, 6, 2); g.add(light); g.userData.light = light; }
+  g.visible = false; return g;
 }
 function flashOn(g, t = 0.05) {
   // 隨機挑一張側面火焰（貼圖三格）與正面火光（三格）
   const si = Math.floor(R() * 3), fi = Math.floor(R() * 3);
   g.children.forEach((m) => { if (m.userData.side) { const uv = m.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, (i < 2 ? 1 : 0) / 3 + si / 3); uv.needsUpdate = true; m.rotation.z = R() * 0.6 - 0.3; }
     else if (m.isMesh) { const uv = m.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) { uv.setXY(i, (i % 2 ? 1 : 0) / 2 + (fi % 2) / 2, (i < 2 ? 1 : 0) / 2 + (fi < 2 ? 1 : 0) / 2); } uv.needsUpdate = true; m.rotation.z = R() * 6.28; m.scale.setScalar(0.7 + R() * 0.6); } });
-  g.visible = true; g.userData.t = t; g.userData.light.intensity = 25;
+  g.visible = true; g.userData.t = t;
+  const L = g.userData.light || NPC_LIGHT; if (!g.userData.light) { g.getWorldPosition(NPC_LIGHT.position); NPC_LIGHT.userData.owner = g; } L.intensity = 25;
 }
-function flashTick(g, dt) { if (!g.visible) return; g.userData.t -= dt; if (g.userData.t <= 0) { g.visible = false; g.userData.light.intensity = 0; } }
+function flashOff(g) { g.visible = false; const L = g.userData.light || (NPC_LIGHT.userData.owner === g ? NPC_LIGHT : null); if (L) L.intensity = 0; }
+function flashTick(g, dt) { if (!g.visible) return; g.userData.t -= dt; if (g.userData.t <= 0) flashOff(g); }
 // 曳光：細長發光線段（敵人開槍）
-const TRACERS = [];
-function tracer(a, b, col = '#ffd27a') {
-  const g = new THREE.BufferGeometry().setFromPoints([a, b]); const m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9, toneMapped: false })); scene.add(m); TRACERS.push({ m, t: 0.08 });
+const TRACERS = []; let tracerI = 0;
+for (let i = 0; i < 12; i++) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3)); const m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.9, toneMapped: false })); m.frustumCulled = false; m.visible = false; scene.add(m); TRACERS.push({ m, t: 0 }); }
+function tracer(a, b) {
+  const t = TRACERS[tracerI]; tracerI = (tracerI + 1) % TRACERS.length; const p = t.m.geometry.attributes.position; p.setXYZ(0, a.x, a.y, a.z); p.setXYZ(1, b.x, b.y, b.z); p.needsUpdate = true; t.t = 0.08; t.m.visible = true; t.m.material.opacity = 0.9;
 }
-function tracersTick(dt) { for (let i = TRACERS.length - 1; i >= 0; i--) { const t = TRACERS[i]; t.t -= dt; t.m.material.opacity = Math.max(0, t.t / 0.08); if (t.t <= 0) { scene.remove(t.m); t.m.geometry.dispose(); TRACERS.splice(i, 1); } } }
+function tracersTick(dt) { for (const t of TRACERS) { if (!t.m.visible) continue; t.t -= dt; t.m.material.opacity = Math.max(0, t.t / 0.08); if (t.t <= 0) t.m.visible = false; } }
 // 命中塵土／火花（粒子）
 class Puffs {
   constructor(n = 300) {
@@ -3261,10 +3283,8 @@ function nearestCovers(cz, n, used) {
   return WORLD.covers.filter((c) => !used.has(c) && Math.abs(c.z - cz) < 16).sort((a, b) => Math.abs(a.z - cz) - Math.abs(b.z - cz)).slice(0, n);
 }
 class Enemy {
-  constructor(cover, from) {
-    const name = CHAR_SETS.soldier[Math.floor(R() * CHAR_SETS.soldier.length)];
-    this.c = new Character(name, { tint: ENEMY_TINT });
-    if (RIFLE_NPC) { const m = RIFLE_NPC.clone(); this.c.attachRifle(m); const f = makeFlash(0.5); f.position.set(0, 0.1, -0.5); m.add(f); this.c.flash = f; }
+  constructor(c, cover, from) {
+    this.c = c;
     this.cover = cover; this.pos = this.c.pos; this.pos.set(from.x, 0, from.z); this.heading = Math.PI;
     this.hp = 100; this.state = 'tocover'; this.t = 0; this.burstT = 1.2 + R() * 1.5; this.shots = 0; this.peek = 0; this.vel = new THREE.Vector3();
     this.c.play('Jog_Aim'); this.c.root.rotation.y = this.heading; this.bornAt = performance.now();
@@ -3319,9 +3339,8 @@ class Enemy {
   dispose() { this.c.dispose(); }
 }
 class Civilian {
-  constructor(mode, spot) {
-    const name = CHAR_SETS.civ[Math.floor(R() * CHAR_SETS.civ.length)];
-    this.c = new Character(name); this.pos = this.c.pos; this.mode = mode; this.hp = 60; this.state = 'walk'; this.heading = 0; this.dead = false; this.hitBy = null;
+  constructor(c, mode, spot) {
+    this.c = c; this.pos = this.c.pos; this.mode = mode; this.hp = 60; this.state = 'walk'; this.heading = 0; this.dead = false; this.hitBy = null;
     if (mode === 'rescued') { this.pos.set(spot.from[0], 0, spot.from[1]); this.goal = V(spot.to[0], 0, spot.to[1]); this.c.play('Jog_Fwd_Loop'); this.speed = 2.6; }
     else { const p = spot; this.pos.set(p[0], 0, p[1]); this.pickGoal(); this.c.play('Walk_Loop'); this.speed = 1.1; }
     this.waitT = 0; this.sayT = 0;
@@ -3355,8 +3374,8 @@ function aiStart(script) {
   aiReset(); setupGroups();
   if (!ANIMS || !CHAR_SETS.civ.length) return;
   // 軍事顧問（劇本 A 規則三）：三位穿軍常服的軍官站在路邊看拍攝
-  if (CHAR_SETS.officer.length) for (const [x, z] of [[-7.6, -27], [7.6, -71], [-7.6, -117]]) { const c = new Character('officer'); c.pos.set(x, 0, z); c.root.rotation.y = x < 0 ? Math.PI / 2 + 0.4 : -Math.PI / 2 - 0.4; c.play('Idle_Loop'); OFFICERS.push({ c, pos: c.pos, hits: 0, dead: false }); }
-  if (script.civ === 'market') for (let i = 0; i < (MOBILE ? 9 : 12); i++) CIVS.push(new Civilian('market', WORLD.marketPts[i % WORLD.marketPts.length]));
+  for (const [x, z] of [[-7.6, -27], [7.6, -71], [-7.6, -117]]) { const c = takeChar('officer'); if (!c) break; c.pos.set(x, 0, z); c.root.rotation.y = x < 0 ? Math.PI / 2 + 0.4 : -Math.PI / 2 - 0.4; c.play('Idle_Loop'); OFFICERS.push({ c, pos: c.pos, hits: 0, dead: false }); }
+  if (script.civ === 'market') for (let i = 0; i < (MOBILE ? 9 : 12); i++) { const c = takeChar('civ'); if (!c) break; CIVS.push(new Civilian(c, 'market', WORLD.marketPts[i % WORLD.marketPts.length])); }
 }
 function aiUpdate(dt, P, script) {
   if (!ANIMS || !CHAR_SETS.soldier.length) return;
@@ -3366,10 +3385,15 @@ function aiUpdate(dt, P, script) {
     if (AI.spawned.has(i) || P.pos.z > g.z) return; AI.spawned.add(i);
     const alive = ENEMIES.filter((e) => e.state !== 'dead').length; const n = Math.min(g.n, 7 - alive);
     const covers = nearestCovers(g.cz, n, used);
-    covers.forEach((c) => { used.add(c); const alleys = WORLD.spawns.filter((s) => Math.abs(s.z - c.z) < 20); const from = alleys.length ? alleys[Math.floor(R() * alleys.length)] : { x: c.x, z: c.z - 6 }; ENEMIES.push(new Enemy(c, from)); });
+    covers.forEach((c) => {
+      let ch = takeChar('soldier');
+      if (!ch) { const old = ENEMIES.findIndex((e) => e.state === 'dead'); if (old >= 0) { ENEMIES[old].dispose(); ENEMIES.splice(old, 1); ch = takeChar('soldier'); } }
+      if (!ch) return;
+      used.add(c); const alleys = WORLD.spawns.filter((s) => Math.abs(s.z - c.z) < 20); const from = alleys.length ? alleys[Math.floor(R() * alleys.length)] : { x: c.x, z: c.z - 6 }; ENEMIES.push(new Enemy(ch, c, from));
+    });
   });
   // 獲救村民（劇本 A）
-  if (script.civ === 'rescued') WORLD.civSpots.forEach((s, i) => { if (!AI.civSpawned.has(i) && P.pos.z < s.to[1] + 26) { AI.civSpawned.add(i); CIVS.push(new Civilian('rescued', s)); } });
+  if (script.civ === 'rescued') WORLD.civSpots.forEach((s, i) => { if (!AI.civSpawned.has(i) && P.pos.z < s.to[1] + 26) { AI.civSpawned.add(i); const c = takeChar('civ'); if (c) CIVS.push(new Civilian(c, 'rescued', s)); } });
   for (const e of ENEMIES) e.update(dt, P);
   for (const c of CIVS) c.update(dt, P);
   for (const o of OFFICERS) { o.c.update(dt); const a = Math.atan2(P.pos.x - o.pos.x, P.pos.z - o.pos.z); let d = a - o.c.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); o.c.root.rotation.y += d * Math.min(1, dt * 2); }
@@ -3400,11 +3424,12 @@ const SFX = (() => {
     if (!ctx) return; const ok = play(sample, { vol, rate: rate * (0.96 + R() * 0.08), send });
     const t0 = ctx.currentTime;
     const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(42, t0 + 0.09); const og = ctx.createGain(); og.gain.setValueAtTime(punch, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.16); o.connect(og); og.connect(master); o.start(t0); o.stop(t0 + 0.18);
-    const n = ctx.createBufferSource(); const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.09), ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (R() * 2 - 1) * Math.pow(1 - i / d.length, 4); n.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.7; const ng = ctx.createGain(); ng.gain.value = ok ? crack : crack * 1.8; n.connect(f); f.connect(ng); ng.connect(master); if (verb) { const sg = ctx.createGain(); sg.gain.value = 0.5; ng.connect(sg); sg.connect(verb); } n.start(t0);
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf(0.09, 4); const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 0.7; const ng = ctx.createGain(); ng.gain.value = ok ? crack : crack * 1.8; n.connect(f); f.connect(ng); ng.connect(master); if (verb) { const sg = ctx.createGain(); sg.gain.value = 0.5; ng.connect(sg); sg.connect(verb); } n.start(t0);
   }
   const pick = (k) => files[k][Math.floor(R() * files[k].length)];
   function tone(f, t, { type = 'sine', vol = 0.2, decay = true } = {}) { if (!ctx) return; const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = vol; if (decay) g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t); o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime + t); }
-  function noise(t, { vol = 0.3, lp = 800, hp = 60 } = {}) { if (!ctx) return; const n = ctx.createBufferSource(); const b = ctx.createBuffer(1, ctx.sampleRate * t, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (R() * 2 - 1) * (1 - i / d.length) ** 2; n.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; const g = ctx.createGain(); g.gain.value = vol; n.connect(f); f.connect(h); h.connect(g); g.connect(master); n.start(); }
+  const NB = {}; function noiseBuf(t, pow) { const k = t + '|' + pow; if (NB[k]) return NB[k]; const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * t), ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, pow); return (NB[k] = b); }
+  function noise(t, { vol = 0.3, lp = 800, hp = 60 } = {}) { if (!ctx) return; const n = ctx.createBufferSource(); n.buffer = noiseBuf(t, 2); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; const g = ctx.createGain(); g.gain.value = vol; n.connect(f); f.connect(h); h.connect(g); g.connect(master); n.start(); }
   return {
     init, resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     shot(w) { gunLayer(pick(w === 'm4' ? 'm4' : 'ak'), w === 'm4' ? { vol: 0.75, punch: 0.45, crack: 0.3, rate: 1.0 } : { vol: 0.8, punch: 0.6, crack: 0.25, rate: 0.95 }); },
@@ -3534,7 +3559,7 @@ class Player {
   eye(out = new THREE.Vector3()) { return out.set(this.pos.x, this.pos.y + 1.62, this.pos.z); }
   setupViewModels(models) {
     for (const k of ['m4', 'ak']) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
-    this.flash = makeFlash(0.55, LAYER_VIEW); this.vm.add(this.flash); this.flash.userData.light.layers.enableAll();
+    this.flash = makeFlash(0.55, LAYER_VIEW); this.vm.add(this.flash); { const L = this.flash.userData.light; this.flash.remove(L); L.layers.enableAll(); this.vm.add(L); this.flashLight = L; } // 燈不放在會隱藏的火光裡：隱藏的燈不算數，燈數一變就要重新編譯
     try { if (models.arms_military) this.arms = new ViewArms(models.arms_military, { shoulder: [0, -0.22, -0.03], yaw: 25, stretch: 1.12, reach: 0.1, pole: [0.6, -1, 0.1], envMap: 0.6 }, this.vm); } catch (e) { console.warn('手臂載入失敗', e); }
     this.setGear(this.gearId);
   }
@@ -3648,7 +3673,7 @@ class Player {
     p.y += lowK * 0.03; p.x -= lowK * 0.08; p.z += lowK * 0.03;
     m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004 + lowK * 0.18, lowK * 0.3, -lowK * 0.6);
     m.updateMatrixWorld(true);
-    this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion);
+    this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion); if (this.flashLight) this.flashLight.position.copy(this.flash.position);
     if (this.arms) {
       let hands = w.hands;
       if (rk > 0) {
@@ -3813,19 +3838,24 @@ function onMeta() {
   else if (ph === 'cut' || ph === 'prem') { if (G.mode === 'take' && !G.practice) endTake('cut'); else if (G.mode === 'wait') { /* 停在等待 */ } }
   else if (ph === 'lobby') { if (G.mode === 'take' && !G.practice) endTake('cut'); if (G.mode !== 'take') waitScreen(); }
 }
+const HUDC = {}; // 上一次寫入的值
+function setHTML(id, v) { if (HUDC[id] === v) return; HUDC[id] = v; $(id).innerHTML = v; }
+function setStyle(id, k, v) { const key = id + '.' + k; if (HUDC[key] === v) return; HUDC[key] = v; $(id).style[k] = v; }
+function setClass(id, v) { const key = id + '.c'; if (HUDC[key] === v) return; HUDC[key] = v; $(id).className = v; }
+let VW = innerWidth, VH = innerHeight; addEventListener('resize', () => { VW = view.clientWidth; VH = view.clientHeight; });
 function studentTick(dt) {
   if (G.mode === 'count') { const left = Math.max(0, Math.ceil((META.startAt - NET.now()) / 1000)); const c = $('cnt'); if (c) c.textContent = left || 'Action！'; return; }
   if (G.mode !== 'take') return;
-  const left = Math.max(0, G.endsAt - NET.now()); $('hTimer').textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`;
+  const left = Math.max(0, G.endsAt - NET.now()); setHTML('hTimer', `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`);
   if (left <= 0) { endTake('end'); return; }
   P.update(dt); aiUpdate(dt, P, G.script);
   if (Q.has('fast')) for (let i = 0; i < 5; i++) { P.update(0.033); aiUpdate(0.033, P, G.script); } // 測試用：軟體渲染很慢時加速模擬
   // 到街尾：殺青加分
   if (P.pos.z < WORLD.END_Z + 3 && !G.wrapped) { G.wrapped = true; P.stats.score += 300; banner('殺青！抵達街尾　+300', 'good', 2500, 'That\'s a wrap!'); SFX.good(); onShot(); }
   // HUD
-  const s = P.stats; $('hScore').innerHTML = `${s.score}<small>票房</small>`; $('hAmmo').innerHTML = P.reloading > 0 ? `換彈<small>…</small>` : `${P.ammo}<small>／${P.w.mag}</small>`;
-  $('hHp').className = 'hp' + (P.hp < 35 ? ' low' : ''); $('hHp').firstElementChild.style.width = Math.max(0, P.hp) + '%';
-  $('hDmg').style.opacity = P.alive ? clamp(P.hurtT * 1.6, 0, 0.9) + (P.hp < 35 ? 0.35 : 0) : 0;
+  const s = P.stats; setHTML('hScore', `${s.score}<small>票房</small>`); setHTML('hAmmo', P.reloading > 0 ? `換彈<small>…</small>` : `${P.ammo}<small>／${P.w.mag}</small>`);
+  setClass('hHp', 'hp' + (P.hp < 35 ? ' low' : '')); const hpw = Math.round(Math.max(0, P.hp)) + '%'; if (HUDC.hpw !== hpw) { HUDC.hpw = hpw; $('hHp').firstElementChild.style.width = hpw; }
+  setStyle('hDmg', 'opacity', String(P.alive ? Math.round((clamp(P.hurtT * 1.6, 0, 0.9) + (P.hp < 35 ? 0.35 : 0)) * 20) / 20 : 0));
   $('hCross').classList.toggle('ads', P.adsK > 0.6);
   if (P.hold !== P.holdShown) { P.holdShown = P.hold; $('hObj').textContent = P.hold ? (P.pos.z <= WORLD.END_Z + 3 ? '已到街尾：守住陣地到喊卡' : '前方有反派：清掉才會繼續推進') : '鏡頭推進中…'; }
   renderMarks();
@@ -3840,10 +3870,12 @@ function renderMarks() {
   for (const c of CIVS) if (!c.dead && c.pos.distanceTo(P.pos) < 28) items.push([c, 'mark civ', '平民']);
   while (host.children.length < items.length) { const d = document.createElement('div'); d.innerHTML = '<span></span>'; host.appendChild(d); }
   for (let i = 0; i < host.children.length; i++) {
-    const d = host.children[i]; if (i >= items.length) { d.style.display = 'none'; continue; }
+    const d = host.children[i]; if (i >= items.length) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
     const [o, cls, label] = items[i]; _pv.set(o.pos.x, 1.4, o.pos.z).project(camera);
-    if (_pv.z > 1 || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { d.style.display = 'none'; continue; }
-    d.style.display = ''; d.className = cls; d.style.left = ((_pv.x + 1) / 2 * view.clientWidth) + 'px'; d.style.top = ((1 - _pv.y) / 2 * view.clientHeight) + 'px'; d.firstElementChild.textContent = label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm';
+    if (_pv.z > 1 || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
+    if (d.style.display) d.style.display = ''; if (d.className !== cls) d.className = cls;
+    d.style.transform = `translate(${Math.round((_pv.x + 1) / 2 * VW)}px, ${Math.round((1 - _pv.y) / 2 * VH)}px) translate(-50%, -50%)`;
+    const txt = label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm'; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
   }
 }
 /* ---------- 觸控與鍵盤 ---------- */
@@ -4028,7 +4060,7 @@ function renderLabels() {
     const el = host.children[i]; if (i >= items.length) { el.style.display = 'none'; continue; }
     const d = items[i]; const p = TS.players[d.userData.pid]; _pv.set(d.position.x, 6.5, d.position.z).project(camera);
     if (_pv.z > 1 || Math.abs(_pv.x) > 1.05 || Math.abs(_pv.y) > 1.05) { el.style.display = 'none'; continue; }
-    el.style.display = ''; el.className = 'tlab'; el.style.setProperty('--c', TEAMS[p?.team]?.c || '#fff'); el.style.left = ((_pv.x + 1) / 2 * view.clientWidth) + 'px'; el.style.top = ((1 - _pv.y) / 2 * view.clientHeight) + 'px'; el.textContent = p ? `${TEAMS[p.team]?.name?.[0] || ''}${p.no}` : '';
+    el.style.display = ''; el.className = 'tlab'; el.style.setProperty('--c', TEAMS[p?.team]?.c || '#fff'); el.style.left = ((_pv.x + 1) / 2 * VW) + 'px'; el.style.top = ((1 - _pv.y) / 2 * VH) + 'px'; el.textContent = p ? `${TEAMS[p.team]?.name?.[0] || ''}${p.no}` : '';
   }
 }
 function teacherTick(dt) {
@@ -4047,6 +4079,7 @@ const SC = sun.shadow.camera; SC.near = 1; SC.far = 200; SC.left = -45; SC.right
 scene.add(sun); scene.add(sun.target); sun.layers.enable(LAYER_VIEW);
 const hemi = new THREE.HemisphereLight('#bcd3ff', '#5a4a38', 0.35); scene.add(hemi); hemi.layers.enable(LAYER_VIEW);
 scene.fog = new THREE.Fog('#c9d3df', 60, 420);
+renderer.shadowMap.autoUpdate = false; let FRAME_N = 0;
 async function loadAll() {
   $('loadMsg').textContent = '載入天空與材質…'; DBG('開始載入（' + (ROLE === 'teacher' ? '老師' : '學生') + '）');
   // 天空：環境光（小張 HDR）與背景（JPG）
@@ -4065,6 +4098,9 @@ async function loadAll() {
   for (const k in CHAR_SETS) CHAR_SETS[k] = CHAR_SETS[k].filter((n) => MODELS[n]);
   if (MODELS.rifle_ak) { const src = skinnedOf(MODELS.rifle_ak.scene) || MODELS.rifle_ak.scene.children[0]; let mesh = null; MODELS.rifle_ak.scene.traverse((o) => { if (!mesh && o.isMesh) mesh = o; }); RIFLE_NPC = new THREE.Mesh(mesh.geometry, mesh.material); RIFLE_NPC.castShadow = true; }
   PUFFS = new Puffs(MOBILE ? 220 : 400);
+  $('loadMsg').textContent = '整理貼圖…';
+  await Promise.race([Promise.all(LOADSTAT.tex.map((p) => p.catch(() => {}))), new Promise((r) => setTimeout(r, 20000))]);
+  if (ROLE !== 'teacher' && ANIMS) buildPools();
   $('loadBar').style.width = '100%'; DBG(`載入完成：模型 ${Object.keys(MODELS).length}，失敗 ${LOADSTAT.fail} 項` + (LOADSTAT.failed.length ? '：' + LOADSTAT.failed.join('、') : '')); if (!LOADSTAT.fail && !Q.has('debug')) setTimeout(() => { $('dbg').hidden = true; }, 4000);
 }
 function applyQuality() {
@@ -4084,7 +4120,7 @@ function frame() {
       // 相機跟著玩家
       P.eye(camera.position); camera.rotation.set(0, 0, 0, 'YXZ'); camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
       camera.updateMatrixWorld(true); if (G.mode === 'take') { camera.rotation.z = Math.sin(P.bob * 0.5) * 0.004 * (P.moving ? 1 : 0); P.updateView(dt); } else { camera.fov = 72; camera.updateProjectionMatrix(); }
-      sun.position.set(P.pos.x + 30, 60, P.pos.z - 20); sun.target.position.set(P.pos.x, 0, P.pos.z);
+      const sx = Math.round(P.pos.x / 2) * 2, sz = Math.round(P.pos.z / 2) * 2; sun.position.set(sx + 30, 60, sz - 20); sun.target.position.set(sx, 0, sz);
       flashTick(P.flash, dt);
     }
     for (const e of ENEMIES) if (e.c.flash) flashTick(e.c.flash, dt);
@@ -4092,8 +4128,32 @@ function frame() {
     // 等待畫面也畫一下場景（靜態背景）
     if (G.mode !== 'take') { for (const e of ENEMIES) e.c.update(dt); for (const c of CIVS) c.c.update(dt); }
   } else { teacherTick(dt); sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); }
+  // 學生還沒開拍時（選組、等待、結果畫面蓋住場景）不必每格都畫，省電也不發燙
+  if (ROLE === 'student' && G.mode !== 'take' && (FRAME_N++ % 6) !== 0) return;
+  FRAME_N++; renderer.shadowMap.needsUpdate = QUALITY === 'high' || ROLE === 'teacher' || (FRAME_N & 1) === 0;
   renderer.autoClear = true; renderer.render(scene, camera);
   if (ROLE === 'student' && G.mode === 'take') { const bg = scene.background, fg = scene.fog; scene.background = null; scene.fog = null; renderer.autoClear = false; renderer.clearDepth(); vmCamera.position.copy(camera.position); vmCamera.quaternion.copy(camera.quaternion); vmCamera.fov = lerp(60, 44, P.adsK); vmCamera.updateProjectionMatrix(); renderer.render(scene, vmCamera); scene.background = bg; scene.fog = fg; }
+}
+// 預熱：在載入畫面後面，把人物、兩把槍、火光、曳光、粒子全部擺到鏡頭前畫一次
+function warmUp() {
+  const shown = [];
+  const show = (o) => { if (!o) return; shown.push([o, o.visible]); o.visible = true; };
+  camera.position.set(0, 1.6, 6); camera.rotation.set(0, 0, 0); camera.updateMatrixWorld(true);
+  let i = 0; const all = [...POOL.soldier, ...POOL.civ, ...POOL.officer];
+  for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); if (c.flash) { show(c.flash); } i++; }
+  if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); }
+  for (const t of TRACERS) show(t.m);
+  for (const t of Object.values(TEX)) if (t && t.isTexture && t.image) renderer.initTexture(t);
+  for (let pass = 0; pass < 3; pass++) {
+  if (pass === 2) for (const c of all) { c.play('Crouch_Idle_Aim'); c.update(0.3); }
+  renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+  if (ROLE === 'student') { const bg = scene.background, fg = scene.fog; scene.background = null; scene.fog = null; renderer.autoClear = false; renderer.clearDepth(); vmCamera.position.copy(camera.position); vmCamera.quaternion.copy(camera.quaternion); renderer.render(scene, vmCamera); scene.background = bg; scene.fog = fg; renderer.autoClear = true; }
+  if (P) { P.arms && P.weaponMeshes && P.updateView(0.016); }
+  }
+  for (const [o, v] of shown) o.visible = v;
+  for (const c of all) { c.mixer.stopAllAction(); c.cur = null; c.curName = null; c.root.position.set(0, -50, 0); }
+  if (P) P.setGear(P.gearId);
+  DBG(`預熱完成：著色程式 ${renderer.info.programs.length} 個`);
 }
 async function main() {
   if (ROLE === 'teacher' && MOBILE && !Q.has('teacher')) { $('load').hidden = true; show('scrPhone'); $('phStu').onclick = () => { ROLE = 'student'; $('scrPhone').hidden = true; $('load').hidden = false; boot(); }; $('phTea').onclick = () => { $('scrPhone').hidden = true; $('load').hidden = false; boot(); }; return; }
@@ -4103,8 +4163,10 @@ async function main() {
 async function boot() {
   applyQuality();
   try { await loadAll(); } catch (e) { console.warn(e); DBG('載入失敗：' + (e && e.message || e)); $('loadMsg').textContent = '部分素材載入失敗，仍嘗試開始…'; }
+  if (ROLE === 'student') { P = new Player(); P.setupViewModels(MODELS); setupInput(); P.spawnAt(6); }
+  try { $('loadMsg').textContent = '準備畫面…'; warmUp(); } catch (e) { DBG('預熱失敗 ' + e.message); }
   $('load').hidden = true;
-  if (ROLE === 'student') { P = new Player(); P.setupViewModels(MODELS); setupInput(); P.spawnAt(6); studentInit(); SFX.init(); }
+  if (ROLE === 'student') { studentInit(); SFX.init(); }
   else teacherInit();
   frame();
 }
