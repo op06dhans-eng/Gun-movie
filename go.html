@@ -28,14 +28,14 @@ h1 { margin: 0; font-size: clamp(30px, 8vw, 46px); font-weight: 900; }
   <div class="pick" id="pick" hidden>
     <a id="gConvoy" href="#">補給公路<small>兩人一台車，把補給送到前線</small></a>
     <a id="gRadar" href="#">雷達站攻防<small>自己飛無人機，攻擊老師的雷達站</small></a>
-    <a id="gFilm" href="#">片場：戰爭片拍攝中<small>第一人稱射擊，四個劇組拍同一場戲</small></a>
+    <a id="gFilm" href="#">城市反恐：破曉行動<small>第一人稱射擊，救人質、拆炸彈</small></a>
   </div>
 </main>
 <script type="module">
 const CFG = { apiKey: 'AIzaSyCtxZmkrZ8tcCONC5DQbEU5ySlos9i-a8o', authDomain: 'drone-swarm-class.firebaseapp.com', databaseURL: 'https://drone-swarm-class-default-rtdb.asia-southeast1.firebasedatabase.app', projectId: 'drone-swarm-class', storageBucket: 'drone-swarm-class.firebasestorage.app', messagingSenderId: '528664638395', appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e' };
 // 三款遊戲的學生網址（同一個網站底下的三個資料夾）
 const BASE = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/' : location.origin + location.pathname.replace(/[^/]*\/[^/]*$/, '');
-const GAMES = { convoy: { name: '補給公路', url: BASE + 'supply-convoy/play.html', key: 'sr' }, radar: { name: '雷達站攻防', url: BASE + 'radar-defense/play.html', key: 'rd' }, film: { name: '片場：戰爭片拍攝中', url: BASE + 'Gun-movie/play.html', key: 'fs' } };
+const GAMES = { convoy: { name: '補給公路', url: BASE + 'supply-convoy/play.html', key: 'sr' }, radar: { name: '雷達站攻防', url: BASE + 'radar-defense/play.html', key: 'rd' }, film: { name: '城市反恐：破曉行動', url: BASE + 'Gun-movie/play.html', key: 'fs' } };
 const $ = (id) => document.getElementById(id);
 $('gConvoy').href = GAMES.convoy.url; $('gRadar').href = GAMES.radar.url; $('gFilm').href = GAMES.film.url;
 const FRESH = 12 * 3600 * 1000; // 12 小時內老師打開過的才算「今天的遊戲」
