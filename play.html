@@ -2545,8 +2545,8 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.0.0（新遊戲：城市反恐・破曉行動。四段推進、人質、炸彈；沿用連線、操作、換彈架構）';
-const ROOT = 'fs'; // 資料庫根節點
+const VERSION = '2.0.1（修正老師畫面空白：資料改放在資料庫允許的位置；面板先顯示，連不上會說明原因）';
+const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
   const mine = VERSION.split('（')[0];
@@ -2662,7 +2662,7 @@ async function makeFirebaseNet(cfg) {
     update: (p, v) => D.update(Rf(p), v).catch(e => console.warn(e)),
     remove: (p) => D.remove(Rf(p)).catch(e => console.warn(e)),
     push: (p, v) => { const r = D.push(Rf(p)); D.set(r, v).catch(e => console.warn(e)); return r.key; },
-    on: (p, cb) => D.onValue(Rf(p), (s) => cb(s.val())),
+    on: (p, cb) => D.onValue(Rf(p), (s) => cb(s.val()), (e) => { DBG('資料庫拒絕讀取 ' + p + '：' + (e && e.message || e)); NET.denied = true; }),
     onChild(p, h) { const u = []; if (h.added) u.push(D.onChildAdded(Rf(p), (s) => h.added(s.key, s.val()))); if (h.changed) u.push(D.onChildChanged(Rf(p), (s) => h.changed(s.key, s.val()))); if (h.removed) u.push(D.onChildRemoved(Rf(p), (s) => h.removed(s.key))); return () => u.forEach(f => f()); },
     onDisconnectRemove: (p) => D.onDisconnect(Rf(p)).remove(),
     onRaw: (p, cb) => D.onValue(D.ref(db, p), (s) => cb(s.val())),
@@ -4095,7 +4095,7 @@ function renderPanel() {
   <h2>難度</h2><div class="row">${Object.keys(DIFFS).map((k) => `<button data-d="${k}" class="${TS.diff === k ? 'on' : ''}">${DIFFS[k].name}</button>`).join('')}</div>
   <div class="small">人質時限 ${DIFFS[TS.diff].hostage} 秒，炸彈倒數 ${DIFFS[TS.diff].bomb} 秒${DIFFS[TS.diff].extra ? '，敵人較多、較準' : ''}</div>
   <h2>任務時間</h2><div class="row">${[210, 240, 300].map((s) => `<button data-sec="${s}" class="${TAKE_SEC === s ? 'on' : ''}">${s / 60 | 0}:${String(s % 60).padStart(2, '0')}</button>`).join('')}</div>
-  ${idle ? `<button class="big" id="bStart" ${total ? '' : 'disabled'}>開始任務</button>` : ''}
+  ${idle ? `<button class="big" id="bStart" ${total && TS.sid ? '' : 'disabled'}>${TS.sid ? '開始任務' : '連線中…'}</button>` : ''}
   ${ph === 'count' || ph === 'take' ? `<button class="big red" id="bCut">結束任務（提前）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bPrem">公布成績（翻牌）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bNew" style="border-color:#666;background:#222;font-size:16px">清空成績，重新選組</button>` : ''}
@@ -4108,7 +4108,7 @@ function renderPanel() {
   p.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { if (ph === 'take' || ph === 'count') return; TS.diff = b.dataset.d; NET.update('meta', { diff: TS.diff }); renderPanel(); });
   p.querySelectorAll('[data-sec]').forEach((b) => b.onclick = () => { TAKE_SEC = +b.dataset.sec; renderPanel(); });
   if ($('bStart')) $('bStart').onclick = startCount; if ($('bCut')) $('bCut').onclick = () => cut('cut'); if ($('bPrem')) $('bPrem').onclick = () => premiere(0); if ($('bNew')) $('bNew').onclick = newSession;
-  $('bFake').onclick = () => addFake(12); $('bUnfake').onclick = removeFake;
+  $('bFake').onclick = () => { if (TS.sid) addFake(12); }; $('bUnfake').onclick = removeFake;
   $('bStu').onclick = () => { const u = new URL(location.href); u.hash = 'student'; const w = window.open(u.toString(), '_blank'); if (!w) { $('tTick').insertAdjacentHTML('afterbegin', `<div>瀏覽器擋住新分頁：請自己開新分頁貼上網址，後面加 #student</div>`); } };
   $('bSnd').onclick = () => { SFX.init(); SFX.toggle(); renderPanel(); }; $('bFs').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); };
   renderTick();
@@ -4219,6 +4219,8 @@ function dotFor(pid, team) {
 const EV_TEXT = { civ: '誤傷平民', hh: '誤傷人質', hr: '救出人質', taken: '人質被押走', bomb: '拆彈成功', boom: '炸彈引爆' };
 function teacherInit() {
   ROLE = 'teacher'; hideAll(); $('hudT').hidden = false; $('hudS').hidden = true;
+  // 先把面板畫出來；連上資料庫前「開始任務」不能按，連不上就顯示原因
+  renderPanel(); setTimeout(() => { if (!TS.sid) tLog(-1, NET.denied ? '資料庫拒絕連線：請截圖給開發者' : '還在連線資料庫…網路慢的話請稍等，或重新整理'); }, 6000);
   const unsub = NET.on('meta', (m) => {
     unsub();
     if (m && m.sid) { TS.sid = m.sid; TS.take = m.take || 0; TS.diff = m.diff || 'N'; TS.phase = 'lobby'; NET.set('meta', { sid: TS.sid, phase: 'lobby', diff: TS.diff, take: TS.take }); claimLobby(); }
