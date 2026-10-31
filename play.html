@@ -119,6 +119,9 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 .fire.on { background: rgba(255,90,60,0.65); }
 .tb { position: absolute; width: min(17vmin, 84px); height: min(17vmin, 84px); border-radius: 50%; border: 3px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.35); color: #fff; font-size: calc(var(--fs) * 0.62); font-weight: 900; pointer-events: auto; touch-action: none; line-height: 1.1; }
 .tb.on { border-color: var(--hot); background: rgba(255,150,60,0.4); }
+#bWeapon { right: calc(max(18px, env(safe-area-inset-right)) + min(30vmin, 140px) + 14px); bottom: calc(24px + 2 * min(17vmin, 84px) + 24px); border-color: #e0b04a; background: rgba(90,60,10,0.55); }
+.fade { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: #000; color: #ddd; display: grid; place-items: center; font-size: calc(var(--fs) * 1.3); font-weight: 900; }
+.scope .rsn { display: none; } .scope.sn .rsn { display: inline; } .scope.sn .r3 { display: none; }
 #bAim { right: calc(max(18px, env(safe-area-inset-right)) + min(30vmin, 140px) + 14px); bottom: 24px; }
 #bReload { right: calc(max(18px, env(safe-area-inset-right)) + min(30vmin, 140px) + 14px); bottom: calc(24px + min(17vmin, 84px) + 12px); }
 #bDefuse { right: calc(max(18px, env(safe-area-inset-right)) + min(30vmin, 140px) + 14px + min(17vmin, 84px) + 14px); bottom: 24px; width: min(28vmin, 130px); height: min(20vmin, 92px); border-radius: 18px; border-color: var(--ok); font-size: calc(var(--fs) * 0.95); }
@@ -207,11 +210,14 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
       <circle r="47.5" fill="url(#scv)"/>
       <rect x="-200" y="-200" width="400" height="400" fill="#050605" mask="url(#scm)"/>
       <circle r="47" fill="none" stroke="#1c1d1b" stroke-width="2.2"/>
-      <g stroke="#0b0b0b" stroke-width="0.35" fill="none">
+      <g class="rsn" stroke="#080808" fill="none"><line x1="-47" y1="0" x2="47" y2="0" stroke-width="0.22"/><line x1="0" y1="-47" x2="0" y2="47" stroke-width="0.22"/>
+        <line x1="-47" y1="0" x2="-20" y2="0" stroke-width="1.1"/><line x1="20" y1="0" x2="47" y2="0" stroke-width="1.1"/><line x1="0" y1="20" x2="0" y2="47" stroke-width="1.1"/><line x1="0" y1="-47" x2="0" y2="-20" stroke-width="1.1"/>
+        <g fill="#080808" stroke="none"><circle cx="-4" cy="0" r="0.5"/><circle cx="-8" cy="0" r="0.5"/><circle cx="-12" cy="0" r="0.5"/><circle cx="-16" cy="0" r="0.5"/><circle cx="4" cy="0" r="0.5"/><circle cx="8" cy="0" r="0.5"/><circle cx="12" cy="0" r="0.5"/><circle cx="16" cy="0" r="0.5"/><circle cx="0" cy="4" r="0.5"/><circle cx="0" cy="8" r="0.5"/><circle cx="0" cy="12" r="0.5"/><circle cx="0" cy="16" r="0.5"/><circle cx="0" cy="-4" r="0.5"/><circle cx="0" cy="-8" r="0.5"/><circle cx="0" cy="-12" r="0.5"/><circle cx="0" cy="-16" r="0.5"/></g></g>
+      <g class="r3" stroke="#0b0b0b" stroke-width="0.35" fill="none">
         <line x1="0" y1="2.2" x2="0" y2="30"/><line x1="-47" y1="0" x2="-9" y2="0"/><line x1="9" y1="0" x2="47" y2="0"/>
         <line x1="-2" y1="7" x2="2" y2="7"/><line x1="-1.6" y1="12" x2="1.6" y2="12"/><line x1="-1.2" y1="17" x2="1.2" y2="17"/><line x1="-0.9" y1="22" x2="0.9" y2="22"/>
       </g>
-      <path d="M -3.2 2.6 L 0 0 L 3.2 2.6" fill="none" stroke="#ff3b1f" stroke-width="0.75" stroke-linejoin="miter"/>
+      <path class="r3" d="M -3.2 2.6 L 0 0 L 3.2 2.6" fill="none" stroke="#ff3b1f" stroke-width="0.75" stroke-linejoin="miter"/>
       <circle cx="0" cy="0" r="0.35" fill="#ff5a3a"/>
     </svg></div>
     <div class="tasks" id="hTask"></div>
@@ -236,7 +242,9 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
     <button class="tb" id="bCover" hidden>前往<br>掩體</button>
     <button class="tb" id="bReload">換彈</button>
     <button class="tb" id="bDefuse" hidden>按住<br>拆彈</button>
-    <div class="deskhint" id="deskHint" hidden><b>點一下畫面開始</b><span>滑鼠移動：轉動視角</span><span>左鍵：開火　右鍵按住：瞄準</span><span>R：換彈　空白鍵：前往掩體　E 按住：拆彈</span><span>Esc：放開滑鼠</span></div>
+    <button class="tb" id="bWeapon" hidden>撿起<br>AK</button>
+    <div class="fade" id="hFade"></div>
+    <div class="deskhint" id="deskHint" hidden><b>點一下畫面開始</b><span>滑鼠移動：轉動視角</span><span>左鍵：開火　右鍵按住：瞄準</span><span>R：換彈　空白鍵：前往掩體　G：撿起 AK／換槍　E 按住：拆彈</span><span>Esc：放開滑鼠</span></div>
     <div class="ng" id="hNg" hidden>你被擊倒了</div>
   </div>
   <div class="hud" id="hudT" hidden>
@@ -2594,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.3.0（全班同一個城鎮：街上的敵人由老師電腦統一控制、全班共用，一波波湧來；救人質時各自攻入民宅；全班共用炸彈倒數與拆彈進度；可切回各自獨立）';
+const VERSION = '2.4.0（加長關卡：新增肅清港灣商行（三個房間）、屋頂手拉槍機狙擊救人質；可撿起敵人的 AK-47；M4／AK／狙擊槍都有拋殼，換彈時彈匣看得到子彈）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2617,7 +2625,7 @@ const store = { get(k, d) { try { const v = localStorage.getItem('fs-' + k); ret
 let QUALITY = Q.get('q') || store.get('q', MOBILE ? 'low' : 'high');
 const TEAMS = [{ name: '紅組', c: '#ff5a4e' }, { name: '藍組', c: '#4ea3ff' }, { name: '綠組', c: '#3fd17a' }, { name: '黃組', c: '#ffc83d' }];
 const TEAM_MAX = 15, COUNT_SEC = 6;
-let TAKE_SEC = +Q.get('sec') || 300;
+let TAKE_SEC = +Q.get('sec') || 360;
 const $ = (id) => document.getElementById(id);
 const clamp = THREE.MathUtils.clamp, lerp = THREE.MathUtils.lerp;
 const R = Math.random;
@@ -2631,17 +2639,28 @@ addEventListener('unhandledrejection', (e) => DBG('錯誤：' + (e.reason && e.r
 /* 難度：普通、困難（敵人數量、命中、傷害、炸彈倒數、人質時限） */
 const GAME_TITLE = '城市反恐：破曉行動';
 const DIFFS = {
-  N: { name: '普通', extra: 0, acc: 1, dmg: 1, bomb: 90, hostage: 60, defuseAmbush: 1 },
-  H: { name: '困難', extra: 1, acc: 1.3, dmg: 1.25, bomb: 70, hostage: 45, defuseAmbush: 2 },
+  N: { name: '普通', extra: 0, acc: 1, dmg: 1, bomb: 90, hostage: 60, snipe: 45, defuseAmbush: 1 },
+  H: { name: '困難', extra: 1, acc: 1.3, dmg: 1.25, bomb: 70, hostage: 45, snipe: 35, defuseAmbush: 2 },
 };
 const PTS = { kill: 100, head: 150, hostage: 200, hostageHit: -300, civHit: -300, bomb: 500, death: -100, timeBonus: 3 };
 const WEAPONS = {
   m4: { name: 'M4 卡賓槍（3 倍瞄準鏡）', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 2.7, spread: 1.1, spreadAds: 0.15, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.205, 0.04], scope: { y: 0.205, z0: 0.04, mount: 0.168 }, magazine: [0, -0.03, -0.08],
     magBox: { zMin: -0.135, zMax: -0.02, yMax: 0.035 }, magAxis: [0, -0.9, -0.44], magGrip: [-0.04, -0.03, -0.075], bolt: { a: [-0.038, 0.072, -0.012], b: [-0.03, 0.066, -0.002], fingers: [0.2, -0.3, -0.93], thumb: [0.1, 0.95, -0.3] }, view: [0.19, -0.21, -0.43], adsDist: 0.13,
+    eject: { port: [0.024, 0.103, -0.064], dir: [1, 0.45, 0.3], len: 0.045, r: 0.0048, neck: 0.012 }, round: { len: 0.057, r: 0.0048, tip: 0.019 },
     hands: { right: { pos: [0.022, 0.05, 0.123], fingers: [0, -0.412, -0.911], thumb: [0, 0.911, -0.412], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.05, 0.055, -0.19], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
-  ak: { name: '道具步槍（AK）', model: 'rifle_ak', dmg: 26, head: 2.5, rpm: 560, mag: 30, reload: 3.0, spread: 2.2, spreadAds: 0.7, recoil: 1.2, adsFov: 50, sound: 'ak', muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12],
+  ak: { name: 'AK-47 步槍（敵人的槍）', model: 'rifle_ak', dmg: 46, head: 2.5, rpm: 600, mag: 30, reload: 3.0, spread: 1.6, spreadAds: 0.5, recoil: 1.25, adsFov: 50, sound: 'ak',
+    eject: { port: [0.022, 0.113, -0.1], dir: [1, 0.55, -0.1], len: 0.039, r: 0.0057, neck: 0.011 }, round: { len: 0.056, r: 0.0057, tip: 0.02 }, muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12],
     magBox: { zMin: -0.215, zMax: -0.1, yMax: 0.065 }, magAxis: [0, -0.96, -0.28], magGrip: [-0.04, -0.03, -0.155], bolt: { a: [0.035, 0.125, -0.03], b: [0.035, 0.125, 0.07], fingers: [0.2, -0.5, -0.85], thumb: [-0.9, 0.2, -0.2] }, view: [0.19, -0.2, -0.42], adsDist: 0.16,
     hands: { right: { pos: [0.022, 0.035, 0.12], fingers: [0, -0.29, -0.96], thumb: [0, 0.96, -0.29], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.035, -0.21], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
+  // 手拉槍機狙擊槍：Poly Haven「Bolt Action Rifle 7.62」（CC0）改成黑色槍托、加上大型 10 倍瞄準鏡、槍口制退器與腳架
+  sniper: { name: '手拉槍機狙擊槍（10 倍瞄準鏡）', model: 'rifle_sniper', dmg: 120, head: 3, rpm: 60, boltAction: true, cycle: 1.25, mag: 5, reload: 3.2, spread: 3.5, spreadAds: 0.02, recoil: 3.4, adsFov: 40, sound: 'sniper',
+    muzzle: [0, 0.1, -1.0], sight: [0, 0.158, 0.075], scope: { y: 0.158, fov: 2 * Math.atan(Math.tan(36 * Math.PI / 180) / 10) * 180 / Math.PI }, magazine: [0, 0.03, -0.09],
+    magBox: { zMin: -0.145, zMax: -0.045, yMax: 0.06, minY: 0.03 }, magAxis: [0, -1, -0.05], magGrip: [-0.035, 0.02, -0.095],
+    bolt: { a: [-0.045, 0.04, -0.24], b: [-0.045, 0.04, -0.27], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92] },
+    knob: [0.034, 0.071, -0.071], boltPivot: [0.0, 0.088], boltBox: { x0: 0.01, x1: 0.04, y0: 0.06, y1: 0.11, z0: -0.12, z1: -0.05 }, boltSlide: 0.075,
+    view: [0.2, -0.19, -0.47], adsDist: 0.09,
+    eject: { port: [0.016, 0.108, -0.092], dir: [1, 0.7, 0.15], len: 0.069, r: 0.0059, neck: 0.016 }, round: { len: 0.071, r: 0.006, tip: 0.024, n: 1 },
+    hands: { right: { pos: [0.022, 0.099, 0.136], fingers: [0, -0.6, -0.8], thumb: [0, 0.8, -0.6], curl: [[10, 30, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.04, -0.28], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
 };
 
 /* =========================================================
@@ -2813,13 +2832,18 @@ function buildWorld() {
   for (const side of [-1, 1]) {
     let z = Z0 + 2;
     while (z > Z1 + 4) {
-      const w = 9 + rnd() * 9; const zc = z - w / 2;
-      const gap = rnd() < 0.3 ? 3.5 : 0;
+      // 左側街口留給「港灣商行」（自己蓋，一樓可以進去）
+      if (side < 0 && z <= BLDG.z0 + 0.01 && z > BLDG.z1) { WORLD.buildings.push({ side, z0: BLDG.z0, z1: BLDG.z1, zc: (BLDG.z0 + BLDG.z1) / 2, x0: -BLDG.x0, h: BLDG.H + 0.5, plaza: false, shop: true }); z = BLDG.z1; continue; }
+      let w = 9 + rnd() * 9;
+      let gap = rnd() < 0.3 ? 3.5 : 0;
+      if (side < 0 && z > BLDG.z0 && z - w - gap < BLDG.z0) { w = z - BLDG.z0; gap = 0; if (w < 2.5) { z = BLDG.z0; continue; } }
+      const zc = z - w / 2;
       const plaza = side > 0 && zc < -68 && zc > -98;
       const depth = 10 + rnd() * 6; const x0 = plaza ? 25 : ROAD_W / 2 + WALK_W;
-      const floors = plaza ? 2 : 2 + (rnd() < 0.5 ? 1 : 0) + (rnd() < 0.2 ? 1 : 0); const h = floors * 3.3 + 0.4;
+      const low = side < 0 && zc < -66 && zc > -96; // 商行屋頂往街尾看的視線經過這一段，樓不能太高
+      let floors = plaza ? 2 : 2 + (rnd() < 0.5 ? 1 : 0) + (rnd() < 0.2 ? 1 : 0); if (low) floors = 2; const h = floors * 3.3 + 0.4;
       const style = styles[Math.floor(rnd() * styles.length)];
-      building(side * (x0 + depth / 2), zc, depth, w, h, floors, style, side);
+      building(side * (x0 + depth / 2), zc, depth, w, h, floors, style, side, low);
       WORLD.buildings.push({ side, z0: z, z1: z - w, zc, x0, h: h + 0.5, plaza });
       if (gap) WORLD.spawns.push({ x: side * (x0 + 1.5), z: z - w - gap / 2, alley: true, side });
       z -= w + gap;
@@ -2854,7 +2878,7 @@ function buildWorld() {
   WORLD.bomb = buildBomb(0.9, -133.2);
   // 平民逃跑的終點：巷口與街尾後方
   for (const s of WORLD.spawns) WORLD.fleePts.push([s.x + s.side * 4, s.z]);
-  buildInterior();
+  buildInterior(); buildShop();
   // 合併靜態幾何
   // 室內材質（in_ 開頭）不接收陰影：屋頂的影子會讓室內一片黑，當作室內有開燈
   for (const m in GEOS) { const g = mergeGeometries(GEOS[m], false); const mesh = new THREE.Mesh(g, matFor(m)); const inside = m.startsWith('in_'); mesh.castShadow = !inside; mesh.receiveShadow = !inside; STATIC.add(mesh); }
@@ -2868,12 +2892,12 @@ function matFor(m) {
   if (m === 'awning2') return new THREE.MeshStandardMaterial({ color: '#2c5a7a', roughness: 0.9, side: THREE.DoubleSide });
   return pbr(m, 1, 1, opt);
 }
-function building(x, z, depth, w, h, floors, style, side) {
+function building(x, z, depth, w, h, floors, style, side, bare) {
   block(depth, h, w, style, x, 0, z, { top: 'concrete2' });
   // 女兒牆、屋頂雜物
   block(depth + 0.3, 0.5, w + 0.3, 'concrete', x, h, z, { top: 'concrete' }); // 屋頂邊緣也算遮擋（判斷屋頂槍手看不看得到）
-  if (rnd() < 0.5) block(1.6, 1.4, 1.6, 'corrugated', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3), { top: 'rust' });
-  if (rnd() < 0.4) block(2.2, 0.8, 1.2, 'metal', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3));
+  if (rnd() < 0.5 && !bare) block(1.6, 1.4, 1.6, 'corrugated', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3), { top: 'rust' });
+  if (rnd() < 0.4 && !bare) block(2.2, 0.8, 1.2, 'metal', x + (rnd() - 0.5) * (depth - 3), h + 0.5, z + (rnd() - 0.5) * (w - 3));
   // 面街的那一面：窗戶、門、雨棚（facade 貼圖本身有窗）
   const fx = x - side * depth / 2 - side * 0.01, ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
   if (style !== 'facade') {
@@ -3019,6 +3043,52 @@ function buildInterior() {
 }
 
 /* =========================================================
+   第二棟要肅清的建築：街口左側的「港灣商行」（兩層樓，一樓可以進去，屋頂是狙擊點）
+   外框 x -9.5（面街）..-21.5、z -50..-66；一樓三個房間：A 店面、B1 倉庫、B2 樓梯間
+   ========================================================= */
+const BLDG = { x0: -9.5, x1: -21.5, z0: -50, z1: -66, h1: 3.3, H: 10.3, t: 0.3 }; // 三層樓高（屋頂狙擊點要高過隔壁的樓）
+function buildShop() {
+  const { x0, x1, z0, z1, h1, H, t } = BLDG; const DOOR_H = 2.25;
+  // 牆：沿 x（固定 z）與沿 z（固定 x），可指定高度與門洞
+  const wallZ = (z, xa, xb, h, mat, doors = []) => { let x = xa; for (const [da, db] of [...doors, [xb, xb]]) { if (da > x) block(da - x, h, t, mat, (x + da) / 2, 0, z); if (db > da) block(db - da, h - DOOR_H, t, mat, (da + db) / 2, DOOR_H, z); x = db; } };
+  const wallX = (x, za, zb, h, mat, doors = []) => { let z = za; for (const [da, db] of [...doors, [zb, zb]]) { if (da < z) block(t, h, z - da, mat, x, 0, (z + da) / 2); if (db < da) block(t, h - DOOR_H, da - db, mat, x, DOOR_H, (da + db) / 2); z = db; } };
+  const IN = 'in_plaster3', IN2 = 'in_plaster2';
+  // 外牆（內側用室內材質，外面另外貼一層會接收陰影的磚牆）
+  wallZ(z0, x1, x0, H, IN); wallZ(z1, x1, x0, H, IN); wallX(x1, z0, z1, H, IN); wallX(x0, z0, z1, H, IN, [[-56.2, -57.8]]);
+  const skin = 'brick2', o = t / 2 + 0.012;
+  quad(z0 - z1 + t, H, skin, [x1 - o, H / 2, (z0 + z1) / 2], -Math.PI / 2);
+  quad(x0 - x1 + t, H, skin, [(x0 + x1) / 2, H / 2, z0 + o], 0); quad(x0 - x1 + t, H, skin, [(x0 + x1) / 2, H / 2, z1 - o], Math.PI);
+  // 面街那一面：門左右兩段、門上方、二樓整面
+  const fx = x0 + o; const fq = (w, h, zc, yc) => quad(w, h, skin, [fx, yc, zc], Math.PI / 2);
+  fq(-50 - -56.2 + t / 2, H, (-50 + t / 2 + -56.2) / 2, H / 2); fq(-57.8 - (z1 - t / 2), H, (-57.8 + z1 - t / 2) / 2, H / 2); fq(1.6, H - DOOR_H, -57, DOOR_H + (H - DOOR_H) / 2);
+  for (const z of [-52.4, -61.4, -64.2]) { quad(1.6, 1.4, 'frame', [fx + 0.01, 1.6, z], Math.PI / 2); quad(1.4, 1.2, 'glass', [fx + 0.02, 1.6, z], Math.PI / 2); } // 一樓櫥窗（假的，打不穿）
+  for (const f of [1, 2]) for (const z of [-52, -55.5, -59, -62.5]) { quad(1.4, 1.5, 'frame', [fx + 0.01, f * h1 + 1.9, z], Math.PI / 2); quad(1.2, 1.3, 'glass', [fx + 0.02, f * h1 + 1.9, z], Math.PI / 2); }
+  awning(fx, 2.75, -57, -1, 3.0);
+  // 招牌
+  { const tex = canvasTex(512, 128, (g, w, h) => { g.fillStyle = '#20343a'; g.fillRect(0, 0, w, h); g.strokeStyle = '#d8c48a'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12); g.fillStyle = '#f2e6c0'; g.font = '900 78px "Noto Sans TC", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('港灣商行', w / 2, h / 2 + 4); });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.9), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 })); m.position.set(fx + 0.04, 3.05, -57); m.rotation.y = Math.PI / 2; m.castShadow = false; m.receiveShadow = true; scene.add(m); }
+  // 室內隔間
+  wallX(-15.5, z0, z1, h1, IN2, [[-52.0, -53.6]]);   // 店面 → 倉庫
+  wallZ(-58, x1, -15.5, h1, IN2, [[-19.6, -18.0]]);   // 倉庫 → 樓梯間
+  // 地板、一樓天花板、屋頂與女兒牆
+  quad(x0 - x1, z0 - z1, 'in_concrete', [(x0 + x1) / 2, 0.03, (z0 + z1) / 2], 0, -Math.PI / 2);
+  quad(x0 - x1, z0 - z1, 'in_concrete2', [(x0 + x1) / 2, h1 - 0.01, (z0 + z1) / 2], 0, Math.PI / 2);
+  block(x0 - x1 + t, 0.3, z0 - z1 + t, 'concrete2', (x0 + x1) / 2, H - 0.3, (z0 + z1) / 2, { top: 'roof' });
+  for (const [w, d, x, z] of [[x0 - x1 + t, 0.25, (x0 + x1) / 2, z0], [x0 - x1 + t, 0.25, (x0 + x1) / 2, z1], [0.25, z0 - z1, x0, (z0 + z1) / 2], [0.25, z0 - z1, x1, (z0 + z1) / 2]]) block(w, 0.5, d, 'concrete', x, H, z, { top: 'concrete' });
+  block(1.6, 1.4, 1.6, 'corrugated', -18.5, H, -54, { top: 'rust' }); block(2.4, 2.4, 2.2, 'concrete2', -19.5, H, -62.5, { top: 'concrete' }); // 屋頂水塔、樓梯間出口
+  // 狙擊點：屋頂前緣的沙包
+  block(1.6, 1.0, 0.6, 'hessian', -10.4, H, -65.3, { top: 'hessian' });
+  // 家具：櫃台、貨架、紙箱、樓梯
+  block(0.7, 1.0, 4.2, 'in_planks', -12.6, 0, -54.6); block(2.6, 0.9, 0.7, 'in_planks', -13.6, 0, -60.3, { rotY: 0.1 }); // 櫃台
+  block(0.5, 1.9, 2.6, 'in_metal', -15.0, 0, -63.6); block(2.2, 1.9, 0.5, 'in_metal', -12.8, 0, -65.4);   // 貨架
+  block(1.0, 1.0, 1.0, 'planks', -11.0, 0, -64.0, { rotY: 0.2 }); block(0.8, 0.8, 0.8, 'planks', -10.8, 0, -51.2, { rotY: -0.3 });
+  block(1.1, 1.05, 1.1, 'planks', -19.6, 0, -51.6, { rotY: 0.15 }); block(0.9, 0.85, 0.9, 'planks', -20.6, 0, -52.6, { rotY: -0.2 }); block(1.1, 1.05, 1.1, 'planks', -17.8, 0, -56.6, { rotY: 0.3 });
+  block(0.5, 1.9, 2.4, 'in_metal', -21.0, 0, -54.6);
+  for (let i = 0; i < 7; i++) block(1.3, 0.42 * (i + 1), 0.6, 'in_concrete', -20.6, 0, -60.0 - i * 0.6, { collide: i < 3 }); // 往屋頂的樓梯
+  block(1.0, 0.8, 0.6, 'in_planks', -16.8, 0, -64.8);
+}
+
+/* =========================================================
    掩體點：同學蹲在掩體後面；瞄準或開火時才探身（low＝從上方，side＝往旁邊）
    box：掩體本身的範圍（準心對到它就能「前往掩體」）
    ========================================================= */
@@ -3035,6 +3105,13 @@ const COVERS = {
   D2b: { x: 15.8, z: -80.1, yaw: 0, kind: 'side', peek: [-1.65, 0], box: [14.8, 16.7, -81.2, -80.8], indoor: 1 },
   D3a: { x: 16.2, z: -88.0, yaw: -Math.PI / 2, kind: 'side', peek: [0, -1.65], box: [16.8, 17.2, -89, -86], indoor: 1 },
   D3b: { x: 16.2, z: -91.3, yaw: -Math.PI / 2, kind: 'side', peek: [0, 1.65], box: [16.8, 17.2, -93, -90.3], indoor: 1 },
+  E1a: { x: -8.7, z: -58.6, yaw: Math.PI / 2, kind: 'side', peek: [0, 1.6], box: [-9.8, -9.2, -59.6, -58.0], indoor: 1 },
+  E1b: { x: -8.7, z: -55.4, yaw: Math.PI / 2, kind: 'side', peek: [0, -1.6], box: [-9.8, -9.2, -56.0, -54.4], indoor: 1 },
+  E2a: { x: -14.7, z: -54.4, yaw: Math.PI / 2, kind: 'side', peek: [0, 1.6], box: [-15.8, -15.2, -55.2, -53.8], indoor: 1 },
+  E2b: { x: -14.7, z: -51.0, yaw: Math.PI / 2, kind: 'side', peek: [0, -1.8], box: [-15.8, -15.2, -51.6, -50.3], indoor: 1 },
+  E3a: { x: -16.9, z: -57.2, yaw: 0, kind: 'side', peek: [-1.9, 0], box: [-17.6, -15.6, -58.3, -57.7], indoor: 1 },
+  E3b: { x: -20.7, z: -57.2, yaw: 0, kind: 'side', peek: [1.9, 0], box: [-21.4, -19.7, -58.3, -57.7], indoor: 1 },
+  SN: { x: -10.0, z: -64.6, y: 10.3, yaw: -0.155, pitch: -0.14, kind: 'low', box: [-11.2, -9.6, -65.6, -65.0], indoor: 1, roof: 1 },
   C3a: { x: -2.2, z: -94.8, yaw: 0, kind: 'side', peek: [1.6, 0], box: [-5.6, -1.4, -100.6, -95.4] },
   C3b: { x: 4.0, z: -91.1, yaw: 0, kind: 'low', box: [2.5, 5.5, -92.4, -91.6] },
   D4: { x: 0.6, z: -130.6, yaw: 0, kind: 'defuse', box: [0.4, 1.4, -133.7, -132.7] },
@@ -3042,7 +3119,7 @@ const COVERS = {
 for (const k in COVERS) COVERS[k].id = k;
 // 掩體上的眼睛位置：躲著（hide）與探身（peek）
 function coverEye(c, peekK, out) {
-  if (c.kind === 'low') return out.set(c.x, lerp(0.98, 1.62, peekK), c.z - peekK * 0.12);
+  if (c.kind === 'low') return out.set(c.x, (c.y || 0) + lerp(0.98, 1.62, peekK), c.z - peekK * 0.12);
   if (c.kind === 'side') return out.set(c.x + c.peek[0] * peekK, lerp(1.5, 1.6, peekK), c.z + c.peek[1] * peekK);
   return out.set(c.x, lerp(1.0, 1.62, peekK), c.z); // 拆彈：蹲著
 }
@@ -3050,11 +3127,11 @@ function coverEye(c, peekK, out) {
 /* =========================================================
    找路（A*，0.5 公尺格子）：在掩體之間移動不穿過車子、牆
    ========================================================= */
-const NAV = { x0: -12, z0: 16, n: 0.5, w: 80, h: 340, grid: null };
+const NAV = { x0: -24, z0: 16, n: 0.5, w: 104, h: 340, grid: null };
 function navBuild() {
   const g = new Uint8Array(NAV.w * NAV.h); const r = 0.3;
   for (const b of WORLD.colliders) {
-    if (b.y1 < 0.3 || b.y0 > 1.0) continue;
+    if (b.y1 < 0.3 || b.y0 > 1.0) continue; // 屋頂上的東西不算
     const i0 = Math.max(0, Math.floor((b.minX - r - NAV.x0) / NAV.n)), i1 = Math.min(NAV.w - 1, Math.floor((b.maxX + r - NAV.x0) / NAV.n));
     const j0 = Math.max(0, Math.floor((NAV.z0 - (b.maxZ + r)) / NAV.n)), j1 = Math.min(NAV.h - 1, Math.floor((NAV.z0 - (b.minZ - r)) / NAV.n));
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) g[j * NAV.w + i] = 1;
@@ -3520,9 +3597,9 @@ class Puffs {
 let PUFFS = null;
 
 /* =========================================================
-   任務：四段推進（路障 → 街口 → 人質 → 炸彈），敵人、平民、人質
+   任務：六段推進（路障 → 街口 → 肅清商行 → 屋頂狙擊救援 → 民宅救人質 → 炸彈），敵人、平民、人質
    ========================================================= */
-const ENEMIES = [], CIVS = [], HOSTAGES = [];
+const ENEMIES = [], CIVS = [], HOSTAGES = [], SNH = []; // SNH：街尾被押著、要用狙擊槍救的兩名人質
 let RIFLE_NPC = null; // 給 NPC 用的 AK 網格（共用幾何）
 const AI = { lastShotAt: 0, lastShotPos: new THREE.Vector3() };
 // 每一段：可用的掩體（第一個是自動前往的）、要清除的敵人
@@ -3534,17 +3611,30 @@ const ZONES = [
   { name: '清除街口', task: 1, covers: ['C1a', 'C1b', 'C1c'], spawns: [
     { k: 'cover', at: [1.0, -50.6], t: 0 }, { k: 'cover', at: [-6.4, -57.5], t: 0.5 }, { k: 'roof', side: -1, z: -46, t: 2 },
     { k: 'rush', from: [-6, -64], at: [-2.6, -44], t: 5 }, { k: 'roof', side: 1, z: -60, t: 8 }, { k: 'rush', from: [-3, -68], at: [-2, -47], t: 11, hard: 1 } ] },
-  { name: '攻入民宅：前廳', task: 2, indoor: true, hostStart: true, covers: ['D1a', 'D1b'], spots: [[15.5, -75.2], [18, -76.6], [20.4, -74.2], [16.6, -79.6], [13, -77]], spawns: [
+  { name: '肅清商行：店面', task: 2, indoor: true, shopStart: true, covers: ['E1a', 'E1b'], spots: [[-13.6, -57.2], [-12.0, -58.4], [-14.2, -59.0], [-11.4, -61.8], [-13.8, -53.2]], spawns: [
+    { k: 'cover', at: [-13.4, -55.0], in: 1 }, { k: 'stand', at: [-14.4, -61.4], in: 1 }, { k: 'cover', at: [-11.6, -64.9], in: 1, t: 1 }, { k: 'rush', from: [-15.0, -52.8], at: [-13.9, -57.6], t: 4, in: 1 }, { k: 'stand', at: [-14.6, -51.2], in: 1, hard: 1 } ] },
+  { name: '肅清商行：倉庫', task: 2, indoor: true, covers: ['E2a', 'E2b'], spots: [[-17.0, -52.8], [-19.0, -53.2], [-20.6, -56.8], [-16.5, -56.9], [-18.4, -50.8]], spawns: [
+    { k: 'cover', at: [-18.6, -51.0], in: 1 }, { k: 'stand', at: [-20.2, -55.6], in: 1 }, { k: 'rush', from: [-18.8, -59.6], at: [-17.2, -54.4], t: 3, in: 1 }, { k: 'cover', at: [-16.6, -55.4], in: 1, hard: 1 } ] },
+  { name: '肅清商行：樓梯間', task: 2, indoor: true, covers: ['E3a', 'E3b'], spots: [[-17.2, -61.0], [-18.4, -62.0], [-16.4, -63.6], [-17.8, -64.6]], spawns: [
+    { k: 'cover', at: [-16.9, -65.4], in: 1 }, { k: 'stand', at: [-18.2, -62.2], in: 1 }, { k: 'stand', at: [-16.4, -60.6], in: 1, t: 2 }, { k: 'stand', at: [-19.2, -64.9], in: 1, hard: 1 } ] },
+  // 屋頂狙擊：街尾兩名人質被押著，看守準備把人押上車；第一槍之前敵人不知道你在屋頂
+  { name: '狙擊救援', task: 3, snipe: true, covers: ['SN'], spawns: [] },
+  { name: '攻入民宅：前廳', task: 4, indoor: true, hostStart: true, covers: ['D1a', 'D1b'], spots: [[15.5, -75.2], [18, -76.6], [20.4, -74.2], [16.6, -79.6], [13, -77]], spawns: [
     { k: 'cover', at: [16.4, -78.3], in: 1 }, { k: 'stand', at: [21.6, -72.4], in: 1 }, { k: 'cover', at: [20.6, -79.9], in: 1, t: 1.5 }, { k: 'rush', from: [14.1, -86], at: [14.4, -78.6], t: 6, hard: 1, in: 1 } ] },
-  { name: '攻入民宅：後房', task: 2, indoor: true, covers: ['D2a', 'D2b'], spots: [[13.2, -86], [14.6, -90], [15.6, -84.5], [12.4, -93.4], [14.2, -94]], spawns: [
+  { name: '攻入民宅：後房', task: 4, indoor: true, covers: ['D2a', 'D2b'], spots: [[13.2, -86], [14.6, -90], [15.6, -84.5], [12.4, -93.4], [14.2, -94]], spawns: [
     { k: 'cover', at: [12.4, -88.3], in: 1 }, { k: 'stand', at: [15.9, -93.8], in: 1 }, { k: 'cover', at: [13.6, -92.6], in: 1, hard: 1 } ] },
-  { name: '人質房', task: 2, indoor: true, hostage: true, covers: ['D3a', 'D3b'], spawns: [] },
-  { name: '拆除炸彈', task: 3, bomb: true, covers: ['C3a', 'C3b'], spawns: [
+  { name: '人質房', task: 4, indoor: true, hostage: true, covers: ['D3a', 'D3b'], spawns: [] },
+  { name: '拆除炸彈', task: 5, bomb: true, covers: ['C3a', 'C3b'], spawns: [
     { k: 'cover', at: [7.4, -105.4], t: 0 }, { k: 'cover', at: [-5.0, -113.6], t: 0.5 }, { k: 'rush', from: [-2, -128], at: [-0.6, -104], t: 3 },
     { k: 'roof', side: -1, z: -108, t: 5 }, { k: 'cover', at: [3.8, -123.4], t: 8 }, { k: 'roof', side: 1, z: -118, t: 11 }, { k: 'rush', from: [0.6, -129], at: [0.8, -106], t: 14, hard: 1 } ] },
-  { name: '拆除炸彈', task: 3, defuse: true, covers: ['D4'], spawns: [] },
+  { name: '拆除炸彈', task: 5, defuse: true, covers: ['D4'], spawns: [] },
 ];
-const HOST_ZONE = 4;
+const HOST_ZONE = 8, Z_SHOP = 2, Z_SNIPE = 5, Z_HOUSE = 6, Z_BOMB = 9, Z_DEF = 10;
+const INDIV = (z) => z >= Z_SHOP && z <= HOST_ZONE; // 全班同一個城鎮時，各自進行的段落（商行、狙擊、民宅）
+// 狙擊段落：看守（g＝押著人質，到時間會押上車）、巡邏、屋頂槍手；人質跪在看守前面
+const SN_GUARDS = [{ k: 'guard', at: [0.3, -139.3], g: 1 }, { k: 'guard', at: [3.1, -139.7], g: 1 }, { k: 'guard', at: [1.6, -141.9], g: 1 }, { k: 'guard', at: [6.4, -133], patrol: [[6.4, -133], [6.4, -142]] }, { k: 'roof', side: 1, z: -127, alt: [-123, -131, -119, -135] }, { k: 'guard', at: [4.7, -141.3], hard: 1 }];
+const SN_HOSTAGES = [[0.6, -138.0], [2.8, -138.4]];
+const SN_CAR = [-1.0, -138.6]; // 黑鴉的車（G-Class，在 -3.2, -140）的車門旁
 const GUARDS = [{ k: 'guard', at: [19.6, -87.6] }, { k: 'guard', at: [22.2, -91.8] }, { k: 'guard', at: [21.9, -84.4], hard: 1 }];
 const HOSTAGE_SPOTS = [[20.4, -86.4], [21.7, -88.7], [20.8, -91.2]];
 const CIV_FLEE = [[-7.2, -15], [7.4, -21], [-7.6, -27], [6.8, -9]];
@@ -3614,7 +3704,13 @@ class Enemy {
     if (this.state === 'dead') { this.deadT += dt; return; }
     if (this.state === 'gone') return;
     const toP = V(P.pos.x - this.pos.x, 0, P.pos.z - this.pos.z); const dist = toP.length(); const want = Math.atan2(toP.x, toP.z);
-    const active = MS.zone === this.zone && MS.arrived && P.alive;
+    const active = MS.zone === this.zone && MS.arrived && P.alive && (!this.sn || MS.snAlert);
+    if (this.patrol && !MS.snAlert && this.state !== 'hit') { // 還沒發現狙擊手：來回巡邏
+      const p = this.patrol[this.pi || 0]; const d = V(p[0] - this.pos.x, 0, p[1] - this.pos.z); const l = d.length();
+      if (l < 0.4) this.pi = ((this.pi || 0) + 1) % this.patrol.length; else { d.divideScalar(l); this.pos.x += d.x * 1.3 * dt; this.pos.z += d.z * 1.3 * dt; this.face(Math.atan2(d.x, d.z), dt, 5); }
+      this.c.root.rotation.y = this.heading; this.c.play('Walk_Aim'); this.peek = 0; return;
+    }
+    if (this.leaveCar && this.state !== 'hit') { const d = V(SN_CAR[0] - this.pos.x, 0, SN_CAR[1] - this.pos.z); const l = d.length(); if (l < 0.5) { this.state = 'gone'; this.c.dispose(); return; } d.divideScalar(l); this.pos.x += d.x * 1.8 * dt; this.pos.z += d.z * 1.8 * dt; this.face(Math.atan2(d.x, d.z), dt, 6); this.c.root.rotation.y = this.heading; this.c.play('Walk_Aim'); return; }
     if (this.state === 'hit') { this.t -= dt; if (this.t <= 0) { this.state = this.prev || 'stand'; this.c.play(this.state === 'cover' ? 'Crouch_Idle_Aim' : this.state === 'move' ? 'Jog_Aim' : 'Pistol_Aim_Neutral'); } this.face(want, dt, 6); this.c.root.rotation.y = this.heading; return; }
     if (this.state === 'leave') { // 看守押著人質離開
       const d = V(this.goal.x - this.pos.x, 0, this.goal.z - this.pos.z); const l = d.length();
@@ -3732,8 +3828,8 @@ class Civilian {
   dispose() { this.c.dispose(); }
 }
 function aiReset() {
-  for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; REM.clear(); for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const h of HOSTAGES) h.dispose(); HOSTAGES.length = 0;
-  Object.assign(MS, { inHouse: false, zone: 0, arrived: false, moving: false, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] });
+  for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; REM.clear(); for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const h of HOSTAGES) h.dispose(); HOSTAGES.length = 0; for (const h of SNH) h.dispose(); SNH.length = 0;
+  Object.assign(MS, { snOn: false, snT: 0, snAlert: false, snState: 'none', snDone: 0, snShots: 0, inHouse: false, zone: 0, arrived: false, moving: false, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] });
   if (WORLD.bomb) WORLD.bomb.show('--:--');
   vsReset();
 }
@@ -3750,22 +3846,45 @@ function aiStart() {
   if (!ANIMS || !CHAR_SETS.civ.length) return;
   for (const f of CIV_FLEE) { const c = takeChar('civ'); if (!c) continue; const [a, b] = fleeRoute(f[0], f[1]); const cv = new Civilian(c, 'civ', f, [a.x, a.z]); cv.next = b; CIVS.push(cv); }
   for (const h of HOSTAGE_SPOTS) { const c = takeChar('civ'); if (c) HOSTAGES.push(new Civilian(c, 'hostage', h)); }
+  MS.snState = 'held';
   for (const g of GUARDS) if (!g.hard || G.diff.extra) spawnEnemy({ ...g, in: 1 }, HOST_ZONE);
   MS.hostState = 'held';
   zoneEnter(0, true);
 }
 // 進入某一段：排好這一段要出現的敵人；室內的敵人一開始就在位置上（從門口看得到）
 function zoneEnter(i, first) {
+  const from = MS.zone;
   MS.zone = i; MS.arrived = !!first; MS.moving = !first; MS.zoneT = 0; const Z = ZONES[i];
+  // 爬上商行屋頂（狙擊）、狙擊完下樓：畫面暗一下、直接換位置
+  if (!first && P && (Z.snipe || (from === Z_SNIPE && i !== Z_SNIPE))) {
+    fadeBlack(Z.snipe ? '爬上屋頂…' : '下樓…');
+    if (Z.snipe) { snipeSpawn(); P.teleport('SN'); P.prevGear = P.gearId === 'sniper' ? 'm4' : P.gearId; P.switchGear('sniper'); MS.pending = []; zoneArrive(); return; }
+    else { P.teleportXZ(-8.2, -57.0); if (P.gearId === 'sniper') P.switchGear(P.prevGear || 'm4'); }
+  }
   MS.pending = SHARED.on && STREET(i) ? [] : Z.spawns.filter((s) => !s.hard || G.diff.extra).map((s) => ({ ...s }));
-  if (SHARED.on && i >= 2 && i <= 4 && !MS.inHouse) { MS.inHouse = true; SHS.houseT = 0; }
+  if (SHARED.on && INDIV(i) && !MS.inHouse) { MS.inHouse = true; SHS.houseT = 0; }
   for (const p of MS.pending) if (p.in && !p.t && !p.from) { p.done = true; spawnEnemy(p, i); }
 }
 function zoneArrive() {
   MS.arrived = true; MS.moving = false; MS.zoneT = 0; const Z = ZONES[MS.zone];
   if (Z.hostStart && !MS.hostOn) { MS.hostOn = true; MS.hostT = G.diff.hostage; }
+  if (Z.snipe && !MS.snOn) { MS.snOn = true; MS.snT = G.diff.snipe; MS.snShots = P ? P.stats.shots : 0; }
   if (Z.bomb && !MS.bombOn && !SHARED.on) { MS.bombOn = true; MS.bombT = G.diff.bomb; }
   vsArrive(); onZone();
+}
+// 狙擊段落：第一槍之後看守才發現；押人質的看守全倒 → 人質跑走（救出）；時間到 → 人質被押上車
+function snipeSpawn() { // 爬上屋頂時才把街尾的看守與人質放上去（避免在街口就被打掉）
+  if (SNH.length) return;
+  for (const h of SN_HOSTAGES) { const c = takeChar('civ'); if (c) { const cv = new Civilian(c, 'hostage', h); cv.c.root.rotation.y = cv.heading = 0.1; SNH.push(cv); } } // 面向街口（狙擊手的方向）
+  for (const g of SN_GUARDS) if (!g.hard || G.diff.extra) { let gg = g; if (g.k === 'roof' && !roofSpot(g.side, g.z)) { const z = (g.alt || []).find((z) => roofSpot(g.side, z)); if (z === undefined) continue; gg = { ...g, z }; } const e = spawnEnemy({ ...gg }, Z_SNIPE); if (e) { e.sn = true; e.g = !!g.g; if (g.patrol) e.patrol = g.patrol; if (e.k === 'guard') e.heading = e.c.root.rotation.y = Math.PI * 0.05; } }
+}
+function snipeUpdate(dt, P) {
+  if (!MS.snOn || MS.snState !== 'held') return;
+  if (!MS.snAlert && P.stats.shots > MS.snShots) { MS.snAlert = true; banner('看守發現狙擊手了！', 'bad', 1600, '動作快：他們會把人質押上車'); }
+  const gs = ENEMIES.filter((e) => e.sn && e.g && e.alive);
+  if (!gs.length) { MS.snState = 'free'; let n = 0; for (const h of SNH) if (!h.dead) { n++; const [a, b] = fleeRoute(h.pos.x + 6, h.pos.z); h.run(a, 4.2); h.next = b; } onSnFree(n); return; }
+  MS.snT -= dt;
+  if (MS.snT <= 0) { MS.snState = 'taken'; for (const h of SNH) if (!h.dead) { h.follow([V(SN_CAR[0], 0, SN_CAR[1])], 1.6, true); } for (const e of gs) e.leaveCar = true; onSnTaken(); }
 }
 function zoneAlive(i) { return ENEMIES.some((e) => e.zone === i && e.alive) || (MS.zone === i && MS.pending.some((p) => !p.done)); }
 function aiUpdate(dt, P) {
@@ -3774,6 +3893,7 @@ function aiUpdate(dt, P) {
   const Z = ZONES[MS.zone];
   // 這一段的敵人依時間出現
   if (MS.arrived) { MS.zoneT += dt; for (const p of MS.pending) if (!p.done && MS.zoneT >= (p.t || 0)) { p.done = true; spawnEnemy(p, MS.zone); } }
+  if (MS.zone === Z_SNIPE) snipeUpdate(dt, P);
   // 人質：衝進民宅後開始計時；時限內打倒看守 → 人質從正門跑出去；時間到 → 看守押著人質從後門離開
   if (MS.hostState === 'held') {
     const guards = ENEMIES.filter((e) => e.k === 'guard' && e.alive);
@@ -3788,7 +3908,12 @@ function aiUpdate(dt, P) {
     if (MS.bombT <= 0) { MS.done = true; MS.fail = true; onBomb(false); return; }
   }
   // 這一段清空了：往下一段推進
-  if (MS.arrived && !Z.defuse && !(SHARED.on && STREET(MS.zone)) && !zoneAlive(MS.zone) && !(Z.hostage && MS.hostState === 'held' && ENEMIES.some((e) => e.k === 'guard' && e.alive))) { if (MS.zone + 1 < ZONES.length) { zoneEnter(MS.zone + 1); onZoneClear(); } }
+  // 防卡關：這一段打太久、只剩一兩個敵人（多半是躲起來的），剩下的撤退
+  if (MS.arrived && !Z.defuse && !Z.snipe && !(SHARED.on && STREET(MS.zone)) && MS.zoneT > (Z.indoor ? 60 : 50) && MS.pending.every((p) => p.done) && !(Z.hostage && MS.hostState === 'held')) {
+    const left = ENEMIES.filter((e) => e.zone === MS.zone && e.alive && e.k !== 'guard'); if (left.length && left.length <= 2) { for (const e of left) { e.state = 'gone'; e.c.dispose(); } banner('剩下的敵人撤退了', 'info', 1600); }
+  }
+  if (Z.snipe && MS.arrived && MS.snState !== 'held') { MS.snDone += dt; if (!zoneAlive(MS.zone) || MS.snDone > 6) { for (const e of ENEMIES) if (e.sn && e.alive) { e.state = 'gone'; e.c.dispose(); } } }
+  if (MS.arrived && !Z.defuse && !(SHARED.on && STREET(MS.zone)) && !(Z.snipe && MS.snState === 'held') && !zoneAlive(MS.zone) && !(Z.hostage && MS.hostState === 'held' && ENEMIES.some((e) => e.k === 'guard' && e.alive))) { if (MS.zone + 1 < ZONES.length) { zoneEnter(MS.zone + 1); onZoneClear(); } }
   // 拆彈
   if (Z.defuse && MS.arrived) {
     MS.defusing = INPUT.defuse && P.alive && P.reloading <= 0 && P.coverId === 'D4' && !P.target;
@@ -3801,6 +3926,7 @@ function aiUpdate(dt, P) {
   bossUpdate(dt);
   for (const c of CIVS) c.update(dt);
   for (const h of HOSTAGES) h.update(dt);
+  for (const h of SNH) h.update(dt);
   for (let i = ENEMIES.length - 1; i >= 0; i--) if (!ENEMIES[i].remote && ENEMIES[i].state === 'dead' && ENEMIES[i].deadT > 30) { ENEMIES[i].dispose(); ENEMIES.splice(i, 1); }
 }
 
@@ -3816,13 +3942,17 @@ function nestPos(i, out = new THREE.Vector3()) { const n = NESTS[i] || NESTS[0];
 const REINF = [
   [{ k: 'rush', from: [-1, -40], at: [-0.6, -20] }, { k: 'rush', from: [5, -42], at: [2.2, -24] }],
   [{ k: 'rush', from: [-5, -66], at: [-2.5, -46] }, { k: 'rush', from: [-1, -68], at: [-0.5, -54] }],
+  [{ k: 'rush', from: [-15.0, -52.8], at: [-13.8, -56.8], in: 1 }, { k: 'rush', from: [-15.0, -52.6], at: [-12.2, -62.0], in: 1 }],
+  [{ k: 'rush', from: [-18.8, -59.6], at: [-19.0, -53.4], in: 1 }, { k: 'rush', from: [-18.8, -59.6], at: [-17.0, -55.8], in: 1 }],
+  [{ k: 'stand', at: [-17.4, -63.2], in: 1 }, { k: 'stand', at: [-18.6, -64.6], in: 1 }],
+  [{ k: 'guard', at: [2.2, -141.0] }, { k: 'guard', at: [-3.8, -141.5] }],
   [{ k: 'rush', from: [14.2, -86], at: [14.2, -78.8], in: 1 }, { k: 'rush', from: [14.2, -87], at: [18, -76.6], in: 1 }],
   [{ k: 'rush', from: [19.5, -89.6], at: [15.4, -86], in: 1 }, { k: 'rush', from: [20, -89.6], at: [14.2, -90.5], in: 1 }],
   [{ k: 'stand', at: [21.9, -84.4], in: 1 }, { k: 'stand', at: [22.2, -93.6], in: 1 }],
   [{ k: 'rush', from: [-2, -128], at: [-1, -104] }, { k: 'rush', from: [3, -130], at: [1.2, -108] }],
   [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -128 }],
 ];
-const ROOFS = [{ side: 1, z: -20 }, { side: 1, z: -60 }, null, null, null, { side: -1, z: -108 }, { side: 1, z: -128 }];
+const ROOFS = [{ side: 1, z: -20 }, { side: 1, z: -60 }, null, null, null, { side: 1, z: -120 }, null, null, null, { side: -1, z: -108 }, { side: 1, z: -128 }];
 const CMD_SH = { reinf: '街上衝出三名武裝分子（在民宅裡的同學：屋內多兩名）', roof: '街上多兩名屋頂槍手', bombfast: '全班的炸彈倒數 −10 秒', ambush: '拆彈時會多一名屋頂槍手' };
 const VS = { tp: null, boss: null, queue: [], pen: { host: 0, bomb: 0 }, ambush: 0, thitN: null, tshotN: null, tdownN: null, bossFlash: 0 };
 const CMD_TEXT = { reinf: ['老師派出增援！', '兩名武裝分子正衝過來'], roof: ['老師派出屋頂狙擊手！', '注意上方'], hurry: ['老師催促看守押走人質！', '人質時限 −15 秒'], bombfast: ['老師讓炸彈加速！', '炸彈倒數 −10 秒'], ambush: ['老師在炸彈旁埋伏！', '拆彈時會多一名屋頂槍手'] };
@@ -3831,7 +3961,7 @@ function applyCmd(c) {
   if (G.mode !== 'take' || G.practice || MS.done) return;
   const t = CMD_TEXT[c.k]; if (t) banner(t[0], 'bad', 2200, SHARED.on ? (CMD_SH[c.k] || t[1]) : t[1]);
   if (SHARED.on && c.k !== 'hurry') { // 全班同一個城鎮：街上的增援由老師電腦派出；在民宅裡的同學另外多兩名室內敵人
-    if (c.k === 'reinf' && ZONES[MS.zone].indoor && MS.arrived && !MS.moving) vsSpawn('reinf', MS.zone); return; }
+    if (c.k === 'reinf' && (ZONES[MS.zone].indoor || ZONES[MS.zone].snipe) && MS.arrived && !MS.moving) vsSpawn('reinf', MS.zone); return; }
   if (c.k === 'hurry') { if (MS.hostState === 'held') { if (MS.hostOn) MS.hostT = Math.max(5, MS.hostT - 15); else VS.pen.host += 15; } return; }
   if (c.k === 'bombfast') { if (MS.bombOn) MS.bombT = Math.max(5, MS.bombT - 10); else VS.pen.bomb += 10; return; }
   if (c.k === 'ambush') { VS.ambush++; return; }
@@ -3898,20 +4028,20 @@ function vsListen() {
    ========================================================= */
 const SHARED = { on: false }; // 學生端：這一回合是不是全班同一個城鎮
 const ANIM_LIST = ['Idle_Rifle', 'Pistol_Aim_Neutral', 'Crouch_Idle_Aim', 'Jog_Aim', 'Sprint_Aim', 'Walk_Aim', 'Hit_Chest', 'Hit_Head', 'Death01'];
-const STREET = (z) => z === 0 || z === 1 || z === 5 || z === 6;
-const GROUP = (z) => (z <= 1 ? 0 : z >= 5 ? 2 : 1); // 0：前段街道　1：民宅　2：街尾（炸彈）
-const SH_NAME = { 0: '突破路障', 1: '清除街口', 2: '攻入民宅救人質', 5: '拆除炸彈：清除守衛', 6: '拆除炸彈' };
+const STREET = (z) => z === 0 || z === 1 || z === Z_BOMB || z === Z_DEF;
+const GROUP = (z) => (z <= 1 ? 0 : z >= Z_BOMB ? 2 : 1); // 0：前段街道　1：各自進行（商行、狙擊、民宅）　2：街尾（炸彈）
+const SH_NAME = { 0: '突破路障', 1: '清除街口', 2: '各自肅清商行、狙擊救援、攻入民宅', 9: '拆除炸彈：清除守衛', 10: '拆除炸彈' };
 // wave：這一段敵人持續湧入幾秒；house：最多等幾秒就開始炸彈戰；bomb：炸彈倒數；defuse：拆彈要幾秒
 const SH_CFG = {
-  N: { wave: [65, 65, 0, 0, 0, 50], house: 85, bomb: 115, defuse: 15, cap: 0, roofMax: 2, hps: 0.7, ambush: 2, hp: 0 },
-  H: { wave: [70, 70, 0, 0, 0, 55], house: 75, bomb: 100, defuse: 18, cap: 2, roofMax: 3, hps: 0.9, ambush: 3, hp: 0.25 },
+  N: { wave: { 0: 50, 1: 50, 9: 40 }, house: 150, bomb: 115, defuse: 15, cap: 0, roofMax: 2, hps: 0.7, ambush: 2, hp: 0 },
+  H: { wave: { 0: 55, 1: 55, 9: 45 }, house: 140, bomb: 100, defuse: 18, cap: 2, roofMax: 3, hps: 0.9, ambush: 3, hp: 0.25 },
 };
 // 每一段街道：敵人出現的位置（cover：跑到車子、沙包後面；rush：從遠處衝過來；roof：屋頂）
 const SPAWN_T = {
   0: { cover: [[-4.0, -23.4, 1.4], [4.4, -35.1, 1.4]], rush: [[[-1, -38], [-1.2, -17.5]], [[6, -40], [3, -22]], [[-5, -40], [-2.5, -24]], [[-1, -40], [-0.6, -20]], [[5, -42], [2.2, -24]]], roof: [[1, -20], [1, -30], [-1, -26], [-1, -34]] },
   1: { cover: [[1.0, -50.6, 0.4], [-6.4, -57.5, 0.6]], rush: [[[-6, -64], [-2.6, -44]], [[-3, -68], [-2, -47]], [[-5, -66], [-2.5, -46]], [[-1, -68], [-0.5, -54]], [[2, -66], [1.5, -55]]], roof: [[-1, -46], [1, -60], [-1, -56], [1, -52]] },
-  5: { cover: [[7.4, -105.4, 0.4], [-5.0, -113.6, 0.5], [3.8, -123.4, 0.5]], rush: [[[-2, -128], [-0.6, -104]], [[0.6, -129], [0.8, -106]], [[3, -130], [1.2, -108]], [[-3, -130], [-1.5, -110]]], roof: [[-1, -108], [1, -118], [-1, -116], [1, -110]] },
-  6: { cover: [[-3.0, -143.6, 0.6]], rush: [[[-3, -149], [-2.2, -138]], [[4, -149], [3, -139]], [[-1, -149], [-0.5, -141]]], roof: [[-1, -124], [1, -126], [-1, -130], [1, -134]] },
+  9: { cover: [[7.4, -105.4, 0.4], [-5.0, -113.6, 0.5], [3.8, -123.4, 0.5]], rush: [[[-2, -128], [-0.6, -104]], [[0.6, -129], [0.8, -106]], [[3, -130], [1.2, -108]], [[-3, -130], [-1.5, -110]]], roof: [[-1, -108], [1, -118], [-1, -116], [1, -110]] },
+  10: { cover: [[-3.0, -143.6, 0.6]], rush: [[[-3, -149], [-2.2, -138]], [[4, -149], [3, -139]], [[-1, -149], [-0.5, -141]]], roof: [[-1, -124], [1, -126], [-1, -130], [1, -134]] },
 };
 // 掩體位置錯開：全班擠在同一個掩體時，每個人沿著掩體左右分開一點（依座號）
 const CVJ = {};
@@ -3944,7 +4074,7 @@ function mateIn(pid, a) {
   if (m.first || Math.hypot(m.tx - m.pos.x, m.tz - m.pos.z) > 12) { m.first = false; m.pos.set(m.tx, 0, m.tz); }
 }
 function shStart() {
-  const k = TS.diff; Object.assign(SHT, { on: true, ph: 0, phT: 0, spawnT: 1, nid: 0, shots: [], kills: [], kseq: 0, bombOn: false, bombT: 0, pen: 0, defuse: 0, dfOn: 0, ambush: 0, ambushDone: false, end: null, endT: 0, sendT: 0, alT: 0, hseq: {}, dfBy: {}, cfg: SH_CFG[k] || SH_CFG.N, f: clamp(TAKE_SEC / 300, 0.8, 1.2) });
+  const k = TS.diff; Object.assign(SHT, { on: true, ph: 0, phT: 0, spawnT: 1, nid: 0, shots: [], kills: [], kseq: 0, bombOn: false, bombT: 0, pen: 0, defuse: 0, dfOn: 0, ambush: 0, ambushDone: false, end: null, endT: 0, sendT: 0, alT: 0, hseq: {}, dfBy: {}, cfg: SH_CFG[k] || SH_CFG.N, f: clamp(TAKE_SEC / 360, 0.8, 1.2) });
   SHT.byId.clear(); G.diff = DIFFS[k] || DIFFS.N; MS.zone = 0; MS.arrived = true; MS.done = false;
   for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0;
   shSpawn('cover', 0); shSpawn('cover', 0); shSpawn('rush', 0); shSpawn('roof', 0);
@@ -3963,10 +4093,10 @@ function shSpawn(kind, z) {
 }
 function shPhase(p) {
   SHT.ph = p; SHT.phT = 0; SHT.spawnT = 1.2;
-  for (const e of ENEMIES) if (e.alive && e.zone !== p) { if (p === 6 && e.zone === 5) e.zone = 6; else { e.state = 'gone'; e.c.dispose(); } }
+  for (const e of ENEMIES) if (e.alive && e.zone !== p) { if (p === Z_DEF && e.zone === Z_BOMB) e.zone = Z_DEF; else { e.state = 'gone'; e.c.dispose(); } }
   if (p === 1) { shSpawn('cover', 1); shSpawn('cover', 1); shSpawn('roof', 1); }
-  if (p === 5) { SHT.bombOn = true; SHT.bombT = Math.max(30, Math.min(SHT.cfg.bomb * SHT.f, (TS.endsAt - NET.now()) / 1000 - 6) - SHT.pen); /* 炸彈一定在任務時間結束前引爆 */ SHT.pen = 0; shSpawn('cover', 5); shSpawn('cover', 5); shSpawn('rush', 5); shSpawn('roof', 5); }
-  if (p === 6) { shSpawn('roof', 6); shSpawn('rush', 6); }
+  if (p === Z_BOMB) { SHT.bombOn = true; SHT.bombT = Math.max(30, Math.min(SHT.cfg.bomb * SHT.f, (TS.endsAt - NET.now()) / 1000 - 6) - SHT.pen); /* 炸彈一定在任務時間結束前引爆 */ SHT.pen = 0; shSpawn('cover', Z_BOMB); shSpawn('cover', Z_BOMB); shSpawn('rush', Z_BOMB); shSpawn('roof', Z_BOMB); }
+  if (p === Z_DEF) { shSpawn('roof', Z_DEF); shSpawn('rush', Z_DEF); }
   tLog(-1, `全班進度：${SH_NAME[p]}`);
 }
 function shEnd(r) { if (SHT.end) return; SHT.end = r; SHT.endT = 0; tLog(-1, r === 'win' ? '全班拆彈成功！' : '炸彈引爆，任務失敗'); }
@@ -3995,7 +4125,7 @@ function shAlt(e, P) {
 }
 function shTeacherTick(dt) {
   if (!SHT.on) return; const C = SHT.cfg;
-  let nSt = 0, nExp = 0; for (const m of MATES.values()) { const k = Math.min(1, dt * 8); m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; if (STREET(m.zone) && m.zone === SHT.ph || (SHT.ph === 6 && m.zone === 5)) { nSt++; if (m.alive && m.exposure() > 0) nExp++; } }
+  let nSt = 0, nExp = 0; for (const m of MATES.values()) { const k = Math.min(1, dt * 8); m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; if (STREET(m.zone) && m.zone === SHT.ph || (SHT.ph === Z_DEF && m.zone === Z_BOMB)) { nSt++; if (m.alive && m.exposure() > 0) nExp++; } }
   SHT.nSt = nSt; SHT.mult = clamp(Math.sqrt(nSt / 4), 1, 4);
   // 全班人多時，每位探身的同學分到的子彈變少：自動提高命中率，讓探身的同學每秒挨到的子彈和單人時差不多
   let nE = 0; for (const e of ENEMIES) if (e.alive && e.zone === SHT.ph) nE++;
@@ -4004,22 +4134,22 @@ function shTeacherTick(dt) {
   if (SHT.end) { SHT.endT += dt; if (SHT.endT > 6 && TS.phase === 'take') cut('end'); }
   SHT.phT += dt; const ph = SHT.ph;
   if (!SHT.end) {
-    if (ph === 2) { let out = false; for (const m of MATES.values()) if (m.zone >= 5) out = true; if (out || SHT.phT > C.house * SHT.f) shPhase(5); }
+    if (ph === 2) { let out = false; for (const m of MATES.values()) if (m.zone >= Z_BOMB) out = true; if (out || SHT.phT > C.house * SHT.f) shPhase(Z_BOMB); }
     else {
-      const wave = ph === 6 ? 1e9 : C.wave[ph] * SHT.f; let alive = 0, roof = 0, cov = 0;
+      const wave = ph === Z_DEF ? 1e9 : C.wave[ph] * SHT.f; let alive = 0, roof = 0, cov = 0;
       for (const e of ENEMIES) if (e.alive && e.zone === ph) { alive++; if (e.k === 'roof') roof++; if (e.k === 'cover') cov++; }
       if (SHT.phT < wave) {
         const cap = clamp(Math.round(5 + nSt * 0.3) + C.cap, 6, 12); SHT.spawnT -= dt;
         if (alive < cap && SHT.spawnT <= 0) { const r = R(); shSpawn(r < 0.2 && roof < C.roofMax ? 'roof' : r < 0.6 && cov < 5 ? 'cover' : 'rush', ph); SHT.spawnT = 0.5 + R() * 0.4; }
-      } else if (!alive || SHT.phT > wave + 15) shPhase(ph === 0 ? 1 : ph === 1 ? 2 : 6);
+      } else if (!alive || SHT.phT > wave + 15) shPhase(ph === 0 ? 1 : ph === 1 ? 2 : Z_DEF);
     }
     if (SHT.bombOn) { SHT.bombT -= dt; if (SHT.bombT <= 0) { SHT.bombT = 0; shEnd('fail'); } }
-    if (SHT.ph === 6 && !SHT.end) {
-      let on = 0; for (const m of MATES.values()) if (m.df && m.alive && m.zone === 6) on++;
+    if (SHT.ph === Z_DEF && !SHT.end) {
+      let on = 0; for (const m of MATES.values()) if (m.df && m.alive && m.zone === Z_DEF) on++;
       if (on && !SHT.dfOn) tLog(-1, `同學開始拆彈（${on} 人）`); SHT.dfOn = on ? 1 : 0;
       if (on) {
         if (!SHT.ambushDone) { SHT.ambushDone = true; for (let i = 0; i < C.ambush + SHT.ambush; i++) shSpawn('roof', 6); }
-        for (const m of MATES.values()) if (m.df && m.alive && m.zone === 6) SHT.dfBy[m.pid] = (SHT.dfBy[m.pid] || 0) + dt;
+        for (const m of MATES.values()) if (m.df && m.alive && m.zone === Z_DEF) SHT.dfBy[m.pid] = (SHT.dfBy[m.pid] || 0) + dt;
         SHT.defuse += dt / C.defuse; if (SHT.defuse >= 1) { SHT.defuse = 1; shEnd('win'); }
       }
     }
@@ -4038,7 +4168,7 @@ function shSend() {
   const now = NET.now(); const e = [];
   for (const x of ENEMIES) { if (x.state === 'gone' || (x.state === 'dead' && x.deadT > 4) || !isFinite(x.pos.x) || !isFinite(x.pos.z) || !isFinite(x.pos.y)) continue; e.push([x.id, r1(x.pos.x), r1(x.pos.z), r1(x.pos.y), Math.round(x.heading * 100) / 100, Math.max(0, ANIM_LIST.indexOf(x.c.curName)), x.tgt && x.alive ? x.tgt.slot : -1, x.alive ? Math.max(1, Math.ceil(x.hp)) : 0]); }
   const k = SHT.kills.filter((q) => now - q[4] < 3000).map((q) => q.slice(0, 4));
-  const ph = SHT.ph; const wave = STREET(ph) && ph !== 6 ? Math.max(0, Math.ceil(SHT.cfg.wave[ph] * SHT.f - SHT.phT)) : 0;
+  const ph = SHT.ph; const wave = STREET(ph) && ph !== Z_DEF ? Math.max(0, Math.ceil(SHT.cfg.wave[ph] * SHT.f - SHT.phT)) : 0;
   NET.set('w', { tk: TS.take, n: ++SHT.seq, ph, wv: wave, bt: SHT.bombOn ? r1(SHT.bombT) : -1, df: Math.round(SHT.defuse * 100), dfo: SHT.dfOn, end: SHT.end || 0, e, s: SHT.shots.splice(0, 80), k });
   SHT.shots.length = 0;
 }
@@ -4097,14 +4227,15 @@ function shFlushHits(dt) { SHS.hT -= dt; if (SHS.hDirty && SHS.hT <= 0) { SHS.hT
 // 中途加入：直接到全班目前所在的那一段
 function shJoinAt() {
   const ph = SHS.w && SHS.w.tk === META.take ? SHS.ph : 0; if (ph < 1) return;
-  const z = ph >= 6 ? 6 : ph >= 5 ? 5 : ph; zoneEnter(z, true); const id = ZONES[z].covers[0]; const c = cvOf(id);
+  const z = ph >= Z_DEF ? Z_DEF : ph >= Z_BOMB ? Z_BOMB : ph; zoneEnter(z, true); const id = ZONES[z].covers[0]; const c = cvOf(id);
   P.coverId = id; P.target = null; P.path = []; P.pos.set(c.x, 0, c.z); P.yaw = c.yaw; P.updateEye(); zoneArrive();
   banner('加入全班的進度', 'info', 2000, SH_NAME[ph]);
 }
 function shLeaveHouse() {
-  for (const e of ENEMIES) if (!e.remote && e.alive && e.zone >= 2 && e.zone <= 4) { e.state = 'gone'; e.c.dispose(); }
+  for (const e of ENEMIES) if (!e.remote && e.alive && INDIV(e.zone)) { e.state = 'gone'; e.c.dispose(); }
+  if (MS.snState === 'held') { MS.snState = 'taken'; for (const h of SNH) if (!h.dead) { h.state = 'gone'; h.c.dispose(); } }
   if (MS.hostState === 'held') { MS.hostState = 'taken'; for (const h of HOSTAGES) if (!h.dead) { h.state = 'gone'; h.c.dispose(); } onHostagesTaken(); }
-  zoneEnter(5); banner('撤出民宅！', 'bad', 2600, '全班正在拆炸彈，快到街尾會合');
+  zoneEnter(Z_BOMB); banner('撤離！', 'bad', 2600, '全班正在拆炸彈，快到街尾會合');
 }
 function shSlot() { const mine = PLAYERS[ME.pid]; const slot = mine && mine.slot >= 0 ? mine.slot : -1; if (slot !== SHS.slot) { SHS.slot = slot; SHS.jit = jitOf(slot); } }
 function shStudentTick(dt, P) {
@@ -4118,8 +4249,8 @@ function shStudentTick(dt, P) {
   const z = MS.zone, ph = SHS.ph;
   if (z === 0 && ph >= 1) { zoneEnter(1); onZoneClear(); }
   else if (z === 1 && ph >= 2) { zoneEnter(2); onZoneClear(); }
-  else if (z === 5 && ph >= 6) { zoneEnter(6); onZoneClear(); }
-  if (MS.zone >= 2 && MS.zone <= 4) { SHS.houseT += dt; if (ph >= 5 && (SHS.houseT > 100 || (SHS.bombOn && MS.bombT < 30))) shLeaveHouse(); }
+  else if (z === Z_BOMB && ph >= Z_DEF) { zoneEnter(Z_DEF); onZoneClear(); }
+  if (INDIV(MS.zone)) { SHS.houseT += dt; if (ph >= Z_BOMB && (SHS.houseT > 170 || (SHS.bombOn && MS.bombT < 30))) shLeaveHouse(); }
   shSyncRemote(P); shShots(dt, P); shFlushHits(dt); shAllies(dt, P);
 }
 // 把老師電腦傳來的敵人畫出來（人物不夠時只畫最近的）
@@ -4200,7 +4331,7 @@ function shAllies(dt, P) {
    ========================================================= */
 const SFX = (() => {
   let ctx = null, master = null, on = store.get('snd', true); const buf = {};
-  const files = { m4: ['m4_1'], ak: ['ak47_1', 'ak47_2', 'ak47_3', 'ak47_4'], magout: ['mag_out_1'], magin: ['mag_in_1'], bolt: ['bolt_1'], dry: ['dry_fire_1'] };
+  const files = { m4: ['m4_1'], ak: ['ak47_1', 'ak47_2', 'ak47_3', 'ak47_4'], magout: ['mag_out_1'], magin: ['mag_in_1'], bolt: ['bolt_1'], dry: ['dry_fire_1'], sniper: ['sniper_1'], shell: ['shotgun_shell_1'] };
   let verb = null, verbGain = null;
   async function init() {
     if (ctx) return; ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = on ? 0.8 : 0; master.connect(ctx.destination);
@@ -4226,7 +4357,10 @@ const SFX = (() => {
   function noise(t, { vol = 0.3, lp = 800, hp = 60 } = {}) { if (!ctx) return; const n = ctx.createBufferSource(); n.buffer = noiseBuf(t, 2); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; const g = ctx.createGain(); g.gain.value = vol; n.connect(f); f.connect(h); h.connect(g); g.connect(master); n.start(); }
   return {
     init, resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
-    shot(w) { gunLayer(pick(w === 'm4' ? 'm4' : 'ak'), w === 'm4' ? { vol: 0.75, punch: 0.45, crack: 0.3, rate: 1.0 } : { vol: 0.8, punch: 0.6, crack: 0.25, rate: 0.95 }); },
+    shot(w) { if (w === 'sniper') { gunLayer('sniper_1', { vol: 0.95, punch: 0.9, crack: 0.35, rate: 1.0, send: 0.9 }); return; } gunLayer(pick(w === 'm4' ? 'm4' : 'ak'), w === 'm4' ? { vol: 0.75, punch: 0.45, crack: 0.3, rate: 1.0 } : { vol: 0.8, punch: 0.6, crack: 0.25, rate: 0.95 }); },
+    shell() { play('shotgun_shell_1', { vol: 0.12 + R() * 0.08, rate: 1.5 + R() * 0.4 }); },
+    boltOpen() { play('bolt_1', { vol: 0.55, rate: 0.78 }); }, boltClose() { play('bolt_1', { vol: 0.65, rate: 1.12 }); },
+    pickup() { play('mag_in_1', { vol: 0.6, rate: 0.8 }); play('bolt_1', { vol: 0.5, delay: 0.18 }); },
     enemyShot(dist) { const v = clamp(0.55 - dist / 110, 0.05, 0.55); play(pick('ak'), { vol: v, rate: 0.88 + R() * 0.1, lp: dist > 30 ? 2200 : 0, send: 0.8 }); },
     dry() { play('dry_fire_1', { vol: 0.5 }); }, magOut() { play('mag_out_1', { vol: 0.7, rate: 0.95 }); }, magIn() { play('mag_in_1', { vol: 0.8 }); }, bolt() { play('bolt_1', { vol: 0.7 }); },
     impact() { noise(0.05, { vol: 0.08, lp: 1800, hp: 200 }); },
@@ -4358,7 +4492,7 @@ function splitMagazine(root, w) {
     for (let t = 0; t < idx.length; t += 3) { const a = find(weld[idx[t]]), b = find(weld[idx[t + 1]]), c = find(weld[idx[t + 2]]); par[a] = b; par[find(c)] = find(b); }
     const C = new Map();
     for (let t = 0; t < idx.length; t += 3) { const r = find(weld[idx[t]]); let c = C.get(r); if (!c) C.set(r, (c = { n: 0, z: 0, y: 0, minY: 1e9 })); c.n++; for (let k = 0; k < 3; k++) { const i = idx[t + k]; c.z += pos[i * 3 + 2] / 3; c.y += pos[i * 3 + 1] / 3; c.minY = Math.min(c.minY, pos[i * 3 + 1]); } }
-    const isMag = new Set(); for (const [r, c] of C) { const cz = c.z / c.n, cy = c.y / c.n; if (c.n >= 40 && cz >= B.zMin && cz <= B.zMax && cy <= B.yMax && c.minY < 0) isMag.add(r); }
+    const isMag = new Set(); for (const [r, c] of C) { const cz = c.z / c.n, cy = c.y / c.n; if (c.n >= 40 && cz >= B.zMin && cz <= B.zMax && cy <= B.yMax && c.minY < (B.minY ?? 0)) isMag.add(r); }
     const keep = [], mag = [];
     for (let t = 0; t < idx.length; t += 3) (isMag.has(find(weld[idx[t]])) ? mag : keep).push(idx[t], idx[t + 1], idx[t + 2]);
     if (!mag.length) continue;
@@ -4374,13 +4508,15 @@ const MAG_HAND = { fingers: [0.55, -0.45, -0.7], thumb: [-0.3, 0.85, -0.4], curl
 /* 換彈動作（進度 0→1）：左手抓彈匣 → 拔出 → 往下丟掉 → 從腰間拿新的 → 對準插入（拍一下）→ 拉／按槍機 → 回到護木 */
 function reloadPose(w, rk) {
   const L = w.hands.left, ax = w.magAxis, out = 0.15; const seg = (a, b) => easeIO(clamp((rk - a) / (b - a), 0, 1));
-  const grip = w.magGrip; const below = ADD3([0, 0, 0], ax, out); const pouch = [-0.1, -0.34, 0.16];
+  // 拔出的彈匣先拿到眼前（看得到裡面還有沒有子彈），再往下丟；新彈匣從腰間拿上來也先經過眼前
+  const grip = w.magGrip; const below = ADD3([0, 0, 0], ax, out * 0.5); const look = ADD3(below, [-0.06, 0.035, 0.08]); const pouch = [-0.12, -0.36, 0.14];
   let off = [0, 0, 0], magVis = true, hand = grip, ori = MAG_HAND, oriK = 1, magRot = 0;
   if (rk < 0.12) { const t = seg(0.0, 0.12); hand = L3(L.pos, grip, t); oriK = t; }
-  else if (rk < 0.28) { off = L3([0, 0, 0], below, seg(0.12, 0.28)); hand = ADD3(grip, off); }
-  else if (rk < 0.42) { const t = seg(0.28, 0.42); off = L3(below, ADD3(below, pouch), t); magRot = t * 0.9; hand = ADD3(grip, off); }
-  else if (rk < 0.52) { off = ADD3(below, pouch); hand = ADD3(grip, off); magVis = rk > 0.47; }
-  else if (rk < 0.64) { const t = seg(0.52, 0.64); off = L3(ADD3(below, pouch), below, t); magRot = (1 - t) * 0.5; hand = ADD3(grip, off); }
+  else if (rk < 0.22) { off = L3([0, 0, 0], below, seg(0.12, 0.22)); hand = ADD3(grip, off); }
+  else if (rk < 0.36) { const t = seg(0.22, 0.30); off = L3(below, look, t); magRot = t * 0.65; hand = ADD3(grip, off); }
+  else if (rk < 0.46) { const t = seg(0.36, 0.46); off = L3(look, ADD3(look, pouch), t); magRot = 0.65 + t * 0.4; hand = ADD3(grip, off); magVis = rk < 0.45; }
+  else if (rk < 0.52) { off = ADD3(look, pouch); hand = ADD3(grip, off); magVis = rk > 0.5; magRot = 0.6; }
+  else if (rk < 0.64) { const t = seg(0.52, 0.6); const t2 = seg(0.6, 0.64); off = L3(L3(ADD3(look, pouch), look, t), below, t2); magRot = 0.6 * (1 - t2); hand = ADD3(grip, off); }
   else if (rk < 0.72) { const t = seg(0.64, 0.72); off = L3(below, ADD3([0, 0, 0], ax, -0.008), t); hand = ADD3(grip, off); }
   else if (rk < 0.80) { const t = seg(0.72, 0.80); hand = L3(grip, w.bolt.a, t); ori = { ...MAG_HAND, fingers: w.bolt.fingers, thumb: w.bolt.thumb }; oriK = 1; }
   else if (rk < 0.86) { const t = seg(0.80, 0.86); hand = L3(w.bolt.a, w.bolt.b, t); ori = { ...MAG_HAND, fingers: w.bolt.fingers, thumb: w.bolt.thumb }; }
@@ -4410,8 +4546,109 @@ function buildScope() {
   g.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) o.frustumCulled = false; });
   return g;
 }
+/* ---------- 把模型裡某一塊零件切出來（依連在一起的三角形；test 依該零件的中心與範圍判斷） ---------- */
+function partsOf(root) {
+  root.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(); const v = new THREE.Vector3(); const out = [];
+  root.traverse((o) => { if (o.isMesh && o.geometry.index) out.push(o); });
+  return out.map((mesh) => {
+    const g = mesh.geometry, P = g.attributes.position, idx = g.index.array; const rel = inv.clone().multiply(mesh.matrixWorld);
+    const pos = new Float32Array(P.count * 3), weld = new Int32Array(P.count), keys = new Map();
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(rel); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; const k = Math.round(v.x * 1e4) + ',' + Math.round(v.y * 1e4) + ',' + Math.round(v.z * 1e4); let id = keys.get(k); if (id === undefined) keys.set(k, (id = keys.size)); weld[i] = id; }
+    const par = new Int32Array(keys.size).map((_, i) => i); const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+    for (let t = 0; t < idx.length; t += 3) { const a = find(weld[idx[t]]), b = find(weld[idx[t + 1]]), c = find(weld[idx[t + 2]]); par[a] = b; par[find(c)] = find(b); }
+    const C = new Map();
+    for (let t = 0; t < idx.length; t += 3) { const r = find(weld[idx[t]]); let c = C.get(r); if (!c) C.set(r, (c = { n: 0, x: 0, y: 0, z: 0, min: [1e9, 1e9, 1e9], max: [-1e9, -1e9, -1e9] })); c.n++; for (let k = 0; k < 3; k++) { const i = idx[t + k]; for (let a = 0; a < 3; a++) { const q = pos[i * 3 + a]; c.min[a] = Math.min(c.min[a], q); c.max[a] = Math.max(c.max[a], q); } c.x += pos[i * 3] / 3; c.y += pos[i * 3 + 1] / 3; c.z += pos[i * 3 + 2] / 3; } }
+    for (const c of C.values()) { c.x /= c.n; c.y /= c.n; c.z /= c.n; }
+    return { mesh, g, idx, rel, comp: (t) => find(weld[idx[t]]), C };
+  });
+}
+// 依 test 切開：回傳切出來的網格（放進 pivot），remove=true 時直接丟掉
+function splitParts(root, test, { pivot = null, remove = false } = {}) {
+  let n = 0;
+  for (const P of partsOf(root)) {
+    const sel = new Set(); for (const [r, c] of P.C) if (test(c)) sel.add(r); if (!sel.size) continue;
+    const keep = [], cut = []; for (let t = 0; t < P.idx.length; t += 3) (sel.has(P.comp(t)) ? cut : keep).push(P.idx[t], P.idx[t + 1], P.idx[t + 2]);
+    const gk = P.g.clone(); gk.setIndex(keep); P.mesh.geometry = gk; n += cut.length / 3;
+    if (!remove && pivot) { const gm = P.g.clone(); gm.setIndex(cut); const mm = new THREE.Mesh(gm, P.mesh.material); const inv = new THREE.Matrix4().copy(pivot.matrix).invert(); mm.applyMatrix4(inv.multiply(P.rel)); mm.layers.set(LAYER_VIEW); mm.frustumCulled = false; pivot.add(mm); }
+  }
+  return n;
+}
+/* ---------- 彈殼與子彈 ---------- */
+const BRASS = new THREE.MeshStandardMaterial({ color: '#d2a648', roughness: 0.32, metalness: 0.95, envMapIntensity: 1.3 });
+const STEELCASE = new THREE.MeshStandardMaterial({ color: '#6f6436', roughness: 0.45, metalness: 0.7, envMapIntensity: 1.1 }); // AK 常見的上漆鋼彈殼
+const COPPER = new THREE.MeshStandardMaterial({ color: '#b8683a', roughness: 0.35, metalness: 0.95, envMapIntensity: 1.2 });
+function caseGeo(e) { const body = new THREE.CylinderGeometry(e.r, e.r * 1.04, e.len - e.neck, 12); body.translate(0, -e.neck / 2, 0); const sh = new THREE.CylinderGeometry(e.r * 0.62, e.r, e.neck * 0.45, 12); sh.translate(0, e.len / 2 - e.neck * 0.78, 0); const nk = new THREE.CylinderGeometry(e.r * 0.6, e.r * 0.62, e.neck * 0.55, 12); nk.translate(0, e.len / 2 - e.neck * 0.27, 0); const g = mergeGeometries([body.toNonIndexed(), sh.toNonIndexed(), nk.toNonIndexed()]); g.rotateX(-Math.PI / 2); return g; } // 長軸沿 -z（彈頭朝前）
+function roundMesh(w) { // 一發完整的子彈（彈殼＋彈頭），彈頭朝 -z
+  const R0 = w.round; const e = { r: R0.r, len: R0.len - R0.tip * 0.6, neck: R0.len * 0.2 }; const g = new THREE.Group();
+  const c = new THREE.Mesh(caseGeo(e), w === WEAPONS.ak ? STEELCASE : BRASS); c.position.z = R0.tip * 0.3; g.add(c);
+  const b = new THREE.Mesh(new THREE.ConeGeometry(e.r * 0.6, R0.tip, 12), COPPER); b.rotation.x = -Math.PI / 2; b.position.z = -e.len / 2 + R0.tip * 0.3 - R0.tip / 2 + 0.002; g.add(b);
+  g.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) o.frustumCulled = false; }); return g;
+}
+// 彈匣頂端看得到的子彈（在彈匣零件裡找出最上面那一圈的位置）
+function magRounds(w, mg) {
+  if (!mg || !w.round) return null; const v = new THREE.Vector3(); let top = -1e9; const pts = [];
+  mg.pivot.traverse((o) => { if (!o.isMesh) return; const P = o.geometry.attributes.position, idx = o.geometry.index.array; o.updateMatrix(); for (let t = 0; t < idx.length; t++) { v.fromBufferAttribute(P, idx[t]).applyMatrix4(o.matrix); pts.push(v.clone()); if (v.y > top) top = v.y; } });
+  const near = pts.filter((p) => p.y > top - 0.008); if (!near.length) return null;
+  let z0 = 1e9, z1 = -1e9, xs = 0; for (const p of near) { z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); xs += p.x; }
+  const g = new THREE.Group(); const n = w.round.n || 2; const zc = (z0 + z1) / 2, xc = xs / near.length;
+  for (let i = 0; i < n; i++) { const m = roundMesh(w); const sx = n === 1 ? 0 : (i ? 1 : -1) * w.round.r * 0.75; m.position.set(xc + sx, top - w.round.r * (0.9 + i * 1.1), zc - 0.003 + i * 0.002); g.add(m); }
+  g.visible = false; mg.pivot.add(g); return g;
+}
+// 退出的彈殼：在第一人稱畫面裡飛出去、翻滾、掉下（16 顆輪流用）
+const CASES = { pool: [], i: 0, geo: {} };
+function ejectCase(P, w, mesh, k = 1) {
+  if (!w.eject || !mesh) return; let c = CASES.pool[CASES.i]; CASES.i = (CASES.i + 1) % 16;
+  if (!c) { c = new THREE.Mesh(caseGeo(w.eject), BRASS); c.layers.set(LAYER_VIEW); c.frustumCulled = false; P.vm.add(c); CASES.pool.push(c); }
+  const key = P.gearId; c.geometry = CASES.geo[key] || (CASES.geo[key] = caseGeo(w.eject)); c.material = key === 'ak' ? STEELCASE : BRASS;
+  c.position.fromArray(w.eject.port).applyMatrix4(mesh.matrix); c.quaternion.copy(mesh.quaternion); c.visible = true;
+  const d = new THREE.Vector3(...w.eject.dir).normalize().applyQuaternion(mesh.quaternion);
+  c.userData = { v: d.multiplyScalar((1.5 + R() * 0.7) * k).add(new THREE.Vector3((R() - 0.5) * 0.3, (R() - 0.2) * 0.3, (R() - 0.5) * 0.3)), s: new THREE.Vector3((R() - 0.5) * 30, (R() - 0.5) * 30, (R() - 0.5) * 30), t: 0.75, snd: R() < 0.35 };
+}
+function casesTick(dt) {
+  for (const c of CASES.pool) { if (!c.visible) continue; const u = c.userData; u.t -= dt; if (u.t <= 0) { c.visible = false; if (u.snd) SFX.shell(); continue; } u.v.y -= 7.5 * dt; c.position.addScaledVector(u.v, dt); c.rotation.x += u.s.x * dt; c.rotation.y += u.s.y * dt; c.rotation.z += u.s.z * dt; }
+}
+/* ---------- 狙擊槍：換成現代的黑色槍托、加大型瞄準鏡、槍口制退器、腳架 ---------- */
+function modernizeSniper(root) {
+  // 原本的小瞄準鏡與鏡座拿掉
+  splitParts(root, (c) => c.y > 0.118 && c.min[1] > 0.112 && c.z > -0.2 && c.z < 0.02, { remove: true });
+  root.traverse((o) => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) { if (m.name === 'bolt_action_rifle_7_62' && m.map && !m.userData.modern) { m.userData.modern = true; m.map = recolorWood(m.map); m.needsUpdate = true; } if (/glass/.test(m.name)) o.visible = false; } });
+  const g = new THREE.Group(); const Y = WEAPONS.sniper.scope.y;
+  const black = new THREE.MeshStandardMaterial({ color: '#1b1c1b', roughness: 0.6, metalness: 0.4, envMapIntensity: 0.8 });
+  const tan = new THREE.MeshStandardMaterial({ color: '#6b5d44', roughness: 0.8, metalness: 0.1, envMapIntensity: 0.6 });
+  const glass = new THREE.MeshStandardMaterial({ color: '#16222c', roughness: 0.05, metalness: 0.9, envMapIntensity: 1.6 });
+  const cyl = (r1, r2, len, mat, x, y, z, seg = 24) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, len, seg), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); g.add(m); return m; };
+  const box = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); g.add(m); return m; };
+  cyl(0.021, 0.021, 0.035, black, 0, Y, 0.055); cyl(0.019, 0.021, 0.05, black, 0, Y, 0.015);           // 目鏡
+  cyl(0.017, 0.017, 0.2, black, 0, Y, -0.1);                                                            // 鏡管（34 公釐）
+  cyl(0.026, 0.017, 0.06, black, 0, Y, -0.23); cyl(0.027, 0.027, 0.05, black, 0, Y, -0.285);            // 物鏡
+  box(0.03, 0.03, 0.05, black, 0, Y, -0.08); cyl(0.012, 0.012, 0.026, black, 0, Y + 0.026, -0.08, 16).rotation.x = 0; // 鏡身與上方調整鈕
+  { const t = cyl(0.012, 0.012, 0.024, black, 0.026, Y, -0.08, 16); t.rotation.set(0, 0, Math.PI / 2); }
+  const lb = new THREE.Mesh(new THREE.CircleGeometry(0.018, 24), glass); lb.position.set(0, Y, 0.073); g.add(lb);
+  const lf = new THREE.Mesh(new THREE.CircleGeometry(0.025, 24), glass); lf.rotation.y = Math.PI; lf.position.set(0, Y, -0.311); g.add(lf);
+  box(0.022, 0.012, 0.3, black, 0, 0.127, -0.06);                                                       // 皮卡汀尼導軌
+  for (const z of [-0.02, -0.15]) { box(0.03, Y - 0.127, 0.018, black, 0, (Y + 0.127) / 2, z); cyl(0.02, 0.02, 0.018, black, 0, Y, z); } // 鏡環
+  cyl(0.016, 0.016, 0.11, black, 0, 0.1, -0.945, 16);                                                   // 槍口制退器
+  for (const z of [-0.92, -0.95, -0.98]) box(0.034, 0.008, 0.01, black, 0, 0.1, z);
+  g.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) o.frustumCulled = false; });
+  root.add(g);
+}
+// 木頭紋理改成沙色合成材質（金屬、膠帶等低彩度的部分不動）
+function recolorWood(tex) {
+  try { const img = tex.image; const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const c = cv.getContext('2d'); c.drawImage(img, 0, 0); const d = c.getImageData(0, 0, cv.width, cv.height); const a = d.data;
+    for (let i = 0; i < a.length; i += 4) { const r = a[i], gg = a[i + 1], b = a[i + 2]; if (r > gg * 1.12 && r > b * 1.35 && r > 50) { const l = (0.3 * r + 0.59 * gg + 0.11 * b) / 255; const k = 0.55 + l * 0.7; a[i] = 104 * k; a[i + 1] = 92 * k; a[i + 2] = 70 * k; } }
+    c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = tex.flipY; t.colorSpace = THREE.SRGBColorSpace; t.wrapS = tex.wrapS; t.wrapT = tex.wrapT; t.anisotropy = 4; return t; } catch (e) { return tex; }
+}
+/* 狙擊槍拉槍機（進度 0→1）：右手放開握把 → 抓槍機柄 → 往上轉 → 往後拉（退殼）→ 往前推 → 往下轉 → 回握把 */
+function boltPose(k) {
+  const seg = (a, b) => easeIO(clamp((k - a) / (b - a), 0, 1));
+  const rot = k < 0.18 ? 0 : k < 0.32 ? seg(0.18, 0.32) : k < 0.66 ? 1 : k < 0.78 ? 1 - seg(0.66, 0.78) : 0;
+  const back = k < 0.32 ? 0 : k < 0.48 ? seg(0.32, 0.48) : k < 0.66 ? 1 - seg(0.48, 0.66) : 0;
+  const hand = k < 0.18 ? seg(0, 0.18) : k < 0.8 ? 1 : 1 - seg(0.8, 1);
+  return { rot, back, hand };
+}
+const BOLT_HAND = { fingers: [-0.2, -0.7, -0.68], thumb: [0.1, 0.9, -0.4], curl: [[50, 60, 60], 70, 75, 80], thumbCurl: [20, 30, 25], thumbFold: 25 };
 const INPUT = { look: { dx: 0, dy: 0 }, fire: false, ads: false, reload: false, defuse: false };
-const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0, tk: 0 });
+const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0, tk: 0, akp: 0, akk: 0, hs: 0 });
 class Player {
   constructor() {
     this.pos = V(0, 0, 6); this.yaw = 0; this.pitch = 0; this.vel = V(0, 0, 0); this.hp = 100; this.alive = true; this.ngT = 0; this.hurtT = 0; this.regenT = 0;
@@ -4419,6 +4656,7 @@ class Player {
     this.stats = newStats(); this.lastHurtFrom = null; this.shotAt = 0;
     this.coverId = null; this.target = null; this.path = []; this.peekK = 0; this._eye = new THREE.Vector3();
     this.weaponMeshes = {}; this.vm = new THREE.Group(); vmGroup.add(this.vm); this.flash = null; this.arms = null;
+    this.ammoOf = {}; this.hasAK = false; this.boltT = 0; this.boltQ = 0; this.swapT = 0; this.fireLatch = false; this.oldHad = false; this.rounds = {}; this.bolts = {}; this.sway = { x: 0, y: 0, t: 0 };
   }
   get cover() { return this.target ? null : cvOf(this.coverId); }
   eye(out = new THREE.Vector3()) { return out.copy(this._eye); }
@@ -4434,19 +4672,29 @@ class Player {
     this.turnTo = best ? Math.atan2(-(best.pos.x - c.x), -(best.pos.z - c.z)) : c.yaw; this.turnPitch = 0;
     if (MS.moving) { if (!ZONES[MS.zone].covers.includes(this.coverId)) { this.goCover(ZONES[MS.zone].covers[0]); return; } zoneArrive(); } onCover(); }
   setupViewModels(models) {
-    for (const k of ['m4', 'ak']) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
-    this.mags = {}; for (const k in this.weaponMeshes) this.mags[k] = splitMagazine(this.weaponMeshes[k], WEAPONS[k]);
+    for (const k of ['m4', 'ak', 'sniper']) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
+    if (this.weaponMeshes.sniper) { const m = this.weaponMeshes.sniper, w = WEAPONS.sniper, B = w.boltBox; modernizeSniper(m);
+      const piv = new THREE.Group(); piv.position.set(w.boltPivot[0], w.boltPivot[1], 0); m.add(piv); piv.updateMatrix(); // 槍機：繞槍管軸線轉、沿 z 拉動
+      const n = splitParts(m, (c) => c.x > B.x0 && c.x < B.x1 && c.y > B.y0 && c.y < B.y1 && c.z > B.z0 && c.z < B.z1 && c.max[0] > 0.03 && c.n > 300, { pivot: piv }); this.bolts.sniper = n ? piv : null; if (!n) DBG('狙擊槍：找不到槍機'); }
+    this.mags = {}; for (const k in this.weaponMeshes) { this.mags[k] = splitMagazine(this.weaponMeshes[k], WEAPONS[k]); this.rounds[k] = magRounds(WEAPONS[k], this.mags[k]); }
     this.flash = makeFlash(0.55, LAYER_VIEW); this.vm.add(this.flash); { const L = this.flash.userData.light; this.flash.remove(L); L.layers.enableAll(); this.vm.add(L); this.flashLight = L; } // 燈不放在會隱藏的火光裡：隱藏的燈不算數，燈數一變就要重新編譯
     try { if (models.arms_military) this.arms = new ViewArms(models.arms_military, { shoulder: [0, -0.22, -0.03], yaw: 25, stretch: 1.12, reach: 0.1, pole: [0.6, -1, 0.1], envMap: 0.6 }, this.vm); } catch (e) { console.warn('手臂載入失敗', e); }
     if (this.weaponMeshes.m4) this.weaponMeshes.m4.add(buildScope());
     this.setGear(this.gearId);
   }
   setGear(id) {
-    this.gearId = id; this.w = WEAPONS[id]; this.ammo = this.w.mag; this.reloading = 0;
+    if (this.w && this.gearId && this.ammoOf) this.ammoOf[this.gearId] = this.reloading > 0 ? this.ammo : this.ammo;
+    this.gearId = id; this.w = WEAPONS[id]; this.ammo = this.ammoOf[id] ?? this.w.mag; this.reloading = 0; this.boltT = 0; this.boltQ = 0; this.swapT = 0.45; this.fireLatch = true;
     for (const k in this.weaponMeshes) this.weaponMeshes[k].visible = k === id; this.mesh = this.weaponMeshes[id] || null;
   }
-  spawnAt(z) { this.pos.set(0, 0, z); this.yaw = 0; this.pitch = 0; this.hp = 100; this.alive = true; this.ammo = this.w.mag; this.reloading = 0; }
-  start() { this.setGear('m4'); this.spawnAt(0); const c = cvOf(ZONES[0].covers[0]); this.coverId = c.id; this.target = null; this.path = []; this.peekK = 0; this.pos.set(c.x, 0, c.z); this.yaw = c.yaw; this.stats = newStats(); this.hurtT = 0; this.lastHurtFrom = null; this.updateEye(); }
+  spawnAt(z) { this.pos.set(0, 0, z); this.yaw = 0; this.pitch = 0; this.hp = 100; this.alive = true; this.ammo = this.w.mag; this.reloading = 0; this.boltT = 0; }
+  // 直接換位置（爬上屋頂、下樓）
+  teleport(id) { const c = cvOf(id); this.coverId = id; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0); this.yaw = c.yaw; this.pitch = c.pitch ?? -0.035; this.turnTo = null; this.peekK = 0; this.updateEye(); }
+  teleportXZ(x, z) { this.coverId = null; this.target = null; this.path = []; this.pos.set(x, 0, z); this.vel.set(0, 0, 0); this.peekK = 0; this.updateEye(); }
+  // 換槍：撿起敵人的 AK、狙擊段落換狙擊槍；每把槍各自記得剩幾發
+  switchGear(id) { if (id === this.gearId || !WEAPONS[id] || !this.weaponMeshes[id]) return false; this.setGear(id); SFX.pickup(); return true; }
+  pickAK() { if (!this.hasAK) { this.hasAK = true; this.ammoOf.ak = WEAPONS.ak.mag; this.stats.akp = 1; } return this.switchGear('ak'); }
+  start() { this.ammoOf = {}; this.hasAK = false; this.gearId = null; this.setGear('m4'); this.swapT = 0; this.spawnAt(0); const c = cvOf(ZONES[0].covers[0]); this.coverId = c.id; this.target = null; this.path = []; this.peekK = 0; this.pos.set(c.x, 0, c.z); this.yaw = c.yaw; this.stats = newStats(); this.hurtT = 0; this.lastHurtFrom = null; this.updateEye(); }
   addScore(n) { this.stats.score = Math.max(0, this.stats.score + n); }
   hurt(amount, from) {
     if (!this.alive) return; this.hp -= amount; this.hurtT = 0.5; this.regenT = 4; this.lastHurtFrom = from; SFX.hurt();
@@ -4482,13 +4730,20 @@ class Player {
     if (this.reloading > 0) {
       const before = 1 - this.reloading / w.reload; this.reloading -= dt; const k = 1 - this.reloading / w.reload;
       if (before < 0.16 && k >= 0.16) SFX.magOut(); if (before < 0.70 && k >= 0.70) SFX.magIn(); if (before < 0.83 && k >= 0.83) SFX.bolt();
-      if (this.reloading <= 0) { this.ammo = w.mag; }
+      if (this.reloading <= 0) { this.ammo = w.mag; if (w.boltAction) this.boltQ = 0.05; } // 狙擊槍換完彈匣要拉一次槍機上膛
     }
-    else if ((INPUT.reload || (this.ammo === 0 && INPUT.fire)) && this.ammo < w.mag) { this.reloading = w.reload; INPUT.reload = false; }
+    else if ((INPUT.reload || (this.ammo === 0 && INPUT.fire && !this.fireLatch)) && this.ammo < w.mag && this.boltT <= 0 && this.swapT <= 0) { this.reloading = w.reload; this.oldHad = this.ammo > 0; INPUT.reload = false; this.boltQ = 0; }
     INPUT.reload = false;
     // 開火
-    this.fireT -= dt;
-    if (INPUT.fire && this.reloading <= 0 && this.fireT <= 0 && !MS.defusing && (!this.cover || this.peekK > 0.75)) { if (this.ammo > 0) this.shoot(); else { SFX.dry(); this.fireT = 0.3; } }
+    this.fireT -= dt; this.swapT = Math.max(0, this.swapT - dt);
+    // 狙擊槍拉槍機：開槍後稍停，再拉一次（期間不能開槍）
+    if (this.boltQ > 0) { this.boltQ -= dt; if (this.boltQ <= 0) { this.boltT = w.cycle || 1.2; this.boltEj = false; this.boltS = 0; } }
+    if (this.boltT > 0) { const cy = w.cycle || 1.2; const k0 = 1 - this.boltT / cy; this.boltT -= dt; const k = 1 - Math.max(0, this.boltT) / cy;
+      if (k0 < 0.3 && k >= 0.3) SFX.boltOpen(); if (k0 < 0.44 && k >= 0.44 && this.mesh) ejectCase(this, w, this.mesh, 0.8); if (k0 < 0.62 && k >= 0.62) SFX.boltClose(); }
+    if (!INPUT.fire) this.fireLatch = false;
+    if (INPUT.fire && !this.fireLatch && this.reloading <= 0 && this.fireT <= 0 && this.boltT <= 0 && this.boltQ <= 0 && this.swapT <= 0 && !MS.defusing && (!this.cover || this.peekK > 0.75)) { if (this.ammo > 0) { this.shoot(); if (w.boltAction) this.fireLatch = true; } else { SFX.dry(); this.fireT = 0.3; this.fireLatch = true; } }
+    // 狙擊鏡：手會微微晃動
+    this.sway.t += dt; const sk = this.scoped ? 1 : 0; this.sway.x = sk * (Math.sin(this.sway.t * 1.3) * 0.0011 + Math.sin(this.sway.t * 0.47) * 0.0007); this.sway.y = sk * (Math.sin(this.sway.t * 0.9 + 1) * 0.0009 + Math.sin(this.sway.t * 0.31) * 0.0006);
     this.defK = lerp(this.defK || 0, MS.defusing ? 1 : 0, Math.min(1, dt * 8));
     this.recoil = lerp(this.recoil, 0, Math.min(1, dt * 9)); this.kick = lerp(this.kick, 0, Math.min(1, dt * 14));
     const safe = this.exposure() === 0; this.hurtT = Math.max(0, this.hurtT - dt); if (this.regenT > 0) this.regenT -= dt * (safe ? 2.5 : 1); else this.hp = Math.min(100, this.hp + (safe ? 26 : 14) * dt);
@@ -4498,12 +4753,14 @@ class Player {
     const spreadDeg = (this.ads ? w.spreadAds : w.spread) * (this.moving ? 1.6 : 1) + this.recoil * 1.2;
     const ro = this.eye(); const rd = this.aimDir(spreadDeg);
     this.recoil = Math.min(3, this.recoil + w.recoil); this.kick = 1; this.pitch += w.recoil * 0.012 * (0.7 + R() * 0.6); this.yaw += (R() - 0.5) * w.recoil * 0.006;
-    flashOn(this.flash, 0.045); SFX.shot(w.sound);
+    flashOn(this.flash, w.boltAction ? 0.07 : 0.045); SFX.shot(w.sound);
+    if (w.boltAction) { if (this.ammo > 0) this.boltQ = 0.28; } else if (this.mesh) ejectCase(this, w, this.mesh);
     // 命中判定：牆、歹徒、平民、人質
     let best = rayWorld(ro, rd, 300), kind = 'world', obj = null, part = null;
     for (const e of ENEMIES) { if (!e.alive) continue; const h = e.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'enemy'; obj = e; part = h.part; } }
     for (const c of CIVS) { if (c.dead || c.state === 'gone') continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'civ'; obj = c; part = h.part; } }
     for (const c of HOSTAGES) { if (c.dead || c.state === 'gone') continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'hostage'; obj = c; part = h.part; } }
+    for (const c of SNH) { if (c.dead || c.state === 'gone') continue; const h = c.c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'hostage'; obj = c; part = h.part; } }
     if (VS.boss && bossExposed()) { const h = VS.boss.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'boss'; part = h.part; } }
     const hitP = ro.clone().addScaledVector(rd, best);
     if (kind === 'boss') {
@@ -4513,18 +4770,18 @@ class Player {
     } else if (kind === 'enemy') {
       this.stats.hits++;
       const killed = obj.damage(w.dmg, part); hitmark(killed);
-      if (killed) { this.stats.kills++; if (part === 'head') this.stats.headshots++; const pts = part === 'head' ? PTS.head : PTS.kill; this.addScore(pts); SFX.kill(); banner(part === 'head' ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); } else SFX.hit();
+      if (killed) { this.stats.kills++; if (part === 'head') this.stats.headshots++; if (this.gearId === 'ak') this.stats.akk = (this.stats.akk || 0) + 1; const pts = part === 'head' ? PTS.head : PTS.kill; this.addScore(pts); SFX.kill(); banner(part === 'head' ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); } else SFX.hit();
       PUFFS.burst(hitP, 6, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
     } else if (kind === 'civ' || kind === 'hostage') {
       obj.damage(w.dmg, part); PUFFS.burst(hitP, 5, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
       if (kind === 'civ') { this.stats.civ++; this.addScore(PTS.civHit); banner(`誤傷平民！　${PTS.civHit}`, 'bad', 1600, '開槍前先看清楚：沒有拿槍的是平民'); }
-      else { this.stats.hh++; this.addScore(PTS.hostageHit); banner(`誤傷人質！　${PTS.hostageHit}`, 'bad', 1800, '人質蹲在看守旁邊，瞄準看守的頭再開槍'); }
+      else { this.stats.hh++; this.addScore(PTS.hostageHit); banner(`誤傷人質！　${PTS.hostageHit}`, 'bad', 1800, MS.zone === Z_SNIPE ? '人質跪在看守前面：瞄準看守露出來的頭和肩膀' : '人質蹲在看守旁邊，瞄準看守的頭再開槍'); }
       SFX.bad(); onPlayerEvent(kind === 'civ' ? 'civ' : 'hh');
     } else { PUFFS.burst(hitP, 7, { spread: 1.5, up: 1.6, size: 0.22 }); SFX.impact(); }
     onShot();
   }
   aimDir(spreadDeg) {
-    const d = V(0, 0, -1).applyEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ'));
+    const d = V(0, 0, -1).applyEuler(new THREE.Euler(this.pitch + this.sway.y, this.yaw + this.sway.x, 0, 'YXZ'));
     const s = spreadDeg * D2R; const a = R() * 6.283, r = Math.sqrt(R()) * s;
     const up = V(0, 1, 0), right = V().crossVectors(d, up).normalize(), u2 = V().crossVectors(right, d);
     return d.addScaledVector(right, Math.cos(a) * r).addScaledVector(u2, Math.sin(a) * r).normalize();
@@ -4543,17 +4800,26 @@ class Player {
     p.x += Math.sin(this.bob) * bobA; p.y += Math.abs(Math.cos(this.bob)) * bobA * 1.2 - this.kick * 0.03 * (1 - this.adsK * 0.5); p.z += this.kick * 0.05;
     // 換彈時把槍拉近身體中央、槍口抬高並向左翻，讓彈匣與左手都在畫面裡
     p.y += lowK * 0.075; p.x -= lowK * 0.11; p.z += lowK * 0.02;
-    const dk = Math.max(this.defK || 0, this.cover ? (1 - this.peekK) * 0.45 : 0); p.y -= dk * 0.32; p.x += dk * 0.08; // 拆彈、躲在掩體後面時把槍放低
+    const dk = Math.max(this.defK || 0, this.cover ? (1 - this.peekK) * 0.45 : 0, this.swapT > 0 ? Math.sin(Math.min(1, this.swapT / 0.45) * Math.PI) * 0.9 : 0); p.y -= dk * 0.32; p.x += dk * 0.08; // 拆彈、躲在掩體後面、換槍時把槍放低
+    const bk = this.boltT > 0 ? boltPose(1 - this.boltT / (w.cycle || 1.2)) : null; if (bk) { p.y += bk.hand * 0.02 * (1 - this.adsK); m.rotation.z = 0; }
     m.position.copy(p); m.rotation.set(-this.kick * 0.08 + Math.sin(this.bob * 0.5) * 0.004 + lowK * 0.22 - dk * 0.7, lowK * 0.35 + dk * 0.4, -lowK * 0.75);
     m.updateMatrixWorld(true);
     this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion); if (this.flashLight) this.flashLight.position.copy(this.flash.position);
-    const mg = this.mags && this.mags[this.gearId];
+    const mg = this.mags && this.mags[this.gearId]; const rnd = this.rounds[this.gearId];
     let hands = w.hands;
-    if (rk > 0 && w.magAxis) { const rp = reloadPose(w, rk); hands = { right: w.hands.right, left: rp.left }; if (mg) { mg.pivot.position.set(...rp.off); mg.pivot.rotation.set(rp.magRot, 0, rp.magRot * 0.4); mg.pivot.visible = rp.magVis; } }
-    else if (mg) { mg.pivot.position.set(0, 0, 0); mg.pivot.rotation.set(0, 0, 0); mg.pivot.visible = true; }
+    if (rk > 0 && w.magAxis) { const rp = reloadPose(w, rk); hands = { right: w.hands.right, left: rp.left }; if (mg) { mg.pivot.position.set(...rp.off); mg.pivot.rotation.set(rp.magRot, 0, rp.magRot * 0.4); mg.pivot.visible = rp.magVis; }
+      // 彈匣裡看得到的子彈：拔出來的舊彈匣還有子彈才顯示（打光的維持原樣）；從腰間拿出的新彈匣一定有子彈
+      if (rnd) rnd.visible = rk > 0.12 && rk < 0.68 && (rk < 0.48 ? this.oldHad : true); }
+    else { if (mg) { mg.pivot.position.set(0, 0, 0); mg.pivot.rotation.set(0, 0, 0); mg.pivot.visible = true; } if (rnd) rnd.visible = false; }
+    // 狙擊槍槍機：轉上去、往後拉；右手跟著槍機柄
+    const bp = this.bolts[this.gearId];
+    if (bp) { const b = bk || { rot: 0, back: 0, hand: 0 }; bp.rotation.z = b.rot * 1.05; bp.position.z = b.back * w.boltSlide;
+      if (bk && bk.hand > 0) { const kn = new THREE.Vector3(...w.knob); kn.x -= w.boltPivot[0]; kn.y -= w.boltPivot[1]; kn.applyAxisAngle(new THREE.Vector3(0, 0, 1), bp.rotation.z); kn.x += w.boltPivot[0]; kn.y += w.boltPivot[1]; kn.z += bp.position.z;
+        const R0 = w.hands.right; const tgt = [kn.x + 0.012, kn.y - 0.006, kn.z + 0.018]; const h = bk.hand; const mix = (a, b2) => a.map((v, i) => v + (b2[i] - v) * h);
+        hands = { left: hands.left, right: { pos: mix(R0.pos, tgt), fingers: mix(R0.fingers, BOLT_HAND.fingers), thumb: mix(R0.thumb, BOLT_HAND.thumb), curl: h > 0.5 ? BOLT_HAND.curl : R0.curl, thumbCurl: h > 0.5 ? BOLT_HAND.thumbCurl : R0.thumbCurl, thumbFold: h > 0.5 ? BOLT_HAND.thumbFold : R0.thumbFold } }; } }
     if (this.arms) this.arms.update(m, hands, 0);
     this.scoped = !!w.scope && this.adsK > 0.85;
-    camera.fov = this.scoped ? SCOPE_FOV : lerp(72, w.scope ? 50 : w.adsFov, this.adsK); camera.updateProjectionMatrix();
+    camera.fov = this.scoped ? (w.scope.fov || SCOPE_FOV) : lerp(72, w.scope ? 50 : w.adsFov, this.adsK); camera.updateProjectionMatrix();
   }
 }
 
@@ -4564,7 +4830,7 @@ const ME = { pid: store.get('pid', null) || (() => { const p = Math.random().toS
 let META = {}, PLAYERS = {}, PREM = null;
 const G = { mode: 'menu', endsAt: 0, startedAt: 0, diff: DIFFS.N, practice: false };
 let P = null; // Player
-const TASKS = ['突破路障', '清除街口', '救出人質', '拆除炸彈'];
+const TASKS = ['突破路障', '清除街口', '肅清商行', '狙擊救援', '救出人質', '拆除炸彈'];
 function show(id) { for (const s of document.querySelectorAll('.scr')) s.hidden = s.id !== id; }
 function hideAll() { for (const s of document.querySelectorAll('.scr')) s.hidden = true; }
 let bannerTO = 0;
@@ -4579,12 +4845,16 @@ function onPlayerEvent(k) {
 }
 let statDirty = false; function onShot() { statDirty = true; }
 /* 任務流程的回呼（04_ai 呼叫） */
-function onZone() { renderTasks(); const Z = ZONES[MS.zone]; if (Z.hostStart) banner('攻入民宅！', 'bad', 2600, `人質關在最裡面的房間：${G.diff.hostage} 秒內一間一間清進去`); else if (Z.hostage) banner('人質房！', 'info', 2200, '看守站在人質旁邊，看清楚再開槍'); else if (Z.indoor) banner(Z.name.split('：')[1] || Z.name, 'info', 1400); else if (Z.bomb) banner('炸彈開始倒數！', 'bad', 2200, SHARED.on ? '全班一起清除守衛，再到炸彈旁邊拆彈' : `清除敵人，${G.diff.bomb} 秒內拆除街尾的炸彈`); else if (Z.defuse) banner(DESKTOP ? '按住 E 拆彈' : '按住「拆彈」', 'info', 2200, SHARED.on ? '全班共用一個拆彈進度：有人拆、有人掩護' : '拆彈 4 秒，期間不能開槍；放開會暫停'); else banner(Z.name, 'info', 1400); }
+function onZone() { renderTasks(); const Z = ZONES[MS.zone]; if (Z.shopStart) banner('肅清港灣商行！', 'bad', 2600, '黑鴉占據了街口的商行：店面 → 倉庫 → 樓梯間，清完上屋頂'); else if (Z.snipe) banner('換上狙擊槍', 'info', 3200, `街尾有 2 名人質被押著，${G.diff.snipe} 秒內打倒押人質的看守（10 倍瞄準鏡，一槍要拉一次槍機）`); else if (Z.hostStart) banner('攻入民宅！', 'bad', 2600, `人質關在最裡面的房間：${G.diff.hostage} 秒內一間一間清進去`); else if (Z.hostage) banner('人質房！', 'info', 2200, '看守站在人質旁邊，看清楚再開槍'); else if (Z.indoor) banner(Z.name.split('：')[1] || Z.name, 'info', 1400); else if (Z.bomb) banner('炸彈開始倒數！', 'bad', 2200, SHARED.on ? '全班一起清除守衛，再到炸彈旁邊拆彈' : `清除敵人，${G.diff.bomb} 秒內拆除街尾的炸彈`); else if (Z.defuse) banner(DESKTOP ? '按住 E 拆彈' : '按住「拆彈」', 'info', 2200, SHARED.on ? '全班共用一個拆彈進度：有人拆、有人掩護' : '拆彈 4 秒，期間不能開槍；放開會暫停'); else banner(Z.name, 'info', 1400); }
 let coverTipShown = false;
 function onCover() { if (!coverTipShown && G.mode === 'take') { coverTipShown = true; setTimeout(() => banner('蹲在掩體後面，敵人打不到你', 'info', 3200, (DESKTOP ? '按住右鍵瞄準或按左鍵開火' : '按「瞄準」或「開火」') + '就會探身射擊；準心對到其他掩體可以換位置'), 1500); } }
-function onZoneClear() { banner('區域清除，前進！', 'good', 1400); SFX.good(); renderTasks(); onShot(); }
-function onHostages(n) { P.stats.hr = n; P.addScore(PTS.hostage * n); banner(n ? `救出 ${n} 名人質　+${PTS.hostage * n}` : '看守全倒，但人質都受傷倒地了', n ? 'good' : 'bad', 2400); SFX.good(); evPush('hr', { n }); renderTasks(); onShot(); }
+function onZoneClear() { if (!ZONES[MS.zone].snipe) banner('區域清除，前進！', 'good', 1400); SFX.good(); renderTasks(); onShot(); }
+function onHostages(n) { P.stats.hr += n; P.addScore(PTS.hostage * n); banner(n ? `救出 ${n} 名人質　+${PTS.hostage * n}` : '看守全倒，但人質都受傷倒地了', n ? 'good' : 'bad', 2400); SFX.good(); evPush('hr', { n }); renderTasks(); onShot(); }
 function onHostagesTaken() { banner('人質被押走了', 'bad', 2600, '太慢了：看守帶著人質離開廣場'); SFX.bad(); evPush('taken'); renderTasks(); onShot(); }
+function onSnFree(n) { P.stats.hr += n; P.stats.hs = n; P.addScore(PTS.hostage * n); banner(n ? `救出 ${n} 名人質　+${PTS.hostage * n}` : '看守全倒，但人質受傷倒地了', n ? 'good' : 'bad', 2400, n ? '人質往巷子裡跑走了' : ''); SFX.good(); evPush('hr', { n }); renderTasks(); onShot(); }
+function onSnTaken() { banner('人質被押上車了', 'bad', 2600, '太慢了：看守帶著人質離開'); SFX.bad(); evPush('taken'); renderTasks(); onShot(); }
+// 換場景（爬上屋頂、下樓）：畫面暗一下
+function fadeBlack(text) { const f = $('hFade'); if (!f) return; f.textContent = text || ''; f.style.transition = 'none'; f.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { f.style.transition = 'opacity 0.9s 0.35s'; f.style.opacity = '0'; })); }
 function onAmbush() { banner('屋頂有槍手！', 'bad', 1800, '放開拆彈鍵就能開槍'); }
 function onBomb(ok) {
   if (ok) {
@@ -4601,8 +4871,9 @@ function onBomb(ok) {
 function taskIndex() { return ZONES[MS.zone].task; }
 function renderTasks() {
   const cur = taskIndex(); const st = (i) => {
-    if (i === 2 && MS.hostState === 'free') return ['done', `救出 ${P.stats.hr}／3`]; if (i === 2 && MS.hostState === 'taken') return ['fail', '人質被押走'];
-    if (i === 3 && MS.done) return MS.fail ? ['fail', '炸彈引爆'] : ['done', '已拆除'];
+    if (i === 3 && MS.snState === 'free') return ['done', `救出 ${P.stats.hs}／2`]; if (i === 3 && MS.snState === 'taken') return ['fail', '人質被押上車'];
+    if (i === 4 && MS.hostState === 'free') return ['done', `救出 ${P.stats.hr - (P.stats.hs || 0)}／3`]; if (i === 4 && MS.hostState === 'taken') return ['fail', '人質被押走'];
+    if (i === 5 && MS.done) return MS.fail ? ['fail', '炸彈引爆'] : ['done', '已拆除'];
     return i < cur ? ['done', ''] : i === cur ? ['cur', ''] : ['', ''];
   };
   setHTML('hTask', TASKS.map((t, i) => { const [c, n] = st(i); return `<div class="${c}"><i>${c === 'done' ? '✓' : c === 'fail' ? '✗' : i + 1}</i>${t}${n ? `<small>${n}</small>` : ''}</div>`; }).join(''));
@@ -4642,10 +4913,11 @@ function followLobby() {
 function briefing(d) {
   return `<div class="rules"><p><b>任務簡報（難度：${d.name}）</b></p>
   <p>虛構的武裝組織「黑鴉」占領了港灣市的商店街，把 3 名人質關在廣場旁的民宅裡，還在街尾放了炸彈。</p>
-  <p>① 突破路障　② 清除街口　③ 攻入民宅救人質（${d.hostage} 秒內清完三個房間）　④ 拆除炸彈（${d.bomb} 秒倒數）</p>
+  <p>① 突破路障　② 清除街口　③ 肅清港灣商行（三個房間）　④ 上屋頂用狙擊槍救出街尾的 2 名人質（${d.snipe} 秒）　⑤ 攻入民宅救 3 名人質（${d.hostage} 秒）　⑥ 拆除炸彈（${d.bomb} 秒倒數）</p>
+  <p>靠近倒下的敵人，可以撿起他的 AK-47 來用。</p>
   <p>敵人頭巾蒙面、拿 AK 步槍。穿便服的是平民和人質，打到會重扣分。你平常蹲在掩體後面，瞄準或開火時才探身。</p>${META.shared ? '<p><b>全班同一條街：</b>街上的敵人全班共用，敵人會一波一波湧來，大家一起推進；救人質時每個人各自攻入民宅，救完到街尾會合拆彈。</p>' : ''}</div>`;
 }
-function controlsText() { return (DESKTOP ? '電腦：滑鼠移動＝轉視角，右鍵按住＝3 倍瞄準鏡，左鍵＝開火，R＝換彈，空白鍵＝前往準心對到的掩體，E 按住＝拆彈，Esc＝放開滑鼠。' : '手機橫放：左手在畫面上滑動＝轉視角，右手按開火；「瞄準」開 3 倍瞄準鏡，「換彈」換彈匣；準心對到別的掩體會出現「前往掩體」。') + '平常蹲在掩體後面（敵人打不到），瞄準或開火時才探身。一段清完，電腦會帶你跑到下一個掩體。'; }
+function controlsText() { return (DESKTOP ? '電腦：滑鼠移動＝轉視角，右鍵按住＝瞄準鏡，左鍵＝開火，R＝換彈，空白鍵＝前往準心對到的掩體，G＝撿起敵人的 AK／換槍，E 按住＝拆彈，Esc＝放開滑鼠。' : '手機橫放：左手在畫面上滑動＝轉視角，右手按開火；「瞄準」開瞄準鏡，「換彈」換彈匣；準心對到別的掩體會出現「前往掩體」；靠近倒下的敵人會出現「撿起 AK」。') + '平常蹲在掩體後面（敵人打不到），瞄準或開火時才探身。一段清完，電腦會帶你跑到下一個掩體。'; }
 function waitScreen() {
   G.mode = 'wait'; hideAll(); show('scrWait'); const t = TEAMS[ME.team]; const d = DIFFS[META.diff || 'N'];
   $('waitCard').innerHTML = `<h1 style="color:${t.c}">${t.name}　${ME.no} 號隊員</h1><p>等老師按「開始任務」。</p>${briefing(d)}
@@ -4668,13 +4940,13 @@ function startTake(practice) {
   if (!(SHARED.on && SHS.ph >= 1)) banner('任務開始', 'info', 1600, SHARED.on ? '全班一起突破路障：擋住黑鴉一波波的攻勢' : '突破路障：清除沙包後面和巷口衝出來的敵人'); statDirty = true;
   renderRotate(); renderDeskHint();
 }
-function grade(s) { const acc = s.shots ? s.hits / s.shots : 0; const pts = (s.bomb === 1 ? 3 : 0) + s.hr + (acc >= 0.4 ? 2 : acc >= 0.25 ? 1 : 0) - s.hh * 2 - s.civ * 2 - (s.deaths > 2 ? 1 : 0); return pts >= 7 ? '特優' : pts >= 5 ? '優等' : pts >= 2 ? '甲等' : '乙等'; }
+function grade(s) { const acc = s.shots ? s.hits / s.shots : 0; const pts = (s.bomb === 1 ? 3 : 0) + Math.round(s.hr * 3 / 5) + (acc >= 0.4 ? 2 : acc >= 0.25 ? 1 : 0) - s.hh * 2 - s.civ * 2 - (s.deaths > 2 ? 1 : 0); return pts >= 7 ? '特優' : pts >= 5 ? '優等' : pts >= 2 ? '甲等' : '乙等'; }
 function resultHTML(title, msg) {
   const s = P.stats; const acc = s.shots ? Math.round(100 * s.hits / s.shots) : 0;
   return `<h1>${title}</h1><p>${msg}</p>
   <div class="stat"><div><b>${s.score}</b><small>分數</small></div><div><b>${grade(s)}</b><small>評等</small></div><div><b>${s.kills}</b><small>擊倒（爆頭 ${s.headshots}）</small></div>
-  <div><b>${acc}%</b><small>命中率</small></div><div><b>${s.hr}／3</b><small>救出人質</small></div><div><b>${s.bomb === 1 ? '成功' : s.bomb === -1 ? '引爆' : '未完成'}</b><small>拆彈</small></div>
-  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>${s.tk ? `<p><b style="color:#ffd23a">擊倒老師 ${s.tk} 次</b></p>` : ''}`;
+  <div><b>${acc}%</b><small>命中率</small></div><div><b>${s.hr}／5</b><small>救出人質</small></div><div><b>${s.bomb === 1 ? '成功' : s.bomb === -1 ? '引爆' : '未完成'}</b><small>拆彈</small></div>
+  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>${s.akp ? `<p>撿起敵人的 AK-47，用 AK 擊倒 ${s.akk || 0} 人</p>` : ''}${s.tk ? `<p><b style="color:#ffd23a">擊倒老師 ${s.tk} 次</b></p>` : ''}`;
 }
 function endTake(reason) {
   if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; if (document.pointerLockElement) document.exitPointerLock(); renderDeskHint(); INPUT.fire = false; INPUT.defuse = false; MS.defusing = false;
@@ -4688,7 +4960,7 @@ function endTake(reason) {
 }
 function sendStat(force) {
   if (!P || G.practice || ME.team < 0) return; const s = P.stats;
-  NET.set('stat/' + ME.pid, { s: s.score, k: s.kills, sh: s.shots, hi: s.hits, h: s.headshots, d: s.deaths, c: s.civ, hh: s.hh, hr: s.hr, b: s.bomb, ft: s.ft, tk: s.tk || 0, z: MS.zone, t: ME.team, no: ME.no, at: NET.now() });
+  NET.set('stat/' + ME.pid, { s: s.score, k: s.kills, sh: s.shots, hi: s.hits, h: s.headshots, d: s.deaths, c: s.civ, hh: s.hh, hr: s.hr, b: s.bomb, ft: s.ft, tk: s.tk || 0, ak: s.akp || 0, akk: s.akk || 0, z: MS.zone, t: ME.team, no: ME.no, at: NET.now() });
   statDirty = false;
 }
 // 老師翻牌時：手機顯示自己的成績
@@ -4748,15 +5020,16 @@ function studentTick(dt) {
   $('hCross').classList.toggle('ads', P.adsK > 0.6);
   // 倒數：人質、炸彈
   const al = [];
-  if (MS.hostState === 'held' && MS.hostOn && MS.zone >= 2 && MS.zone <= 4) al.push(`人質時限 ${mmss(MS.hostT * 1000)}`);
+  if (MS.hostState === 'held' && MS.hostOn && MS.zone >= Z_HOUSE && MS.zone <= HOST_ZONE) al.push(`人質時限 ${mmss(MS.hostT * 1000)}`);
+  if (MS.snOn && MS.snState === 'held' && MS.zone === Z_SNIPE) al.push(`人質押上車倒數 ${mmss(MS.snT * 1000)}`);
   if (MS.bombOn && !MS.done) al.push(`炸彈倒數 ${mmss(MS.bombT * 1000)}`);
   const alarm = al.join('　');
   setHTML('hAlarm', alarm); setHidden('hAlarm', !alarm);
   // 目前目標
   const Z = ZONES[MS.zone]; const shSt = SHARED.on && STREET(MS.zone); const alive = shSt ? (SHS.w && SHS.w.e || []).filter((a) => a && a[7] > 0).length : ENEMIES.filter((e) => e.zone === MS.zone && e.alive).length + MS.pending.filter((p) => !p.done).length;
-  const obj = MS.moving ? '區域清除，前往下一個掩體…' : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
+  const obj = MS.moving ? '區域清除，前往下一個掩體…' : Z.snipe ? (MS.snState === 'held' ? `打倒押著人質的看守${MS.snAlert ? '' : '（第一槍之前他們不知道你在這裡）'}　敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
   setHTML('hObj', obj);
-  renderCover(dt); setClass('hScope', P.scoped ? 'scope on' : 'scope'); $('hCross').classList.toggle('hide', P.scoped);
+  renderCover(dt); renderWeaponBtn(dt); setClass('hScope', P.scoped ? (P.gearId === 'sniper' ? 'scope on sn' : 'scope on') : 'scope'); $('hCross').classList.toggle('hide', P.scoped);
   const c = P.cover; setHTML('hCov', !c ? '移動中…' : P.exposure() === 0 ? '隱蔽中：敵人打不到你' : '探身射擊中'); setClass('hCov', 'cov' + (!c ? ' mv' : P.exposure() === 0 ? ' safe' : ' out'));
   const canDefuse = Z.defuse && MS.arrived && !MS.done && P.coverId === 'D4' && !P.target; setHidden('bDefuse', !canDefuse); if (canDefuse) setStyle('bDefuse', 'background', `conic-gradient(rgba(63,209,122,0.75) ${Math.round(MS.defuse * 360)}deg, rgba(0,0,0,0.4) 0deg)`);
   renderMarks(dt); renderHurtDir();
@@ -4775,6 +5048,18 @@ function coverCandidate() {
   return best;
 }
 function renderCover(dt) { CV.t -= dt; if (CV.t <= 0) { CV.t = 0.1; CV.cand = coverCandidate(); } setHidden('bCover', !CV.cand); }
+// 撿起敵人的 AK／換槍：靠近倒下的敵人（7 公尺內）出現「撿起 AK」；撿過之後可以隨時切換
+const WB = { t: 0, near: false };
+function renderWeaponBtn(dt) {
+  WB.t -= dt; if (WB.t <= 0) { WB.t = 0.2; WB.near = !P.hasAK && ENEMIES.some((e) => e.state === 'dead' && e.pos.distanceTo(P.pos) < 7 && Math.abs(e.pos.y) < 1); }
+  const sn = MS.zone === Z_SNIPE || P.gearId === 'sniper'; const show = P.alive && !sn && !MS.defusing && (P.hasAK || WB.near);
+  setHidden('bWeapon', !show); if (show) setHTML('bWeapon', !P.hasAK ? '撿起<br>AK' : P.gearId === 'ak' ? '換回<br>M4' : '換成<br>AK');
+}
+function weaponBtn() {
+  if (!P || !P.alive || MS.zone === Z_SNIPE || P.reloading > 0) return;
+  if (!P.hasAK) { if (!WB.near) return; P.pickAK(); banner('撿起敵人的 AK-47', 'info', 2600, '7.62 公釐子彈、30 發彈匣；沒有瞄準鏡，用照門和準星瞄準'); evPush('ak'); onShot(); return; }
+  P.switchGear(P.gearId === 'ak' ? 'm4' : 'ak');
+}
 function takeCover() { if (CV.cand) { P.goCover(CV.cand); CV.cand = null; setHidden('bCover', true); SFX.resume(); } }
 // 受擊方向：畫面邊緣的紅色箭頭指向開槍的人
 function renderHurtDir() {
@@ -4791,6 +5076,7 @@ function renderMarks(dt) {
   losT -= dt; const recheck = losT <= 0; if (recheck) losT = 0.2;
   for (const e of ENEMIES) { if (!e.alive || e.zone !== MS.zone || e.state === 'leave' && e.pos.distanceTo(P.pos) > 60) continue; if (recheck || e.los === undefined) e.los = lineOfSight(e, 1.45) || lineOfSight(e, 1.0); items.push([e, e.los ? 'mark' : 'mark dim', e.k === 'guard' ? '看守' : '敵', 1.95]); }
   for (const h of HOSTAGES) if (!h.dead && h.state === 'held' && MS.zone === HOST_ZONE) items.push([h, 'mark hos', '人質', 1.35]);
+  for (const h of SNH) if (!h.dead && h.state === 'held' && MS.zone === Z_SNIPE && !P.scoped) items.push([h, 'mark hos', '人質', 1.35]);
   for (const c of CIVS) if (!c.dead && c.state !== 'gone' && c.pos.distanceTo(P.pos) < 32) items.push([c, 'mark civ', '平民', 2.0]);
   if (SHARED.on) for (const c of ALLY.pool) if (c.slot !== null && c.root.visible) items.push([c, 'mark ally', `${TEAMS[c.team]?.name?.[0] || ''}${c.no}`, 2.05, TEAMS[c.team]?.c]);
   if (VS.boss && bossOn() && !VS.tp.dn) items.push([VS.boss, bossExposed() ? 'mark boss' : 'mark boss dim', '老師', 2.2]);
@@ -4814,7 +5100,7 @@ function noZoom() {
   document.addEventListener('touchend', (e) => { const now = performance.now(); if (now - lastEnd < 350) e.preventDefault(); lastEnd = now; }, { passive: false });
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
   // 遊戲畫面上的按鈕與瞄準區：觸碰一開始就擋掉瀏覽器預設動作（放大、捲動、長按選字）
-  for (const id of ['bFire', 'bAim', 'bReload', 'bDefuse', 'bCover', 'look']) $(id).addEventListener('touchstart', stop, { passive: false });
+  for (const id of ['bFire', 'bAim', 'bReload', 'bDefuse', 'bCover', 'bWeapon', 'look']) $(id).addEventListener('touchstart', stop, { passive: false });
   const vp = $('vp'); const base = vp.getAttribute('content');
   const reset = () => { const vv = window.visualViewport; if (vv && Math.abs(vv.scale - 1) > 0.01) { vp.setAttribute('content', base.replace('maximum-scale=1', 'maximum-scale=1.01')); requestAnimationFrame(() => vp.setAttribute('content', base)); window.scrollTo(0, 0); } };
   if (window.visualViewport) { visualViewport.addEventListener('resize', reset); visualViewport.addEventListener('scroll', () => { if (visualViewport.offsetLeft || visualViewport.offsetTop) window.scrollTo(0, 0); }); }
@@ -4829,10 +5115,11 @@ function setupInput() {
   const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); };
   hold('bFire', 'fire'); hold('bDefuse', 'defuse');
   $('bCover').addEventListener('pointerdown', (e) => { e.preventDefault(); takeCover(); });
+  $('bWeapon').addEventListener('pointerdown', (e) => { e.preventDefault(); weaponBtn(); });
   $('bAim').addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT.ads = !INPUT.ads; $('bAim').classList.toggle('on', INPUT.ads); });
   $('bReload').addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT.reload = true; });
   // 電腦：滑鼠移動＝轉視角，左鍵＝開火，右鍵（按住）＝瞄準，R＝換彈，E（按住）＝拆彈
-  addEventListener('keydown', (e) => { if (e.code === 'KeyE' || e.code === 'KeyF') INPUT.defuse = true; if (e.repeat) return; if (e.code === 'KeyR') INPUT.reload = true; if (e.code === 'Space' && G.mode === 'take') { e.preventDefault(); takeCover(); } });
+  addEventListener('keydown', (e) => { if (e.code === 'KeyE' || e.code === 'KeyF') INPUT.defuse = true; if (e.repeat) return; if (e.code === 'KeyR') INPUT.reload = true; if (e.code === 'Space' && G.mode === 'take') { e.preventDefault(); takeCover(); } if ((e.code === 'KeyG' || e.code === 'KeyQ') && G.mode === 'take') weaponBtn(); });
   addEventListener('keyup', (e) => { if (e.code === 'KeyE' || e.code === 'KeyF') INPUT.defuse = false; });
   addEventListener('blur', () => { INPUT.defuse = false; INPUT.fire = false; });
   const locked = () => document.pointerLockElement === canvas;
@@ -4864,10 +5151,10 @@ function renderPanel() {
   ${idle ? `<div class="qr"><canvas id="qr" width="400" height="400"></canvas></div><div class="url">學生掃 QR Code（課堂遊戲大廳）<br>${url}</div>` : ''}
   <div class="teams">${TEAMS.map((t, i) => `<div style="--c:${t.c}"><b>${t.name}</b><span>${n[i]} 人${TS.res ? `　平均 ${TS.res.teams[i].avg}` : ''}</span></div>`).join('')}</div>
   <h2>難度</h2><div class="row">${Object.keys(DIFFS).map((k) => `<button data-d="${k}" class="${TS.diff === k ? 'on' : ''}">${DIFFS[k].name}</button>`).join('')}</div>
-  <div class="small">人質時限 ${DIFFS[TS.diff].hostage} 秒，炸彈倒數 ${DIFFS[TS.diff].bomb} 秒${DIFFS[TS.diff].extra ? '，敵人較多、較準' : ''}</div>
+  <div class="small">狙擊救援 ${DIFFS[TS.diff].snipe} 秒，民宅人質時限 ${DIFFS[TS.diff].hostage} 秒，炸彈倒數 ${DIFFS[TS.diff].bomb} 秒${DIFFS[TS.diff].extra ? '，敵人較多、較準' : ''}</div>
   <h2>對戰方式</h2><div class="row"><button data-sh="1" class="${TS.shared ? 'on' : ''}">全班同一個城鎮</button><button data-sh="0" class="${TS.shared ? '' : 'on'}">各自獨立</button></div>
   <div class="small">${TS.shared ? '街上的敵人由這台電腦控制，全班看到同一批敵人、一起推進；救人質時各自攻入民宅。這台電腦的遊戲畫面要一直開著。' : '每位同學在自己的手機上各自打一場（舊版玩法）。'}</div>
-  <h2>任務時間</h2><div class="row">${[240, 300, 360].map((s) => `<button data-sec="${s}" class="${TAKE_SEC === s ? 'on' : ''}">${s / 60 | 0}:${String(s % 60).padStart(2, '0')}</button>`).join('')}</div>
+  <h2>任務時間</h2><div class="row">${[300, 360, 420].map((s) => `<button data-sec="${s}" class="${TAKE_SEC === s ? 'on' : ''}">${s / 60 | 0}:${String(s % 60).padStart(2, '0')}</button>`).join('')}</div>
   ${cmdPanelHTML()}
   ${idle ? `<button class="big" id="bStart" ${total && TS.sid ? '' : 'disabled'}>${TS.sid ? '開始任務' : '連線中…'}</button>` : ''}
   ${ph === 'count' || ph === 'take' ? `<button class="big red" id="bCut">結束任務（提前）</button>` : ''}
@@ -4911,8 +5198,8 @@ function startCount() {
 }
 function cut() {
   if (TS.phase !== 'take' && TS.phase !== 'count') return; TS.phase = 'cut'; if (TP.mode === 'sn') leaveSniper(); sendTP(); if (SHT.on) shSend();
-  const teams = TEAMS.map((t, i) => ({ i, name: t.name, score: 0, avg: 0, kills: 0, n: 0, shots: 0, hits: 0, hr: 0, hh: 0, civ: 0, bomb: 0, boom: 0, deaths: 0 })); const rows = [];
-  for (const pid in TS.stats) { const s = TS.stats[pid]; const t = teams[s.t]; if (!t) continue; t.score += s.s; t.kills += s.k; t.n++; t.shots += s.sh; t.hits += s.hi; t.hr += s.hr || 0; t.hh += s.hh || 0; t.civ += s.c || 0; t.bomb += s.b === 1 ? 1 : 0; t.boom += s.b === -1 ? 1 : 0; t.deaths += s.d; rows.push({ ...s, pid }); }
+  const teams = TEAMS.map((t, i) => ({ i, name: t.name, score: 0, avg: 0, kills: 0, n: 0, shots: 0, hits: 0, hr: 0, hh: 0, civ: 0, bomb: 0, boom: 0, deaths: 0, ak: 0, akk: 0 })); const rows = [];
+  for (const pid in TS.stats) { const s = TS.stats[pid]; const t = teams[s.t]; if (!t) continue; t.score += s.s; t.kills += s.k; t.n++; t.shots += s.sh; t.hits += s.hi; t.hr += s.hr || 0; t.hh += s.hh || 0; t.civ += s.c || 0; t.bomb += s.b === 1 ? 1 : 0; t.boom += s.b === -1 ? 1 : 0; t.deaths += s.d; t.ak += s.ak || 0; t.akk += s.akk || 0; rows.push({ ...s, pid }); }
   for (const t of teams) t.avg = t.n ? Math.round(t.score / t.n) : 0;
   TS.res = { teams, rows, diff: TS.diff, take: TS.take, at: NET.now(), teacher: { tk: TP.tk, downs: TP.downs, cmds: TP.cmdN }, shared: SHT.on ? 1 : 0, dfBy: SHT.on ? Object.entries(SHT.dfBy).sort((a, b) => b[1] - a[1]).map(([pid, t]) => ({ pid, t: Math.round(t), p: TS.players[pid] })) : [] }; shStop();
   NET.set('res', { teams, diff: TS.diff, take: TS.take }); NET.update('meta', { phase: 'cut' }); for (const d of TS.dots.values()) d.visible = false;
@@ -4921,7 +5208,7 @@ function cut() {
 function premiere(step) {
   TS.phase = 'prem'; TS.premStep = step; NET.update('meta', { phase: 'prem' }); NET.set('prem', { step, at: NET.now() });
   const r = TS.res; const d = DIFFS[r.diff]; const order = r.teams.filter((t) => t.n).sort((a, b) => b.avg - a.avg);
-  const sum = (k) => r.teams.reduce((a, t) => a + t[k], 0); const N = sum('n'); const rows = r.rows;
+  const sum = (k) => r.teams.reduce((a, t) => a + (t[k] || 0), 0); const N = sum('n'); const rows = r.rows;
   const nameOf = (s) => `${TEAMS[s.t]?.name || ''} ${s.no} 號`; const tc = r.teacher || {};
   const best = (list, key, cmp) => list.slice().sort(cmp)[0];
   const sharp = best(rows.filter((s) => s.sh >= 15), 0, (a, b) => b.hi / b.sh - a.hi / a.sh);
@@ -4933,7 +5220,7 @@ function premiere(step) {
     `<div class="slide"><h1 class="gold">任務結果　<span class="badge">第 ${r.take} 回合・${d.name}</span></h1><div class="rank">${order.map((t, k) => `<div style="--c:${TEAMS[t.i].c}"><span>第 ${k + 1} 名</span><b>${t.avg}</b><span>${t.name}　${t.n} 人（平均分數）</span><span>拆彈成功 ${t.bomb}　救出人質 ${t.hr}</span><span>擊倒 ${t.kills}　誤傷 ${t.hh + t.civ}</span></div>`).join('')}</div><p class="en">各組用平均分數比較，人數不同也公平。</p></div>`,
     `<div class="slide"><h1>全班戰報</h1><div class="rank">
       <div style="--c:#3fd17a"><span>拆彈成功</span><b>${sum('bomb')}／${N}</b><span>引爆 ${sum('boom')} 人</span></div>
-      <div style="--c:#4ea3ff"><span>救出人質</span><b>${sum('hr')}／${N * 3}</b><span>救出率 ${N ? Math.round(100 * sum('hr') / (N * 3)) : 0}%</span></div>
+      <div style="--c:#4ea3ff"><span>救出人質</span><b>${sum('hr')}／${N * 5}</b><span>救出率 ${N ? Math.round(100 * sum('hr') / (N * 5)) : 0}%</span></div>
       <div style="--c:#ff5a4e"><span>誤傷</span><b>${sum('hh') + sum('civ')}</b><span>人質 ${sum('hh')}　平民 ${sum('civ')}</span></div>
       <div style="--c:#ffc83d"><span>擊倒敵人</span><b>${sum('kills')}</b><span>平均命中率 ${acc}%</span></div></div></div>`,
     `<div class="slide"><h1 class="gold">個人表現</h1><div class="rank">
@@ -4959,8 +5246,13 @@ function premiere(step) {
       <div><h2>歐盟 2025 年</h2><p>恐怖攻擊（含未遂）共 45 起：聖戰主義 24 起、左翼與無政府主義 12 起、右翼 5 起、其他 4 起。</p><p>將近一半不是聖戰主義。</p><p class="src">Europol, EU TE-SAT 2026</p></div>
       <div><h2>美國 2001～2016 年</h2><p>造成死亡的暴力極端主義攻擊 85 起：極右翼 62 起（73%）、激進伊斯蘭主義 23 起（27%）；死亡人數分別是 106 人與 119 人。</p><p class="src">美國政府課責署 GAO-17-300, 2017</p></div></div>
       <p class="en">這些報告依意識形態分類，沒有記錄攻擊者的長相；「恐怖分子長什麼樣子」不是數據能回答的問題。</p></div>`,
+    `<div class="slide"><h1 class="gold">為什麼敵人都拿 AK？</h1><div class="rank">
+      <div style="--c:#e0b04a"><span>撿起敵人的 AK-47</span><b>${sum('ak')}／${N}</b><span>人</span></div>
+      <div style="--c:#ff5a4e"><span>用 AK 擊倒敵人</span><b>${sum('akk')}</b><span>人次</span></div></div>
+      <p>小型武器調查（Small Arms Survey）估計：全世界約 1.75 億支軍用自動裝填步槍中，AK 系列約 7,600 萬支，是數量最多的一種。構造簡單、耐用、容易保養，冷戰時期大量生產並流向各國軍隊、警察與武裝團體。</p>
+      <p class="en">AK 本身沒有立場；是電影和遊戲反覆把它交到「壞人」手上。剛才你撿起 AK 的時候，你變成壞人了嗎？</p></div>`,
     `<div class="slide"><h1 class="gold">想一想：軍事娛樂複合體</h1><p>1. 你腦中「恐怖分子」的樣子，是從新聞、電影還是遊戲來的？</p><p>2. 遊戲反覆讓你射擊同一種長相的人，會不會影響你看新聞、看陌生人的方式？</p><p>3. 美國陸軍的招募遊戲刻意不讓敵人有族裔特徵，商業遊戲卻常常相反。為什麼？誰從這樣的形象中得利？</p><p>4. 如果由你設計敵人，你會怎麼做？</p></div>`,
-    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：M4A1 by TORI106（Sketchfab，CC-BY 4.0）、AKM by LonesomeDucky（OpenGameArt，CC0）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。<br><br>研究與數據出處：Jack G. Shaheen, "Reel Bad Arabs: How Hollywood Vilifies a People," Annals of the American Academy of Political and Social Science 588 (2003): 171–193。Vít Šisler, "Digital Arabs: Representation in Video Games," European Journal of Cultural Studies 11(2) (2008): 203–220。Johan Höglund, "Electronic Empire: Orientalism Revisited in the Military Shooter," Game Studies 8(1) (2008)。Brian Kennedy, "Uncle Sam Wants You to Play This Game," The New York Times, 2002-07-11。Europol, EU Terrorism Situation and Trend Report (TE-SAT) 2026。U.S. GAO, GAO-17-300 Countering Violent Extremism (2017)。</div></div>`,
+    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：M4A1 by TORI106（Sketchfab，CC-BY 4.0）、AKM by LonesomeDucky（OpenGameArt，CC0）、狙擊槍改自 Bolt Action Rifle 7.62 by Mateusz Sadek（Poly Haven，CC0）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd、SuperPhat、lensflare8642，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。<br><br>研究與數據出處：Jack G. Shaheen, "Reel Bad Arabs: How Hollywood Vilifies a People," Annals of the American Academy of Political and Social Science 588 (2003): 171–193。Vít Šisler, "Digital Arabs: Representation in Video Games," European Journal of Cultural Studies 11(2) (2008): 203–220。Johan Höglund, "Electronic Empire: Orientalism Revisited in the Military Shooter," Game Studies 8(1) (2008)。Brian Kennedy, "Uncle Sam Wants You to Play This Game," The New York Times, 2002-07-11。Europol, EU Terrorism Situation and Trend Report (TE-SAT) 2026。U.S. GAO, GAO-17-300 Countering Violent Extremism (2017)。N.R. Jenzen-Jones, Global Development and Production of Self-loading Service Rifles: 1896 to the Present, Small Arms Survey Working Paper 25 (2017)。</div></div>`,
   ];
   const host = $('prem'); host.hidden = false; host.innerHTML = slides[step] + `<div class="step">成績　${step + 1}／${slides.length}</div><div class="nav"><button id="pPrev">← 上一頁</button><button id="pNext">${step < slides.length - 1 ? '下一頁 →' : '結束'}</button></div>`;
   $('pPrev').onclick = () => premiere(Math.max(0, step - 1)); $('pNext').onclick = () => { if (step < slides.length - 1) premiere(step + 1); else { host.hidden = true; TS.phase = 'cut'; NET.update('meta', { phase: 'cut' }); renderPanel(); } };
@@ -4999,20 +5291,20 @@ function fakeTick(dt) {
 }
 // 全班同一個城鎮的假學生：跟著全班進度走、打共用的敵人（走真正的命中回報路徑）、被敵人打中會倒下
 function fakeCover(z, j) {
-  if (z >= 2 && z <= 4) return COVERS.D1a; const ids = ZONES[z].covers; const c = COVERS[ids[Math.floor((j + 1) / 2 * ids.length) % ids.length]];
+  if (INDIV(z)) return COVERS.E1a; const ids = ZONES[z].covers; const c = COVERS[ids[Math.floor((j + 1) / 2 * ids.length) % ids.length]];
   if (c.kind === 'side' || !c.box) return c; const b = c.box; const half = Math.max(0, (b[1] - b[0]) / 2 - 0.55); return { x: c.kind === 'defuse' ? c.x + j * 1.3 : clamp((b[0] + b[1]) / 2 + j * half, b[0] + 0.5, b[1] - 0.5), z: c.z };
 }
 function fakeShared(f, dt) {
   const slot = TS.players[f.pid]?.slot ?? 0; const j = jitOf(slot);
-  if (!f.S) { const c = fakeCover(0, j); f.S = { zone: 0, tz: 0, x: c.x, z: c.z, hp: 100, dn: 0, s: 0, k: 0, sh: 0, hi: 0, h: 0, d: 0, c: 0, hh: 0, hr: 0, b: 0, ft: 0, t0: NET.now(), hT: 30 + R() * 45, dfw: R() < 0.4, q: [], qn: 0, r: Math.random().toString(36).slice(2, 6), qT: 0 }; }
+  if (!f.S) { const c = fakeCover(0, j); f.S = { zone: 0, tz: 0, x: c.x, z: c.z, hp: 100, dn: 0, s: 0, k: 0, sh: 0, hi: 0, h: 0, d: 0, c: 0, hh: 0, hr: 0, b: 0, ft: 0, t0: NET.now(), hT: 85 + R() * 60, dfw: R() < 0.4, ak: R() < 0.45 ? 1 : 0, q: [], qn: 0, r: Math.random().toString(36).slice(2, 6), qT: 0 }; }
   const S = f.S; const ph = SHT.ph;
   if (SHT.end && !S.b) { S.b = SHT.end === 'win' ? 1 : -1; S.ft = Math.round((NET.now() - S.t0) / 1000); if (S.b === 1) S.s += 500; }
   if (S.dn > 0) { S.dn -= dt; if (S.dn <= 0) S.hp = 100; }
   // 要去哪一段
   if (S.zone === S.tz) {
     if (S.zone <= 1 && ph > S.zone) S.tz = Math.min(2, S.zone + 1);
-    else if (S.zone === 2) { S.hT -= dt; if (S.hT <= 0) { S.hr = R() < 0.7 ? 3 : 0; S.s += S.hr * 200; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.hr ? 'hr' : 'taken', n: S.hr, pid: f.pid }); S.tz = 5; } }
-    else if (S.zone === 5 && ph >= 6) S.tz = 6;
+    else if (S.zone === 2) { S.hT -= dt; if (S.hT <= 0) { S.hr = (R() < 0.7 ? 3 : 0) + (R() < 0.6 ? 2 : 0); S.s += S.hr * 200; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.hr ? 'hr' : 'taken', n: S.hr, pid: f.pid }); S.tz = Z_BOMB; } }
+    else if (S.zone === Z_BOMB && ph >= Z_DEF) S.tz = Z_DEF;
   }
   let mv = 0; if (S.zone !== S.tz && S.dn <= 0) { const c = fakeCover(S.tz, j); const dx = c.x - S.x, dz = c.z - S.z; const l = Math.hypot(dx, dz); if (l < 0.5) S.zone = S.tz; else { const sp = Math.min(l, 5 * dt); S.x += dx / l * sp; S.z += dz / l * sp; mv = 1; } }
   S.peekT = (S.peekT || 0) - dt; if (S.peekT <= 0) { S.peek = R() < 0.5 ? 1 : 0; S.peekT = 0.6 + R() * 1.6; }
@@ -5023,10 +5315,10 @@ function fakeShared(f, dt) {
     if (list.length && R() < 0.5) { const e = list[Math.floor(R() * list.length)]; const head = R() < 0.2; S.hi++; S.q.push([++S.qn, e.id, 40, head ? 2 : 0]); if (S.q.length > 12) S.q.shift(); }
   }
   S.qT -= dt; if (S.qT <= 0 && S.q.length) { S.qT = 0.2; NET.set('eh/' + f.pid, { r: S.r, q: S.q }); }
-  const df = alive && S.zone === 6 && S.tz === 6 && S.dfw ? 1 : 0;
+  const df = alive && S.zone === Z_DEF && S.tz === Z_DEF && S.dfw ? 1 : 0;
   if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && street && R() < dt * 0.12) { const n = nestPos(TP.nest, new THREE.Vector3()); if (Math.hypot(n.x - S.x, n.z - S.z) < 70) NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() }); }
   f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, alive ? 1 : 0, f.team, mv ? 0 : S.peek, mv, S.zone, df]); }
-  f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
+  f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, ak: S.ak, akk: S.ak ? Math.floor(S.k * 0.4) : 0, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
 }
 function renderBoard() {
   const b = $('tBoard'); const n = tCounts(); const agg = TEAMS.map(() => ({ s: 0, k: 0, hh: 0, b: 0, m: 0 }));
@@ -5045,7 +5337,7 @@ function dotFor(pid, team) {
   if (!d) { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 10), new THREE.MeshBasicMaterial({ color: TEAMS[team]?.c || '#fff' })); m.position.y = 4.2; g.add(m); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.2, 6), new THREE.MeshBasicMaterial({ color: '#fff' })); pole.position.y = 2.1; g.add(pole); scene.add(g); d = g; g.userData.pid = pid; TS.dots.set(pid, d); }
   return d;
 }
-const EV_TEXT = { civ: '誤傷平民', hh: '誤傷人質', hr: '救出人質', taken: '人質被押走', bomb: '拆彈成功', boom: '炸彈引爆' };
+const EV_TEXT = { ak: '撿起敵人的 AK-47', civ: '誤傷平民', hh: '誤傷人質', hr: '救出人質', taken: '人質被押走', bomb: '拆彈成功', boom: '炸彈引爆' };
 function teacherInit() {
   ROLE = 'teacher'; hideAll(); $('hudT').hidden = false; $('hudS').hidden = true;
   // 先把面板畫出來；連上資料庫前「開始任務」不能按，連不上就顯示原因
@@ -5235,7 +5527,7 @@ async function loadAll() {
   FLASH.side = loadTex(ASSET + 'fx/muzzle-side.jpg', true); FLASH.front = loadTex(ASSET + 'fx/muzzle-front.jpg', true); FLASH.side.wrapS = FLASH.side.wrapT = THREE.ClampToEdgeWrapping; FLASH.front.wrapS = FLASH.front.wrapT = THREE.ClampToEdgeWrapping;
   buildWorld();
   $('loadMsg').textContent = '載入人物與道具…';
-  const names = ['anims', 'gclass', 'btr80', 'rifle_ak', ...CHAR_SETS.soldier, ...(ROLE === 'teacher' ? [] : ['rifle_m4', 'arms_military', ...CHAR_SETS.civ])];
+  const names = ['anims', 'gclass', 'btr80', 'rifle_ak', ...CHAR_SETS.soldier, ...(ROLE === 'teacher' ? [] : ['rifle_m4', 'rifle_sniper', 'arms_military', ...CHAR_SETS.civ])];
   const gs = await Promise.all(names.map((n) => loadGLB(n).catch(() => null)));
   names.forEach((n, i) => { if (gs[i]) MODELS[n] = gs[i]; });
   await placeDynamic(MODELS);
@@ -5268,10 +5560,10 @@ function frame() {
     studentTick(dt);
     if (P) {
       // 相機跟著玩家
-      P.eye(camera.position); camera.rotation.set(0, 0, 0, 'YXZ'); camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
+      P.eye(camera.position); camera.rotation.set(0, 0, 0, 'YXZ'); camera.rotation.y = P.yaw + P.sway.x; camera.rotation.x = P.pitch + P.sway.y;
       camera.updateMatrixWorld(true); if (G.mode === 'take') { camera.rotation.z = Math.sin(P.bob * 0.5) * 0.004 * (P.moving ? 1 : 0); P.updateView(dt); } else { camera.fov = 72; camera.updateProjectionMatrix(); }
       const sx = Math.round(P.pos.x / 2) * 2, sz = Math.round(P.pos.z / 2) * 2; sun.position.set(sx + 30, 60, sz - 20); sun.target.position.set(sx, 0, sz);
-      flashTick(P.flash, dt);
+      flashTick(P.flash, dt); casesTick(dt);
     }
     for (const e of ENEMIES) if (e.c.flash) flashTick(e.c.flash, dt);
     tracersTick(dt); if (PUFFS) PUFFS.update(dt);
@@ -5292,7 +5584,7 @@ function warmUp() {
   camera.position.set(0, 1.6, 6); camera.rotation.set(0, 0, 0); camera.updateMatrixWorld(true);
   let i = 0; const all = [...POOL.soldier, ...POOL.civ, ...AV.pool, ...ALLY.pool];
   for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); c.aimRifle('low'); if (c.flash) { show(c.flash); } i++; }
-  if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); }
+  if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); for (const k in P.rounds) if (P.rounds[k]) show(P.rounds[k]); }
   if (WORLD.bomb) show(WORLD.bomb.g);
   for (const t of TRACERS) show(t.m);
   for (const t of Object.values(TEX)) if (t && t.isTexture && t.image) renderer.initTexture(t);
@@ -5324,7 +5616,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
