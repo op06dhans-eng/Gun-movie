@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.3（老師測試用：可開「電腦自動遊玩的學生視窗」；假學生會被老師狙擊倒下、會朝屋頂開槍並看得到曳光）';
+const VERSION = '2.4.4（門口改成跟著準心自動切角：門兩側合併成一道門，瞄準哪裡就自動站到門的另一側探頭）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3118,6 +3118,22 @@ const COVERS = {
   D4: { x: 0.6, z: -130.6, yaw: 0, kind: 'defuse', box: [0.4, 1.4, -133.7, -132.7] },
 };
 for (const k in COVERS) COVERS[k].id = k;
+/* 門口「切角」：門兩側的掩體合併成一道門。不瞄準時躲在門邊牆後；瞄準時依準心方向自動站到門的另一側，
+   準心越往房間深處的牆角，人移得越多、露出越多（實際攻堅時一點一點擴大視角的方法）
+   c：門口中心（牆線上）　n：往房間裡的方向　w：門寬的一半　s：站在牆外多遠　um：最多往旁邊移多遠 */
+const DOORS = [
+  { ids: ['E1a', 'E1b'], c: [-9.5, -57.0], n: [-1, 0], w: 0.8, s: 0.85, um: 1.6 },
+  { ids: ['E2a', 'E2b'], c: [-15.5, -52.8], n: [-1, 0], w: 0.8, s: 0.8, um: 1.7 },
+  { ids: ['E3a', 'E3b'], c: [-18.8, -58.0], n: [0, -1], w: 0.8, s: 0.8, um: 1.9 },
+  { ids: ['D1a', 'D1b'], c: [11.0, -74.0], n: [1, 0], w: 0.8, s: 0.8, um: 1.6 },
+  { ids: ['D2a', 'D2b'], c: [14.2, -81.0], n: [0, -1], w: 0.8, s: 0.9, um: 1.65 },
+  { ids: ['D3a', 'D3b'], c: [17.0, -89.6], n: [1, 0], w: 0.8, s: 0.8, um: 1.65 },
+];
+const DOOR_OF = {}; for (const d of DOORS) { d.t = [-d.n[1], d.n[0]]; for (const id of d.ids) DOOR_OF[id] = d; }
+// 門口切角時的眼睛位置：u＝沿著牆往旁邊移多少（0＝正對門口中心）
+function doorEye(d, u, peekK, out) { return out.set(d.c[0] - d.n[0] * d.s + d.t[0] * u, lerp(1.5, 1.6, peekK), d.c[1] - d.n[1] * d.s + d.t[1] * u); }
+// 準心方向 → 要站在哪裡才能從門口看出去（看向右邊就站到門的左邊）
+function doorAimU(d, yaw) { const dx = -Math.sin(yaw), dz = -Math.cos(yaw); const fn = dx * d.n[0] + dz * d.n[1], ft = dx * d.t[0] + dz * d.t[1]; const th = Math.atan2(ft, Math.max(0.12, fn)); return clamp(-d.s * Math.tan(clamp(th, -1.35, 1.35)), -d.um, d.um); }
 // 掩體上的眼睛位置：躲著（hide）與探身（peek）
 function coverEye(c, peekK, out) {
   if (c.kind === 'low') return out.set(c.x, (c.y || 0) + lerp(0.98, 1.62, peekK), c.z - peekK * 0.12);
@@ -4667,13 +4683,15 @@ class Player {
   }
   get cover() { return this.target ? null : cvOf(this.coverId); }
   eye(out = new THREE.Vector3()) { return out.copy(this._eye); }
-  peekEye(out = new THREE.Vector3()) { const c = this.cover; return c ? coverEye(c, 1, out) : out.copy(this._eye); } // 探身時眼睛的位置（判斷看不看得到用）
-  updateEye() { const c = this.cover; if (c) { coverEye(c, this.peekK, this._eye); this.pos.x = this._eye.x; this.pos.z = this._eye.z; } else this._eye.set(this.pos.x, 1.58, this.pos.z); }
+  get door() { const c = this.cover; return c ? DOOR_OF[c.id] : null; }
+  peekEye(out = new THREE.Vector3()) { const d = this.door; if (d) return doorEye(d, 0, 1, out); const c = this.cover; return c ? coverEye(c, 1, out) : out.copy(this._eye); } // 探身時眼睛的位置（判斷看不看得到用）
+  updateEye() { const d = this.door; if (d) { const uh = (this.doorSide || 1) * (d.w + 0.55); this.doorUE = lerp(uh, this.doorU ?? uh, this.peekK); doorEye(d, this.doorUE, this.peekK, this._eye); this.pos.x = this._eye.x; this.pos.z = this._eye.z; return; } const c = this.cover; if (c) { coverEye(c, this.peekK, this._eye); this.pos.x = this._eye.x; this.pos.z = this._eye.z; } else this._eye.set(this.pos.x, 1.58, this.pos.z); }
   // 敵人打得到多少：蹲在掩體後面＝0；探身時只露出一部分
-  exposure() { const c = this.cover; if (!c) return 1; if (c.kind === 'defuse') return this.peekK > 0.4 ? 1 : 0.35; if (this.peekK < 0.4) return 0; return (c.kind === 'low' ? 0.6 : 0.75) * this.peekK; }
+  exposure() { const c = this.cover; if (!c) return 1;
+    const d = DOOR_OF[c.id]; if (d) { if (this.peekK < 0.4 || Math.abs(this.doorUE ?? 9) > d.w + 0.25) return 0; return (0.45 + 0.35 * (1 - clamp(Math.abs(this.doorUE) / d.um, 0, 1))) * this.peekK; } /* 門口：越站到門中間露出越多 */ if (c.kind === 'defuse') return this.peekK > 0.4 ? 1 : 0.35; if (this.peekK < 0.4) return 0; return (c.kind === 'low' ? 0.6 : 0.75) * this.peekK; }
   // 前往某個掩體（找路，繞過車子和牆）
   goCover(id) { if (!COVERS[id] || id === this.coverId && !this.target || id === this.target) return; const c = cvOf(id); this.path = findPath(this.pos, V(c.x, 0, c.z)); this.target = id; this.peekK = 0; }
-  arrive() { const c = cvOf(this.target); this.coverId = this.target; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0);
+  arrive() { const c = cvOf(this.target); this.coverId = this.target; { const d = DOOR_OF[c.id]; if (d) { this.doorSide = Math.sign((c.x - d.c[0]) * d.t[0] + (c.z - d.c[1]) * d.t[1]) || 1; this.doorU = null; } } this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0);
     // 自動轉向：面向這一段最近的敵人，沒有就面向掩體的方向
     let best = null, bd = 1e9; for (const e of ENEMIES) if (e.alive && e.zone === MS.zone) { const d = e.pos.distanceTo(this.pos); if (d < bd) { bd = d; best = e; } }
     this.turnTo = best ? Math.atan2(-(best.pos.x - c.x), -(best.pos.z - c.z)) : c.yaw; this.turnPitch = 0;
@@ -4727,6 +4745,7 @@ class Player {
     this.vel.x = lerp(this.vel.x, vx, Math.min(1, dt * 8)); this.vel.z = lerp(this.vel.z, vz, Math.min(1, dt * 8));
     if (this.target) { this.pos.x += this.vel.x * dt; this.pos.z += this.vel.z * dt; }
     // 探身：瞄準、開火（或剛開過槍）時從掩體探出去，否則蹲回掩體後面
+    { const d = this.door; if (d) { const ua = doorAimU(d, this.yaw); if (this.doorU === undefined || this.doorU === null) this.doorU = ua; this.doorU = lerp(this.doorU, ua, Math.min(1, dt * 7)); if (Math.abs(ua) > 0.15 && this.peekK < 0.3) this.doorSide = Math.sign(ua); } }
     const wantPeek = !!this.cover && (INPUT.ads || INPUT.fire || performance.now() - this.shotAt < 650) && this.reloading <= 0 && !MS.defusing;
     this.peekK = clamp(this.peekK + (wantPeek ? 1 : -1) * dt * 6, 0, 1);
     this.updateEye();
@@ -5050,7 +5069,7 @@ const CV = { cand: null, t: 0 }; const _cv = new THREE.Vector3(), _cf = new THRE
 function coverCandidate() {
   if (!P.alive || MS.moving || MS.defusing || MS.done) return null; const list = ZONES[MS.zone].covers; if (list.length < 2) return null;
   P.eye(_e); _cf.set(0, 0, -1).applyQuaternion(camera.quaternion); let best = null, ba = 0.16;
-  for (const id of list) { if (id === P.coverId && !P.target || id === P.target) continue; const c = COVERS[id]; const b = c.box;
+  for (const id of list) { if (id === P.coverId && !P.target || id === P.target || (DOOR_OF[id] && DOOR_OF[id] === DOOR_OF[P.coverId] && !P.target)) continue; const c = COVERS[id]; const b = c.box;
     _cv.set(clamp(_e.x + _cf.x * 40, b[0], b[1]), 0.7, clamp(_e.z + _cf.z * 40, b[2], b[3])); // 掩體上最靠近視線的一點
     let a = 9; for (const [x, z] of [[(b[0] + b[1]) / 2, (b[2] + b[3]) / 2], [_cv.x, _cv.z], [c.x, c.z]]) { _dir.set(x - _e.x, 0.7 - _e.y, z - _e.z); const L = _dir.length(); if (L > 32) continue; a = Math.min(a, _dir.normalize().angleTo(_cf)); }
     if (a < ba) { ba = a; best = id; } }
@@ -5089,7 +5108,7 @@ function renderMarks(dt) {
   for (const c of CIVS) if (!c.dead && c.state !== 'gone' && c.pos.distanceTo(P.pos) < 32) items.push([c, 'mark civ', '平民', 2.0]);
   if (SHARED.on) for (const c of ALLY.pool) if (c.slot !== null && c.root.visible) items.push([c, 'mark ally', `${TEAMS[c.team]?.name?.[0] || ''}${c.no}`, 2.05, TEAMS[c.team]?.c]);
   if (VS.boss && bossOn() && !VS.tp.dn) items.push([VS.boss, bossExposed() ? 'mark boss' : 'mark boss dim', '老師', 2.2]);
-  if (!MS.moving && !P.scoped) for (const id of ZONES[MS.zone].covers) { if (id === P.coverId && !P.target) continue; const c = COVERS[id]; const b = c.box; const o = { pos: _cvm[id] || (_cvm[id] = V((b[0] + b[1]) / 2, 0, (b[2] + b[3]) / 2)) }; items.push([o, id === CV.cand ? 'mark cov on' : 'mark cov', id === CV.cand ? '前往掩體' : '掩體', c.kind === 'side' ? 2.1 : 1.3]); }
+  if (!MS.moving && !P.scoped) for (const id of ZONES[MS.zone].covers) { if (id === P.coverId && !P.target) continue; if (DOOR_OF[id] && DOOR_OF[id] === DOOR_OF[P.coverId] && !P.target) continue; /* 同一道門的另一側不用顯示（切角自動換邊） */ const c = COVERS[id]; const b = c.box; const o = { pos: _cvm[id] || (_cvm[id] = V((b[0] + b[1]) / 2, 0, (b[2] + b[3]) / 2)) }; items.push([o, id === CV.cand ? 'mark cov on' : 'mark cov', id === CV.cand ? '前往掩體' : '掩體', c.kind === 'side' ? 2.1 : 1.3]); }
   while (host.children.length < items.length) { const d = document.createElement('div'); d.innerHTML = '<span></span>'; host.appendChild(d); }
   for (let i = 0; i < host.children.length; i++) {
     const d = host.children[i]; if (i >= items.length) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
@@ -5169,7 +5188,7 @@ function botTick() {
   if (I.defuse) { I.fire = false; I.ads = false; return; }
   if (!P.hasAK && WB.near && Math.random() < 0.02) weaponBtn(); // 偶爾撿起敵人的 AK
   if (!tgt || P.hp < 35) { I.fire = false; I.ads = false; return; }
-  BOT.lockT += 0.1; const ro = P.peekEye(); const crouch = tgt.c.curName === 'Crouch_Idle_Aim';
+  BOT.lockT += 0.1; const ro = P.peekK > 0.5 ? P.eye() : P.peekEye(); const crouch = tgt.c.curName === 'Crouch_Idle_Aim';
   const dx = tgt.pos.x - ro.x, dy = tgt.pos.y + (crouch ? 0.85 : 1.3) - ro.y, dz = tgt.pos.z - ro.z; const h = Math.hypot(dx, dz);
   const err = (0.012 + 0.03 / BOT.skill) * Math.max(0.25, 1.4 - BOT.lockT);
   const yaw = Math.atan2(-dx, -dz) + (Math.random() - 0.5) * err, pitch = Math.atan2(dy, h) + (Math.random() - 0.5) * err;
@@ -5676,7 +5695,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
