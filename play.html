@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.2（修正：突擊步槍按右鍵開瞄準鏡失效）';
+const VERSION = '2.4.3（老師測試用：可開「電腦自動遊玩的學生視窗」；假學生會被老師狙擊倒下、會朝屋頂開槍並看得到曳光）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2618,7 +2618,8 @@ const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/G
 const Q = new URLSearchParams(location.search);
 const LOCAL = Q.has('local') || !FIREBASE_CONFIG.databaseURL;
 const IS_PLAY = /play(\.html)?$/.test(location.pathname);
-let ROLE = Q.has('teacher') ? 'teacher' : (Q.has('student') || location.hash === '#student' || IS_PLAY) ? 'student' : (LOCAL ? null : 'teacher');
+let ROLE = Q.has('teacher') ? 'teacher' : (Q.has('student') || location.hash.startsWith('#student') || IS_PLAY) ? 'student' : (LOCAL ? null : 'teacher');
+const IS_BOT = Q.has('bot') || /bot/.test(location.hash); // 電腦自動遊玩的學生（老師測試用）
 const MOBILE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900;
 const TEXDIR = ASSET + (MOBILE ? 'tex/m/' : 'tex/');
 const store = { get(k, d) { try { const v = localStorage.getItem('fs-' + k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem('fs-' + k, JSON.stringify(v)); } catch (_) {} } };
@@ -4376,6 +4377,7 @@ const SFX = (() => {
     // 炸彈引爆：慢慢變大的低沉隆隆聲（不做突然的爆炸巨響）
     rumble() { if (!ctx) return; const t0 = ctx.currentTime; const n = ctx.createBufferSource(); n.buffer = noiseBuf(3.2, 1.2); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 140; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5, t0 + 1.2); g.gain.exponentialRampToValueAtTime(0.001, t0 + 3.2); n.connect(f); f.connect(g); g.connect(master); n.start(t0); },
     whizz() { tone(2600 + R() * 800, 0.12, { type: 'sine', vol: 0.08 }); },
+    mute() { on = false; if (master) master.gain.value = 0; }, // 不寫進設定（自動學生視窗用）
     toggle() { on = !on; store.set('snd', on); if (master) master.gain.value = on ? 0.8 : 0; return on; }, get on() { return on; },
   };
 })();
@@ -4833,7 +4835,7 @@ class Player {
 /* =========================================================
    學生：選組、任務簡報、任務中、結算
    ========================================================= */
-const ME = { pid: store.get('pid', null) || (() => { const p = Math.random().toString(36).slice(2, 10); store.set('pid', p); return p; })(), team: -1, no: 0, sid: null, waitingJoin: false, sendT: 0, statT: 0 };
+const ME = { pid: IS_BOT ? 'bot' + Math.random().toString(36).slice(2, 8) : store.get('pid', null) || (() => { const p = Math.random().toString(36).slice(2, 10); store.set('pid', p); return p; })(), team: -1, no: 0, sid: null, waitingJoin: false, sendT: 0, statT: 0 };
 let META = {}, PLAYERS = {}, PREM = null;
 const G = { mode: 'menu', endsAt: 0, startedAt: 0, diff: DIFFS.N, practice: false };
 let P = null; // Player
@@ -4894,7 +4896,7 @@ function renderPick() {
 function joinTeam(t, silent) {
   if (!silent && teamCounts()[t] >= TEAM_MAX) return;
   ME.waitingJoin = true; if (!silent) renderPick();
-  const last = store.get('me', null);
+  const last = IS_BOT ? null : store.get('me', null);
   for (const p of ['players/', 'pos/', 'req/', 'ans/', 'stat/', 'eh/']) NET.onDisconnectRemove(p + ME.pid);
   NET.remove('ans/' + ME.pid);
   NET.set('req/' + ME.pid, { team: t, at: NET.now(), no: last && last.sid === META.sid && last.team === t ? last.no : 0 });
@@ -4938,7 +4940,7 @@ function waitScreen() {
 }
 function renderRotate() { const portrait = innerHeight > innerWidth; $('rotate').hidden = !(MOBILE && portrait && (G.mode === 'take' || G.mode === 'wait' || G.mode === 'count')); }
 addEventListener('resize', renderRotate);
-function startTake(practice) {
+function startTake(practice) { if (IS_BOT) SFX.mute();
   G.practice = !!practice; G.mode = 'take'; hideAll(); $('hudS').hidden = false; $('hNg').hidden = true;
   G.diff = DIFFS[META.diff || 'N']; G.startedAt = NET.now(); G.simT = 0; G.endsAt = practice ? NET.now() + TAKE_SEC * 1000 : META.endsAt;
   SHARED.on = !practice && !!META.shared; shReset(); shSlot();
@@ -4974,7 +4976,7 @@ function sendStat(force) {
 function showMine() { if (G.mode === 'take' || !P) return; hideAll(); show('scrRes'); $('resCard').innerHTML = resultHTML('請看大螢幕', `${TEAMS[ME.team]?.name || ''}　${ME.no} 號隊員的成績`); }
 function studentInit() {
   if (!NET.local && location.protocol !== 'file:') followLobby();
-  ROLE = 'student'; show('scrJoin'); renderPick(); vsListen(); shListen();
+  ROLE = 'student'; show('scrJoin'); renderPick(); vsListen(); shListen(); botInit();
   for (const k of ['N', 'H']) $('solo' + k).onclick = () => { if (ME.team < 0) { ME.team = 0; ME.no = 1; } META.diff = k; G.solo = true; startTake(true); };
   $('joinMsg').textContent = NET.local ? '練習連線模式：老師畫面要開在同一台電腦的另一個分頁。' : '選好組別後，等老師開始任務。';
   NET.on('players', (p) => {
@@ -5143,6 +5145,41 @@ function setupInput() {
 }
 
 /* =========================================================
+   自動遊玩的學生（老師測試用）：網址加 #student-bot
+   一個真的學生畫面，由電腦自己選組、瞄準看得到的敵人、短點放、換彈、拆彈、偶爾撿起敵人的 AK
+   ========================================================= */
+const BOT = { tgt: null, lockT: 0, burst: 0, skill: 0.75 + Math.random() * 0.5, joined: false };
+function botInit() {
+  if (!IS_BOT) return;
+  document.title = '自動學生'; SFX.mute(); /* 自動學生不出聲（老師電腦開好幾個會很吵） */
+  document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;left:50%;top:4px;transform:translateX(-50%);z-index:50;background:rgba(200,120,20,0.85);color:#fff;font:900 14px sans-serif;padding:2px 10px;border-radius:6px;pointer-events:none">電腦自動遊玩的學生</div>');
+  // 選人數最少的組
+  const tryJoin = () => { if (ME.team >= 0 || ME.waitingJoin) return; const n = teamCounts(); let t = 0; for (let i = 1; i < 4; i++) if (n[i] < n[t]) t = i; joinTeam(t); };
+  setInterval(tryJoin, 2500); setTimeout(tryJoin, 1200);
+  setInterval(botTick, 100);
+}
+function botTick() {
+  const I = INPUT;
+  if (G.mode !== 'take' || !P || !P.alive) { I.fire = false; I.ads = false; I.defuse = false; return; }
+  if (MS.moving) { I.fire = false; I.ads = false; return; }
+  const vis = ENEMIES.filter((e) => e.alive && e.zone === MS.zone && e.los === true && e.state !== 'leave').sort((a, b) => a.pos.distanceTo(P.pos) - b.pos.distanceTo(P.pos));
+  if (!BOT.tgt || !BOT.tgt.alive || !vis.includes(BOT.tgt)) { BOT.tgt = vis[0] || null; BOT.lockT = 0; }
+  const Z = ZONES[MS.zone]; const tgt = BOT.tgt;
+  I.defuse = !!(Z.defuse && MS.arrived && P.coverId === 'D4' && !P.target && (!tgt || P.hp > 60));
+  if (I.defuse) { I.fire = false; I.ads = false; return; }
+  if (!P.hasAK && WB.near && Math.random() < 0.02) weaponBtn(); // 偶爾撿起敵人的 AK
+  if (!tgt || P.hp < 35) { I.fire = false; I.ads = false; return; }
+  BOT.lockT += 0.1; const ro = P.peekEye(); const crouch = tgt.c.curName === 'Crouch_Idle_Aim';
+  const dx = tgt.pos.x - ro.x, dy = tgt.pos.y + (crouch ? 0.85 : 1.3) - ro.y, dz = tgt.pos.z - ro.z; const h = Math.hypot(dx, dz);
+  const err = (0.012 + 0.03 / BOT.skill) * Math.max(0.25, 1.4 - BOT.lockT);
+  const yaw = Math.atan2(-dx, -dz) + (Math.random() - 0.5) * err, pitch = Math.atan2(dy, h) + (Math.random() - 0.5) * err;
+  let d = yaw - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * 0.3 * BOT.skill; P.pitch += (pitch - P.pitch) * 0.3 * BOT.skill; P.turnTo = null;
+  I.ads = true; if (P.ammo === 0) I.reload = true;
+  const ready = BOT.lockT > 0.6 / BOT.skill && !crouch && P.peekK > 0.9;
+  BOT.burst = ready ? (BOT.burst + 1) % 7 : 0; I.fire = ready && BOT.burst < 4;
+}
+
+/* =========================================================
    老師：指揮中心大螢幕（大廳、開始任務、全景、公布成績）
    ========================================================= */
 const TS = { shared: true, fake: [], sid: null, phase: 'lobby', diff: 'N', take: 0, startAt: 0, endsAt: 0, players: {}, stats: {}, res: null, premStep: -1, dots: new Map() };
@@ -5168,8 +5205,8 @@ function renderPanel() {
   ${ph === 'cut' ? `<button class="big" id="bPrem">公布成績（翻牌）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bNew" style="border-color:#666;background:#222;font-size:16px">清空成績，重新選組</button>` : ''}
   <h2>測試（沒有學生手機時）</h2><div class="row"><button id="bFake">加入 12 位假學生</button><button id="bUnfake" ${TS.fake.length ? '' : 'disabled'}>移除假學生</button></div>
-  <div class="row"><button id="bStu">在新分頁開學生畫面（同機試玩）</button></div>
-  <div class="small">假學生會自己選組、出任務並回報分數，可以走完整個流程到公布成績。</div>
+  <div class="row"><button id="bStu">在新分頁開學生畫面（同機試玩）</button><button id="bBot">開一個自動遊玩的學生視窗</button></div>
+  <div class="small">假學生：不畫畫面，自己選組、出任務、會被你狙擊倒下、也會朝屋頂的你開槍，可以走完整個流程到公布成績。<br>自動遊玩的學生：開一個小視窗，裡面是真的學生畫面由電腦自己打（會瞄準、開槍、換掩體、拆彈），可以多按幾次開好幾個；這台電腦比較吃力，開 2～4 個就好。</div>
   <h2>現場狀況</h2><div class="tick" id="tTick"></div>
   <div class="row" style="margin-top:auto"><button id="bSnd">音效：${SFX.on ? '開' : '關'}</button><button id="bFs">全螢幕</button></div>`;
   if ($('qr')) drawQR($('qr'), url); bindCmdPanel(p);
@@ -5178,6 +5215,7 @@ function renderPanel() {
   p.querySelectorAll('[data-sec]').forEach((b) => b.onclick = () => { TAKE_SEC = +b.dataset.sec; renderPanel(); });
   if ($('bStart')) $('bStart').onclick = startCount; if ($('bCut')) $('bCut').onclick = () => cut('cut'); if ($('bPrem')) $('bPrem').onclick = () => premiere(0); if ($('bNew')) $('bNew').onclick = newSession;
   $('bFake').onclick = () => { if (TS.sid) addFake(12); }; $('bUnfake').onclick = removeFake;
+  $('bBot').onclick = () => { const u = new URL(location.href); u.hash = 'student-bot'; u.searchParams.set('q', 'low'); const n = (TS.botN = (TS.botN || 0) + 1); const w = window.open(u.toString(), 'bot' + n + Date.now(), `popup,width=560,height=320,left=${40 + (n % 4) * 580},top=${60 + Math.floor(n / 4) * 360}`); if (!w) $('tTick').insertAdjacentHTML('afterbegin', '<div>瀏覽器擋住新視窗：請在網址列右邊允許「彈出式視窗」，再按一次</div>'); else tLog(-1, `開了第 ${n} 個自動遊玩的學生視窗`); };
   $('bStu').onclick = () => { const u = new URL(location.href); u.hash = 'student'; const w = window.open(u.toString(), '_blank'); if (!w) { $('tTick').insertAdjacentHTML('afterbegin', `<div>瀏覽器擋住新分頁：請自己開新分頁貼上網址，後面加 #student</div>`); } };
   $('bSnd').onclick = () => { SFX.init(); SFX.toggle(); renderPanel(); }; $('bFs').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); };
   renderTick();
@@ -5291,8 +5329,9 @@ function fakeTick(dt) {
       if (S.zone === NZ - 1 && S.wait <= 0) { S.b = R() < 0.75 ? 1 : -1; S.ft = Math.round((NET.now() - S.t0) / 1000); if (S.b === 1) S.s += 500; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.b === 1 ? 'bomb' : 'boom', ft: S.ft, pid: f.pid }); }
     }
     S.peekT = (S.peekT || 0) - dt; if (S.peekT <= 0) { S.peek = R() < 0.45 ? 1 : 0; S.peekT = 0.6 + R() * 1.6; }
-    if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && R() < dt * 0.12) { const n = nestPos(TP.nest, new THREE.Vector3()); if (Math.hypot(n.x - S.x, n.z - S.z) < 70) NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() }); }
-    f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; const mv = S.wait <= 0 && !S.b ? 1 : 0; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, 1, f.team, mv ? 0 : S.peek, mv, S.zone]); }
+    if (S.dn > 0) { S.dn -= dt; S.peek = 0; }
+    if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && !(S.dn > 0) && R() < dt * 0.35) fakeShootTeacher(f, S);
+    f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; const mv = S.wait <= 0 && !S.b ? 1 : 0; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, S.dn > 0 ? 0 : 1, f.team, mv ? 0 : S.peek, mv, S.zone]); }
     f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
   }
 }
@@ -5323,9 +5362,23 @@ function fakeShared(f, dt) {
   }
   S.qT -= dt; if (S.qT <= 0 && S.q.length) { S.qT = 0.2; NET.set('eh/' + f.pid, { r: S.r, q: S.q }); }
   const df = alive && S.zone === Z_DEF && S.tz === Z_DEF && S.dfw ? 1 : 0;
-  if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && street && R() < dt * 0.12) { const n = nestPos(TP.nest, new THREE.Vector3()); if (Math.hypot(n.x - S.x, n.z - S.z) < 70) NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() }); }
+  if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && street && alive && R() < dt * 0.35) fakeShootTeacher(f, S);
   f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, alive ? 1 : 0, f.team, mv ? 0 : S.peek, mv, S.zone, df]); }
   f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, ak: S.ak, akk: S.ak ? Math.floor(S.k * 0.4) : 0, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
+}
+// 假學生朝屋頂上的老師開槍：老師看得到槍口的曳光、聽得到槍聲；大約四成打中（老師站起來瞄準時才算）
+const _fm = new THREE.Vector3(), _ft = new THREE.Vector3();
+function fakeShootTeacher(f, S) {
+  const n = nestPos(TP.nest, _ft); const dist = Math.hypot(n.x - S.x, n.z - S.z); if (dist > 75) return;
+  const c = AV.pool.find((x) => x.pid === f.pid && x.root.visible);
+  if (c && c.rifle) { _fm.set(0, 0.1, -0.5).applyMatrix4(c.rifle.matrixWorld); const hit = R() < 0.4; _ft.copy(camera.position).add(new THREE.Vector3((R() - 0.5) * (hit ? 0.3 : 3), (R() - 0.3) * (hit ? 0.3 : 2), (R() - 0.5) * (hit ? 0.3 : 3))); tracer(_fm, _ft); SFX.enemyShot(dist); if (!hit) return; }
+  else if (R() > 0.4) return;
+  NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() });
+}
+// 老師狙擊打中假學生：扣血，倒下 4 秒（畫面上的化身會倒地）
+function fakeHitByTeacher(pid, d) {
+  const f = TS.fake.find((x) => x.pid === pid); if (!f || !f.S || f.S.dn > 0) return;
+  f.S.hp = (f.S.hp ?? 100) - d; if (f.S.hp <= 0) { f.S.hp = 100; f.S.dn = 4; f.S.d++; f.S.s = Math.max(0, f.S.s - 100); }
 }
 function renderBoard() {
   const b = $('tBoard'); const n = tCounts(); const agg = TEAMS.map(() => ({ s: 0, k: 0, hh: 0, b: 0, m: 0 }));
@@ -5473,7 +5526,7 @@ function tpFire() {
   NET.set('tshot', { n: ++TP.shotN, x: Math.round(hp.x * 10) / 10, y: Math.round(hp.y * 10) / 10, z: Math.round(hp.z * 10) / 10, at: NET.now() });
   if (hit) {
     const pid = hit.pid; const d = part === 'head' ? 100 : part === 'limb' ? 20 : 34; TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
-    NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid];
+    NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid]; fakeHitByTeacher(pid, d);
     if (p) tLog(p.team, `老師命中 ${TEAMS[p.team]?.name} ${p.no} 號${part === 'head' ? '（爆頭）' : ''}`);
     $('tSnX').classList.add('hit'); setTimeout(() => $('tSnX').classList.remove('hit'), 160);
   }
@@ -5557,8 +5610,8 @@ addEventListener('resize', applyQuality);
 let last = performance.now(), lastFrame = performance.now();
 // 老師的電腦是裁判：分頁切到背景時瀏覽器會停掉畫面更新，這裡改用計時器補上遊戲時間（敵人、炸彈不會停）
 setInterval(() => {
-  if (ROLE !== 'teacher') return; const now = performance.now(); if (now - lastFrame < 400) return;
-  let el = Math.min(1.5, (now - last) / 1000); last = now; while (el > 0.001) { const d = Math.min(0.05, el); teacherTick(d); el -= d; }
+  if (ROLE !== 'teacher' && !(ROLE === 'student' && IS_BOT)) return; const now = performance.now(); if (now - lastFrame < 400) return;
+  let el = Math.min(1.5, (now - last) / 1000); last = now; while (el > 0.001) { const d = Math.min(0.05, el); if (ROLE === 'teacher') teacherTick(d); else { if (G.mode === 'take' && Math.random() < 0.3) botTick(); studentTick(d); } el -= d; }
 }, 250);
 function frame() {
   requestAnimationFrame(frame);
