@@ -110,6 +110,7 @@ button { font-family: var(--sans); cursor: pointer; -webkit-tap-highlight-color:
 .mark.boss { border-top-color: #ffd23a; border-left-width: 13px; border-right-width: 13px; border-top-width: 18px; } .mark.boss span { color: #ffe27a; font-size: 15px; }
 .mark.cov { border: 2px solid rgba(255,255,255,0.55); width: 16px; height: 16px; border-radius: 4px; transform-origin: center; background: rgba(0,0,0,0.25); }
 .mark.cov span { color: #e8eef0; font-size: 11px; bottom: 20px; }
+.mark.ally { border-top-color: var(--c, #7ad0ff); border-left-width: 6px; border-right-width: 6px; border-top-width: 9px; opacity: 0.9; } .mark.ally span { color: var(--c, #bfe7ff); font-size: 12px; }
 .mark.cov.on { border-color: #7ad0ff; width: 24px; height: 24px; background: rgba(60,160,230,0.35); } .mark.cov.on span { color: #bfe7ff; font-size: 15px; }
 /* 觸控 */
 .stick { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: 18px; width: min(34vmin, 160px); height: min(34vmin, 160px); border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); background: rgba(0,0,0,0.25); pointer-events: auto; touch-action: none; }
@@ -2593,7 +2594,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.2.1（屋頂槍手改站在屋頂最外緣，不再被屋頂邊緣擋住；被擋住超過 3 秒會沿屋頂移到看得到的位置）';
+const VERSION = '2.3.0（全班同一個城鎮：街上的敵人由老師電腦統一控制、全班共用，一波波湧來；救人質時各自攻入民宅；全班共用炸彈倒數與拆彈進度；可切回各自獨立）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3460,7 +3461,7 @@ const POOL = { soldier: [], civ: [] };
 function buildPools() {
   const mk = (set, name, opt) => { if (!MODELS[name]) return; const c = new Character(name, opt); c.root.visible = false; c.busy = false; c.set = set; POOL[set].push(c); return c; };
   const WRAPS = ['bw', 'black', 'red', 'olive', 'black', 'bw'];
-  CHAR_SETS.soldier.forEach((n, i) => { removeHead(n); for (let k = 0; k < 3; k++) { const c = mk('soldier', n, { outfit: true }); if (c) addHeadWrap(c, WRAPS[(i * 3 + k) % WRAPS.length]); if (c && RIFLE_NPC) { const m = RIFLE_NPC.clone(); c.attachRifle(m); const f = makeFlash(0.5, 0, false); f.position.set(0, 0.1, -0.5); m.add(f); c.flash = f; } } });
+  CHAR_SETS.soldier.forEach((n, i) => { removeHead(n); for (let k = 0; k < 4; k++) { const c = mk('soldier', n, { outfit: true }); if (c) addHeadWrap(c, WRAPS[(i * 4 + k) % WRAPS.length]); if (c && RIFLE_NPC) { const m = RIFLE_NPC.clone(); c.attachRifle(m); const f = makeFlash(0.5, 0, false); f.position.set(0, 0.1, -0.5); m.add(f); c.flash = f; } } });
   for (let k = 0; k < 9; k++) mk('civ', CHAR_SETS.civ[k % CHAR_SETS.civ.length]);
 }
 function takeChar(set) {
@@ -3534,7 +3535,7 @@ const ZONES = [
     { k: 'cover', at: [1.0, -50.6], t: 0 }, { k: 'cover', at: [-6.4, -57.5], t: 0.5 }, { k: 'roof', side: -1, z: -46, t: 2 },
     { k: 'rush', from: [-6, -64], at: [-2.6, -44], t: 5 }, { k: 'roof', side: 1, z: -60, t: 8 }, { k: 'rush', from: [-3, -68], at: [-2, -47], t: 11, hard: 1 } ] },
   { name: '攻入民宅：前廳', task: 2, indoor: true, hostStart: true, covers: ['D1a', 'D1b'], spots: [[15.5, -75.2], [18, -76.6], [20.4, -74.2], [16.6, -79.6], [13, -77]], spawns: [
-    { k: 'cover', at: [16.4, -78.3], in: 1 }, { k: 'stand', at: [21.6, -72.4], in: 1 }, { k: 'cover', at: [20.6, -79.9], in: 1, t: 1.5 }, { k: 'rush', from: [14.1, -86], at: [14.4, -78.6], t: 6, hard: 1 } ] },
+    { k: 'cover', at: [16.4, -78.3], in: 1 }, { k: 'stand', at: [21.6, -72.4], in: 1 }, { k: 'cover', at: [20.6, -79.9], in: 1, t: 1.5 }, { k: 'rush', from: [14.1, -86], at: [14.4, -78.6], t: 6, hard: 1, in: 1 } ] },
   { name: '攻入民宅：後房', task: 2, indoor: true, covers: ['D2a', 'D2b'], spots: [[13.2, -86], [14.6, -90], [15.6, -84.5], [12.4, -93.4], [14.2, -94]], spawns: [
     { k: 'cover', at: [12.4, -88.3], in: 1 }, { k: 'stand', at: [15.9, -93.8], in: 1 }, { k: 'cover', at: [13.6, -92.6], in: 1, hard: 1 } ] },
   { name: '人質房', task: 2, indoor: true, hostage: true, covers: ['D3a', 'D3b'], spawns: [] },
@@ -3596,12 +3597,19 @@ class Enemy {
   muzzle(out = new THREE.Vector3()) { if (this.c.rifle) { out.set(0, 0.1, -0.5).applyMatrix4(this.c.rifle.matrixWorld); return out; } return out.set(this.pos.x, this.pos.y + 1.3, this.pos.z); }
   damage(amount, part) {
     if (!this.alive) return false;
+    if (this.remote) { // 全班共用的敵人：先在自己的手機上預測，再回報老師的電腦（擊倒以老師電腦為準）
+      shHit(this, amount, part); this.predHp -= amount * (part === 'head' ? 2.5 : part === 'limb' ? 0.7 : 1);
+      if (this.predHp <= 0) { this.state = 'dead'; this.deadT = 0; this.predDeadAt = performance.now(); this.c.play('Death01', { loop: false, fade: 0.08 }); }
+      else { this.hitT = 0.3; this.c.play(part === 'head' ? 'Hit_Head' : 'Hit_Chest', { loop: false, fade: 0.05 }); }
+      return false;
+    }
     this.hp -= amount * (part === 'head' ? 2.5 : part === 'limb' ? 0.7 : 1);
     if (this.hp <= 0) { this.state = 'dead'; this.c.play('Death01', { loop: false, fade: 0.08 }); this.deadT = 0; return true; }
     if (this.state !== 'hit' && this.state !== 'leave') { this.prev = this.state; this.state = 'hit'; this.t = 0.3; this.c.play(part === 'head' ? 'Hit_Head' : 'Hit_Chest', { loop: false, fade: 0.05 }); }
     return false;
   }
   update(dt, P) {
+    if (this.remote) { this.remoteUpdate(dt); return; }
     this.c.update(dt); this.updateRifle(P);
     if (this.state === 'dead') { this.deadT += dt; return; }
     if (this.state === 'gone') return;
@@ -3630,13 +3638,13 @@ class Enemy {
     this.burstT -= dt;
     if (this.peek > 0) {
       this.peek -= dt; this.shotT -= dt;
-      if (this.shotT <= 0 && this.shots > 0) { this.shots--; this.shotT = 0.14; this.fire(P, dist); }
+      if (this.shotT <= 0 && this.shots > 0) { this.shots--; this.shotT = P.isProxy ? 0.14 / Math.min(2, SHT.mult) : 0.14; this.fire(P, dist); }
       if (this.peek <= 0) {
         if (this.state === 'cover') { this.c.play('Crouch_Idle_Aim'); this.burstT = 1.0 + R() * 1.3; }
         else { this.c.play('Pistol_Aim_Neutral'); this.burstT = 1.1 + R() * 1.4; }
       }
     } else if (this.burstT <= 0) {
-      this.peek = 1.5 + R() * 0.6; this.shots = 3 + Math.floor(R() * 2); this.shotT = 0.4; this.c.play('Pistol_Aim_Neutral');
+      this.peek = 1.5 + R() * 0.6; this.shots = Math.round((3 + Math.floor(R() * 2)) * (P.isProxy ? SHT.mult : 1)); this.shotT = 0.4; this.c.play('Pistol_Aim_Neutral');
     }
   }
   face(a, dt, k) { let d = a - this.heading; d = Math.atan2(Math.sin(d), Math.cos(d)); this.heading += d * Math.min(1, dt * k); }
@@ -3649,21 +3657,48 @@ class Enemy {
     else this.c.aimRifle('low');
   }
   fire(P, dist) {
+    if (P.isProxy) { P = shAlt(this, P); dist = Math.hypot(P.pos.x - this.pos.x, P.pos.z - this.pos.z); }
     const m = this.muzzle(); const eye = P.eye();
     const dir = eye.clone().sub(m); const L = dir.length(); dir.divideScalar(L);
     if (rayWorld(m, dir, L) < L - 0.3) return; // 視線被擋就不打
     const expo = P.exposure(); // 躲在掩體後面＝0（打不到），探身＝部分身體露出
-    const pHit = clamp(0.3 - dist / 200, 0.08, 0.28) * G.diff.acc * expo * (this.inside ? 1.25 : 1);
-    const hit = R() < pHit;
+    const pHit = clamp(0.3 - dist / 200, 0.08, 0.28) * G.diff.acc * expo * (this.inside ? 1.25 : 1) * (P.isProxy ? SHT.accM : 1); const pHit2 = Math.min(0.6, pHit);
+    const hit = R() < pHit2; const dmg = (6 + R() * 4) * G.diff.dmg;
     const target = hit ? eye.clone() : eye.clone().add(V((R() - 0.5) * 2.2, (R() - 0.3) * 1.4, (R() - 0.5) * 2.2));
     tracer(m, target);
     if (this.c.flash) flashOn(this.c.flash, 0.05);
+    if (P.isProxy) { SHT.shots.push([this.id, P.slot, hit ? Math.round(dmg) : 0]); if (hit && P.fake) fakeHurt(P.pid, dmg); if (R() < 0.06) SFX.enemyShot(camera.position.distanceTo(m) + 10); return; } // 老師電腦：記下這一槍，傳給同學
     SFX.enemyShot(dist);
     AI.lastShotAt = performance.now(); AI.lastShotPos.copy(m);
-    if (hit) P.hurt((6 + R() * 4) * G.diff.dmg, m);
+    if (hit) P.hurt(dmg, m);
     else { if (eye.distanceTo(target) < 1.4 && R() < 0.5 && expo > 0.2) SFX.whizz(); if (expo < 0.2 && R() < 0.4) SFX.impact(); const d2 = target.clone().sub(m).normalize(); const t = rayWorld(m, d2, 80); const hp = m.clone().addScaledVector(d2, t - 0.1); if (t < 80 && PUFFS && hp.distanceTo(eye) > 2.5) PUFFS.burst(hp, 4, { spread: 1, up: 1, size: 0.18 }); }
   }
   dispose() { this.c.dispose(); }
+  /* ---------- 全班共用的敵人（學生手機）：位置、動作跟著老師電腦 ---------- */
+  remoteSnap(a, first) {
+    const now = performance.now(); const x = a[1], z = a[2], y = a[3];
+    if (this.snapAt && !first) { const dtS = (now - this.snapAt) / 1000; if (dtS > 0.05) { this.vx = clamp((x - this.sx) / dtS, -6, 6); this.vz = clamp((z - this.sz) / dtS, -6, 6); } }
+    this.sx = x; this.sz = z; this.sy = y; this.snapAt = now; this.sh = a[4]; this.tgSlot = a[6]; this.zone = MS.zone;
+    if (first) { this.pos.set(x, y, z); this.heading = this.sh; this.vx = this.vz = 0; this.c.root.rotation.y = this.heading; }
+    const hp = a[7]; if (hp < this.predHp) this.predHp = hp;
+    if (hp <= 0) { this.remoteKill(); return; }
+    if (this.state === 'dead') { if (this.predDeadAt && now - this.predDeadAt > 1500) { this.predDeadAt = 0; this.predHp = hp; this.curR = null; } else return; } // 以為打倒了，老師的電腦說還活著：站起來
+    const anim = ANIM_LIST[a[5]] || 'Idle_Rifle'; this.ranim = anim;
+    this.state = anim === 'Crouch_Idle_Aim' ? 'cover' : /Jog|Sprint|Walk/.test(anim) ? 'move' : 'stand';
+    if (anim === 'Death01') this.state = 'stand';
+  }
+  remoteKill() { if (this.state === 'dead' && !this.predDeadAt) return; const was = this.state === 'dead'; this.state = 'dead'; this.predDeadAt = 0; if (!was) this.deadT = 0; this.c.play('Death01', { loop: false, fade: 0.08 }); }
+  remoteUpdate(dt) {
+    this.c.update(dt);
+    if (this.state === 'dead') { this.deadT = (this.deadT || 0) + dt; this.c.aimRifle('drop'); return; }
+    const age = Math.min(0.3, (performance.now() - this.snapAt) / 1000);
+    const tx = this.sx + (this.vx || 0) * age, tz = this.sz + (this.vz || 0) * age; const k = Math.min(1, dt * 7);
+    if (Math.hypot(tx - this.pos.x, tz - this.pos.z) > 6) { this.pos.x = tx; this.pos.z = tz; } else { this.pos.x += (tx - this.pos.x) * k; this.pos.z += (tz - this.pos.z) * k; }
+    this.pos.y += (this.sy - this.pos.y) * k; this.face(this.sh, dt, 8); this.c.root.rotation.y = this.heading;
+    if (this.hitT > 0) this.hitT -= dt; else if (this.ranim && this.ranim !== 'Death01') this.c.play(this.ranim, /Hit/.test(this.ranim) ? { loop: false, fade: 0.05 } : undefined);
+    const n = this.c.curName;
+    if (/Jog|Sprint|Walk/.test(n)) this.c.aimRifle('run'); else if (n === 'Pistol_Aim_Neutral' || n === 'Crouch_Idle_Aim' || /Hit/.test(n)) this.c.aimRifle('aim', shAimPoint(this, _aimT)); else this.c.aimRifle('low');
+  }
 }
 /* 平民（開場逃跑）與人質 */
 class Civilian {
@@ -3697,18 +3732,18 @@ class Civilian {
   dispose() { this.c.dispose(); }
 }
 function aiReset() {
-  for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const h of HOSTAGES) h.dispose(); HOSTAGES.length = 0;
-  Object.assign(MS, { zone: 0, arrived: false, moving: false, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] });
+  for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; REM.clear(); for (const c of CIVS) c.dispose(); CIVS.length = 0; for (const h of HOSTAGES) h.dispose(); HOSTAGES.length = 0;
+  Object.assign(MS, { inHouse: false, zone: 0, arrived: false, moving: false, zoneT: 0, hostT: 0, hostState: 'none', hostOn: false, bombT: 0, bombOn: false, defuse: 0, defusing: false, done: false, fail: false, ambush: false, pending: [] });
   if (WORLD.bomb) WORLD.bomb.show('--:--');
   vsReset();
 }
 function spawnEnemy(spec, zone) {
   let at = spec.at;
-  if (spec.k === 'roof') { const r = roofSpot(spec.side, spec.z); if (!r) return; at = [r.x, r.z, r.y]; }
+  if (spec.k === 'roof') { const r = roofSpot(spec.side, spec.z); if (!r) return null; at = [r.x, r.z, r.y]; }
   let ch = takeChar('soldier');
   if (!ch) { const old = ENEMIES.findIndex((e) => !e.alive); if (old >= 0) { ENEMIES[old].dispose(); ENEMIES.splice(old, 1); ch = takeChar('soldier'); } }
-  if (!ch) return;
-  ENEMIES.push(new Enemy(ch, { ...spec, at }, zone));
+  if (!ch) return null;
+  const e = new Enemy(ch, { ...spec, at }, zone); ENEMIES.push(e); return e;
 }
 function aiStart() {
   aiReset();
@@ -3722,18 +3757,20 @@ function aiStart() {
 // 進入某一段：排好這一段要出現的敵人；室內的敵人一開始就在位置上（從門口看得到）
 function zoneEnter(i, first) {
   MS.zone = i; MS.arrived = !!first; MS.moving = !first; MS.zoneT = 0; const Z = ZONES[i];
-  MS.pending = Z.spawns.filter((s) => !s.hard || G.diff.extra).map((s) => ({ ...s }));
+  MS.pending = SHARED.on && STREET(i) ? [] : Z.spawns.filter((s) => !s.hard || G.diff.extra).map((s) => ({ ...s }));
+  if (SHARED.on && i >= 2 && i <= 4 && !MS.inHouse) { MS.inHouse = true; SHS.houseT = 0; }
   for (const p of MS.pending) if (p.in && !p.t && !p.from) { p.done = true; spawnEnemy(p, i); }
 }
 function zoneArrive() {
   MS.arrived = true; MS.moving = false; MS.zoneT = 0; const Z = ZONES[MS.zone];
   if (Z.hostStart && !MS.hostOn) { MS.hostOn = true; MS.hostT = G.diff.hostage; }
-  if (Z.bomb && !MS.bombOn) { MS.bombOn = true; MS.bombT = G.diff.bomb; }
+  if (Z.bomb && !MS.bombOn && !SHARED.on) { MS.bombOn = true; MS.bombT = G.diff.bomb; }
   vsArrive(); onZone();
 }
 function zoneAlive(i) { return ENEMIES.some((e) => e.zone === i && e.alive) || (MS.zone === i && MS.pending.some((p) => !p.done)); }
 function aiUpdate(dt, P) {
   if (!ANIMS || !CHAR_SETS.soldier.length || MS.done) return;
+  if (SHARED.on) { shStudentTick(dt, P); if (MS.done) return; }
   const Z = ZONES[MS.zone];
   // 這一段的敵人依時間出現
   if (MS.arrived) { MS.zoneT += dt; for (const p of MS.pending) if (!p.done && MS.zoneT >= (p.t || 0)) { p.done = true; spawnEnemy(p, MS.zone); } }
@@ -3746,16 +3783,16 @@ function aiUpdate(dt, P) {
       for (const e of guards) { e.state = 'leave'; e.path = [...findPath(e.pos, V(22.3, 0, -88.2)), ...exit]; e.goal = e.path.shift(); e.c.play('Walk_Aim'); } onHostagesTaken(); } }
   }
   // 炸彈倒數
-  if (MS.bombOn && !MS.done) {
+  if (MS.bombOn && !MS.done && !SHARED.on) {
     MS.bombT -= dt; const s = Math.max(0, Math.ceil(MS.bombT)); if (WORLD.bomb) WORLD.bomb.show(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
     if (MS.bombT <= 0) { MS.done = true; MS.fail = true; onBomb(false); return; }
   }
   // 這一段清空了：往下一段推進
-  if (MS.arrived && !Z.defuse && !zoneAlive(MS.zone) && !(Z.hostage && MS.hostState === 'held' && ENEMIES.some((e) => e.k === 'guard' && e.alive))) { if (MS.zone + 1 < ZONES.length) { zoneEnter(MS.zone + 1); onZoneClear(); } }
+  if (MS.arrived && !Z.defuse && !(SHARED.on && STREET(MS.zone)) && !zoneAlive(MS.zone) && !(Z.hostage && MS.hostState === 'held' && ENEMIES.some((e) => e.k === 'guard' && e.alive))) { if (MS.zone + 1 < ZONES.length) { zoneEnter(MS.zone + 1); onZoneClear(); } }
   // 拆彈
   if (Z.defuse && MS.arrived) {
     MS.defusing = INPUT.defuse && P.alive && P.reloading <= 0 && P.coverId === 'D4' && !P.target;
-    if (MS.defusing) {
+    if (MS.defusing && !SHARED.on) {
       if (!MS.ambush) { MS.ambush = true; const sp = [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -126 }]; for (let i = 0; i < G.diff.defuseAmbush + VS.ambush; i++) spawnEnemy({ ...sp[i % 2], z: sp[i % 2].z - Math.floor(i / 2) * 6, t: 0 }, MS.zone); onAmbush(); }
       MS.defuse += dt / 4; if (MS.defuse >= 1) { MS.defuse = 1; MS.done = true; if (WORLD.bomb) WORLD.bomb.show('已拆除', '#3fd17a'); onBomb(true); }
     }
@@ -3764,7 +3801,7 @@ function aiUpdate(dt, P) {
   bossUpdate(dt);
   for (const c of CIVS) c.update(dt);
   for (const h of HOSTAGES) h.update(dt);
-  for (let i = ENEMIES.length - 1; i >= 0; i--) if (ENEMIES[i].state === 'dead' && ENEMIES[i].deadT > 30) { ENEMIES[i].dispose(); ENEMIES.splice(i, 1); }
+  for (let i = ENEMIES.length - 1; i >= 0; i--) if (!ENEMIES[i].remote && ENEMIES[i].state === 'dead' && ENEMIES[i].deadT > 30) { ENEMIES[i].dispose(); ENEMIES.splice(i, 1); }
 }
 
 /* =========================================================
@@ -3786,12 +3823,15 @@ const REINF = [
   [{ k: 'roof', side: -1, z: -124 }, { k: 'roof', side: 1, z: -128 }],
 ];
 const ROOFS = [{ side: 1, z: -20 }, { side: 1, z: -60 }, null, null, null, { side: -1, z: -108 }, { side: 1, z: -128 }];
+const CMD_SH = { reinf: '街上衝出三名武裝分子（在民宅裡的同學：屋內多兩名）', roof: '街上多兩名屋頂槍手', bombfast: '全班的炸彈倒數 −10 秒', ambush: '拆彈時會多一名屋頂槍手' };
 const VS = { tp: null, boss: null, queue: [], pen: { host: 0, bomb: 0 }, ambush: 0, thitN: null, tshotN: null, tdownN: null, bossFlash: 0 };
 const CMD_TEXT = { reinf: ['老師派出增援！', '兩名武裝分子正衝過來'], roof: ['老師派出屋頂狙擊手！', '注意上方'], hurry: ['老師催促看守押走人質！', '人質時限 −15 秒'], bombfast: ['老師讓炸彈加速！', '炸彈倒數 −10 秒'], ambush: ['老師在炸彈旁埋伏！', '拆彈時會多一名屋頂槍手'] };
 function vsReset() { VS.queue.length = 0; VS.pen.host = 0; VS.pen.bomb = 0; VS.ambush = 0; if (VS.boss) { VS.boss.dispose(); VS.boss = null; } }
 function applyCmd(c) {
   if (G.mode !== 'take' || G.practice || MS.done) return;
-  const t = CMD_TEXT[c.k]; if (t) banner(t[0], 'bad', 2200, t[1]);
+  const t = CMD_TEXT[c.k]; if (t) banner(t[0], 'bad', 2200, SHARED.on ? (CMD_SH[c.k] || t[1]) : t[1]);
+  if (SHARED.on && c.k !== 'hurry') { // 全班同一個城鎮：街上的增援由老師電腦派出；在民宅裡的同學另外多兩名室內敵人
+    if (c.k === 'reinf' && ZONES[MS.zone].indoor && MS.arrived && !MS.moving) vsSpawn('reinf', MS.zone); return; }
   if (c.k === 'hurry') { if (MS.hostState === 'held') { if (MS.hostOn) MS.hostT = Math.max(5, MS.hostT - 15); else VS.pen.host += 15; } return; }
   if (c.k === 'bombfast') { if (MS.bombOn) MS.bombT = Math.max(5, MS.bombT - 10); else VS.pen.bomb += 10; return; }
   if (c.k === 'ambush') { VS.ambush++; return; }
@@ -3847,6 +3887,312 @@ function vsListen() {
   NET.on('tshot', onTeacherShot);
   NET.on('thit/' + ME.pid, onTeacherHit);
   NET.on('tdown', onTeacherDown);
+}
+
+/* =========================================================
+   全班同一個城鎮（老師的電腦當裁判）
+   街上三段（突破路障、清除街口、拆除炸彈）：敵人由老師的電腦統一控制，全班看到同一批敵人，一起推進
+   民宅（救人質）：幾十個人擠不進三個小房間，所以每位同學各自攻入自己的那一份，救完出來再會合
+   資料：老師電腦每 0.3 秒廣播一次敵人狀態（w），每 0.6 秒廣播一次同學位置（al）；
+         同學打中敵人時回報（eh/<pid>），由老師電腦扣血、判定誰擊倒
+   ========================================================= */
+const SHARED = { on: false }; // 學生端：這一回合是不是全班同一個城鎮
+const ANIM_LIST = ['Idle_Rifle', 'Pistol_Aim_Neutral', 'Crouch_Idle_Aim', 'Jog_Aim', 'Sprint_Aim', 'Walk_Aim', 'Hit_Chest', 'Hit_Head', 'Death01'];
+const STREET = (z) => z === 0 || z === 1 || z === 5 || z === 6;
+const GROUP = (z) => (z <= 1 ? 0 : z >= 5 ? 2 : 1); // 0：前段街道　1：民宅　2：街尾（炸彈）
+const SH_NAME = { 0: '突破路障', 1: '清除街口', 2: '攻入民宅救人質', 5: '拆除炸彈：清除守衛', 6: '拆除炸彈' };
+// wave：這一段敵人持續湧入幾秒；house：最多等幾秒就開始炸彈戰；bomb：炸彈倒數；defuse：拆彈要幾秒
+const SH_CFG = {
+  N: { wave: [65, 65, 0, 0, 0, 50], house: 85, bomb: 115, defuse: 15, cap: 0, roofMax: 2, hps: 0.7, ambush: 2, hp: 0 },
+  H: { wave: [70, 70, 0, 0, 0, 55], house: 75, bomb: 100, defuse: 18, cap: 2, roofMax: 3, hps: 0.9, ambush: 3, hp: 0.25 },
+};
+// 每一段街道：敵人出現的位置（cover：跑到車子、沙包後面；rush：從遠處衝過來；roof：屋頂）
+const SPAWN_T = {
+  0: { cover: [[-4.0, -23.4, 1.4], [4.4, -35.1, 1.4]], rush: [[[-1, -38], [-1.2, -17.5]], [[6, -40], [3, -22]], [[-5, -40], [-2.5, -24]], [[-1, -40], [-0.6, -20]], [[5, -42], [2.2, -24]]], roof: [[1, -20], [1, -30], [-1, -26], [-1, -34]] },
+  1: { cover: [[1.0, -50.6, 0.4], [-6.4, -57.5, 0.6]], rush: [[[-6, -64], [-2.6, -44]], [[-3, -68], [-2, -47]], [[-5, -66], [-2.5, -46]], [[-1, -68], [-0.5, -54]], [[2, -66], [1.5, -55]]], roof: [[-1, -46], [1, -60], [-1, -56], [1, -52]] },
+  5: { cover: [[7.4, -105.4, 0.4], [-5.0, -113.6, 0.5], [3.8, -123.4, 0.5]], rush: [[[-2, -128], [-0.6, -104]], [[0.6, -129], [0.8, -106]], [[3, -130], [1.2, -108]], [[-3, -130], [-1.5, -110]]], roof: [[-1, -108], [1, -118], [-1, -116], [1, -110]] },
+  6: { cover: [[-3.0, -143.6, 0.6]], rush: [[[-3, -149], [-2.2, -138]], [[4, -149], [3, -139]], [[-1, -149], [-0.5, -141]]], roof: [[-1, -124], [1, -126], [-1, -130], [1, -134]] },
+};
+// 掩體位置錯開：全班擠在同一個掩體時，每個人沿著掩體左右分開一點（依座號）
+const CVJ = {};
+function cvOf(id) {
+  const c = COVERS[id]; if (!c || !SHARED.on || c.indoor || c.kind === 'side' || !SHS.jit) return c;
+  let o = CVJ[id]; if (o && o.j === SHS.jit) return o;
+  const b = c.box; const half = Math.max(0, (b[1] - b[0]) / 2 - 0.55); const cx = (b[0] + b[1]) / 2;
+  const x = c.kind === 'defuse' ? c.x + SHS.jit * 1.3 : clamp(cx + SHS.jit * half, b[0] + 0.5, b[1] - 0.5);
+  return (CVJ[id] = { ...c, x, j: SHS.jit });
+}
+const jitOf = (slot) => (slot >= 0 ? ((slot * 0.6180339 + 0.3) % 1) * 2 - 1 : 0);
+
+/* =========================================================
+   老師端：統一控制街上的敵人
+   ========================================================= */
+const SHT = { on: false, ph: 0, phT: 0, spawnT: 0, nid: 0, byId: new Map(), shots: [], kills: [], kseq: 0, bombOn: false, bombT: 0, pen: 0, defuse: 0, dfOn: 0, ambush: 0, ambushDone: false, end: null, endT: 0, sendT: 0, alT: 0, seq: 0, hseq: {}, cfg: SH_CFG.N, mult: 1, accM: 1, f: 1, nSt: 0 };
+const MATES = new Map(); // pid → 同學替身（老師電腦用來判斷敵人打誰）
+const DUMMY = { alive: false, isProxy: true, slot: -1, pos: new THREE.Vector3(0, 0, 80), eye: (o = new THREE.Vector3()) => o.set(0, 1.5, 80), peekEye: (o = new THREE.Vector3()) => o.set(0, 1.5, 80), exposure: () => 0, hurt() {} };
+class Mate {
+  constructor(pid) { this.pid = pid; this.isProxy = true; this.fake = pid.startsWith('fake'); this.pos = new THREE.Vector3(); this.tx = 0; this.tz = 0; this.yaw = 0; this.alive = true; this.peek = 0; this.mv = 0; this.zone = 0; this.df = 0; this.first = true; }
+  get slot() { const p = TS.players[this.pid]; return p && p.slot >= 0 ? p.slot : -1; }
+  eye(o = new THREE.Vector3()) { return o.set(this.pos.x, this.peek || this.mv ? 1.55 : 1.0, this.pos.z); }
+  peekEye(o = new THREE.Vector3()) { return o.set(this.pos.x, 1.55, this.pos.z); }
+  exposure() { return this.mv ? 1 : this.df ? 0.5 : this.peek ? 0.65 : 0; }
+  hurt() {}
+}
+function mateIn(pid, a) {
+  let m = MATES.get(pid); if (!m) { m = new Mate(pid); MATES.set(pid, m); }
+  m.tx = a[0]; m.tz = a[1]; m.yaw = a[2]; m.alive = !!a[3]; m.peek = a[5] || 0; m.mv = a[6] || 0; m.zone = a[7] || 0; m.df = a[8] || 0;
+  if (m.first || Math.hypot(m.tx - m.pos.x, m.tz - m.pos.z) > 12) { m.first = false; m.pos.set(m.tx, 0, m.tz); }
+}
+function shStart() {
+  const k = TS.diff; Object.assign(SHT, { on: true, ph: 0, phT: 0, spawnT: 1, nid: 0, shots: [], kills: [], kseq: 0, bombOn: false, bombT: 0, pen: 0, defuse: 0, dfOn: 0, ambush: 0, ambushDone: false, end: null, endT: 0, sendT: 0, alT: 0, hseq: {}, dfBy: {}, cfg: SH_CFG[k] || SH_CFG.N, f: clamp(TAKE_SEC / 300, 0.8, 1.2) });
+  SHT.byId.clear(); G.diff = DIFFS[k] || DIFFS.N; MS.zone = 0; MS.arrived = true; MS.done = false;
+  for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0;
+  shSpawn('cover', 0); shSpawn('cover', 0); shSpawn('rush', 0); shSpawn('roof', 0);
+  tLog(-1, '全班同一個城鎮：街上的敵人由這台電腦控制');
+}
+function shStop() { SHT.on = false; for (const e of ENEMIES) e.dispose(); ENEMIES.length = 0; SHT.byId.clear(); MATES.clear(); }
+function shSpawn(kind, z) {
+  const T = SPAWN_T[z]; if (!T) return null; let spec = null;
+  if (kind === 'roof') { for (let i = 0; i < 5 && !spec; i++) { const r = T.roof[Math.floor(R() * T.roof.length)]; const zz = r[1] + (R() - 0.5) * 6; if (roofSpot(r[0], zz)) spec = { k: 'roof', side: r[0], z: zz }; } if (!spec) kind = 'rush'; }
+  if (kind === 'cover') { const c = T.cover[Math.floor(R() * T.cover.length)]; spec = { k: 'cover', at: [c[0] + (R() - 0.5) * 2 * c[2], c[1]] }; }
+  if (kind === 'rush') { const r = T.rush[Math.floor(R() * T.rush.length)]; spec = { k: 'rush', from: [r[0][0] + (R() - 0.5) * 2, r[0][1] - R() * 3], at: [clamp(r[1][0] + (R() - 0.5) * 2.4, -7, 7), r[1][1] + (R() - 0.5) * 3] }; }
+  const e = spawnEnemy(spec, z); if (!e) return null;
+  e.id = ++SHT.nid; SHT.byId.set(e.id, e); e.retT = 0;
+  e.hp = Math.round(100 * (clamp(1 + (SHT.nSt - 8) / 30, 1, 2) + SHT.cfg.hp)); // 全班人多時敵人比較耐打（不然一出現就被幾十個人打倒）
+  return e;
+}
+function shPhase(p) {
+  SHT.ph = p; SHT.phT = 0; SHT.spawnT = 1.2;
+  for (const e of ENEMIES) if (e.alive && e.zone !== p) { if (p === 6 && e.zone === 5) e.zone = 6; else { e.state = 'gone'; e.c.dispose(); } }
+  if (p === 1) { shSpawn('cover', 1); shSpawn('cover', 1); shSpawn('roof', 1); }
+  if (p === 5) { SHT.bombOn = true; SHT.bombT = Math.max(30, Math.min(SHT.cfg.bomb * SHT.f, (TS.endsAt - NET.now()) / 1000 - 6) - SHT.pen); /* 炸彈一定在任務時間結束前引爆 */ SHT.pen = 0; shSpawn('cover', 5); shSpawn('cover', 5); shSpawn('rush', 5); shSpawn('roof', 5); }
+  if (p === 6) { shSpawn('roof', 6); shSpawn('rush', 6); }
+  tLog(-1, `全班進度：${SH_NAME[p]}`);
+}
+function shEnd(r) { if (SHT.end) return; SHT.end = r; SHT.endT = 0; tLog(-1, r === 'win' ? '全班拆彈成功！' : '炸彈引爆，任務失敗'); }
+function shCmd(k) {
+  if (!SHT.on || SHT.end) return; const ph = SHT.ph; const street = STREET(ph);
+  if (k === 'reinf' && street) for (let i = 0; i < 3; i++) shSpawn('rush', ph);
+  if (k === 'roof' && street) { shSpawn('roof', ph); shSpawn('roof', ph); }
+  if (k === 'bombfast') { if (SHT.bombOn) SHT.bombT = Math.max(5, SHT.bombT - 10); else SHT.pen += 10; }
+  if (k === 'ambush') SHT.ambush++;
+}
+// 挑目標：同一段街上、活著的同學；探身、移動中、拆彈中的同學比較容易被挑中，近的優先，而且要看得到
+const _sh1 = new THREE.Vector3(), _sh2 = new THREE.Vector3(), _sh3 = new THREE.Vector3();
+function shSees(e, m) { _sh1.set(e.pos.x, e.pos.y + 1.5, e.pos.z); m.peekEye(_sh2); _sh3.subVectors(_sh2, _sh1); const L = _sh3.length(); _sh3.divideScalar(L); return rayWorld(_sh1, _sh3, L) >= L - 0.4; }
+function shPick(e) {
+  const g = GROUP(e.zone); const list = []; let sum = 0;
+  for (const m of MATES.values()) { if (!m.alive || GROUP(m.zone) !== g || !STREET(m.zone)) continue; const d = Math.hypot(m.pos.x - e.pos.x, m.pos.z - e.pos.z); if (d > 75) continue; const w = (m.exposure() > 0 ? 3 : 0.5) * (m.df ? 5 : 1) / (1 + d / 25); list.push([m, w]); sum += w; }
+  if (!list.length) return null; let first = null;
+  for (let t = 0; t < 4; t++) { let r = R() * sum, m = list[list.length - 1][0]; for (const [x, w] of list) { r -= w; if (r <= 0) { m = x; break; } } if (!first) first = m; if (shSees(e, m)) return m; }
+  return first;
+}
+// 一串連發中換打別人（全班人多時，一個敵人會掃射好幾位探身的同學）
+function shAlt(e, P) {
+  if (R() > 0.45) return P; const g = GROUP(e.zone); const c = [];
+  for (const m of MATES.values()) if (m !== P && m.alive && GROUP(m.zone) === g && STREET(m.zone) && m.exposure() > 0 && Math.hypot(m.pos.x - e.pos.x, m.pos.z - e.pos.z) < 60) c.push(m);
+  return c.length ? c[Math.floor(R() * c.length)] : P;
+}
+function shTeacherTick(dt) {
+  if (!SHT.on) return; const C = SHT.cfg;
+  let nSt = 0, nExp = 0; for (const m of MATES.values()) { const k = Math.min(1, dt * 8); m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; if (STREET(m.zone) && m.zone === SHT.ph || (SHT.ph === 6 && m.zone === 5)) { nSt++; if (m.alive && m.exposure() > 0) nExp++; } }
+  SHT.nSt = nSt; SHT.mult = clamp(Math.sqrt(nSt / 4), 1, 4);
+  // 全班人多時，每位探身的同學分到的子彈變少：自動提高命中率，讓探身的同學每秒挨到的子彈和單人時差不多
+  let nE = 0; for (const e of ENEMIES) if (e.alive && e.zone === SHT.ph) nE++;
+  const perStu = nE * 3.5 * SHT.mult / 2.6 / Math.max(1, nExp); SHT.accM = clamp(C.hps / Math.max(0.05, perStu * 0.12), 1, 5);
+  MS.zone = SHT.ph; MS.arrived = true; MS.done = !!SHT.end; G.diff = DIFFS[TS.diff] || DIFFS.N;
+  if (SHT.end) { SHT.endT += dt; if (SHT.endT > 6 && TS.phase === 'take') cut('end'); }
+  SHT.phT += dt; const ph = SHT.ph;
+  if (!SHT.end) {
+    if (ph === 2) { let out = false; for (const m of MATES.values()) if (m.zone >= 5) out = true; if (out || SHT.phT > C.house * SHT.f) shPhase(5); }
+    else {
+      const wave = ph === 6 ? 1e9 : C.wave[ph] * SHT.f; let alive = 0, roof = 0, cov = 0;
+      for (const e of ENEMIES) if (e.alive && e.zone === ph) { alive++; if (e.k === 'roof') roof++; if (e.k === 'cover') cov++; }
+      if (SHT.phT < wave) {
+        const cap = clamp(Math.round(5 + nSt * 0.3) + C.cap, 6, 12); SHT.spawnT -= dt;
+        if (alive < cap && SHT.spawnT <= 0) { const r = R(); shSpawn(r < 0.2 && roof < C.roofMax ? 'roof' : r < 0.6 && cov < 5 ? 'cover' : 'rush', ph); SHT.spawnT = 0.5 + R() * 0.4; }
+      } else if (!alive || SHT.phT > wave + 15) shPhase(ph === 0 ? 1 : ph === 1 ? 2 : 6);
+    }
+    if (SHT.bombOn) { SHT.bombT -= dt; if (SHT.bombT <= 0) { SHT.bombT = 0; shEnd('fail'); } }
+    if (SHT.ph === 6 && !SHT.end) {
+      let on = 0; for (const m of MATES.values()) if (m.df && m.alive && m.zone === 6) on++;
+      if (on && !SHT.dfOn) tLog(-1, `同學開始拆彈（${on} 人）`); SHT.dfOn = on ? 1 : 0;
+      if (on) {
+        if (!SHT.ambushDone) { SHT.ambushDone = true; for (let i = 0; i < C.ambush + SHT.ambush; i++) shSpawn('roof', 6); }
+        for (const m of MATES.values()) if (m.df && m.alive && m.zone === 6) SHT.dfBy[m.pid] = (SHT.dfBy[m.pid] || 0) + dt;
+        SHT.defuse += dt / C.defuse; if (SHT.defuse >= 1) { SHT.defuse = 1; shEnd('win'); }
+      }
+    }
+  }
+  // 敵人：每個敵人挑一位同學當目標
+  for (const e of ENEMIES) {
+    if (e.alive) { e.retT -= dt; if (e.retT <= 0 || !e.tgt || !e.tgt.alive || GROUP(e.tgt.zone) !== GROUP(e.zone) || !MATES.has(e.tgt.pid)) { e.tgt = shPick(e); e.retT = 1.2 + R(); } }
+    e.update(dt, e.alive && e.tgt ? e.tgt : DUMMY); if (e.c.flash) flashTick(e.c.flash, dt);
+  }
+  for (let i = ENEMIES.length - 1; i >= 0; i--) { const e = ENEMIES[i]; if ((e.state === 'dead' && e.deadT > 6) || e.state === 'gone') { SHT.byId.delete(e.id); e.dispose(); ENEMIES.splice(i, 1); } }
+  SHT.sendT -= dt; if (SHT.sendT <= 0) { SHT.sendT = 0.3; shSend(); }
+  SHT.alT -= dt; if (SHT.alT <= 0) { SHT.alT = 0.6; shSendAllies(); }
+}
+const r1 = (v) => Math.round(v * 10) / 10;
+function shSend() {
+  const now = NET.now(); const e = [];
+  for (const x of ENEMIES) { if (x.state === 'gone' || (x.state === 'dead' && x.deadT > 4) || !isFinite(x.pos.x) || !isFinite(x.pos.z) || !isFinite(x.pos.y)) continue; e.push([x.id, r1(x.pos.x), r1(x.pos.z), r1(x.pos.y), Math.round(x.heading * 100) / 100, Math.max(0, ANIM_LIST.indexOf(x.c.curName)), x.tgt && x.alive ? x.tgt.slot : -1, x.alive ? Math.max(1, Math.ceil(x.hp)) : 0]); }
+  const k = SHT.kills.filter((q) => now - q[4] < 3000).map((q) => q.slice(0, 4));
+  const ph = SHT.ph; const wave = STREET(ph) && ph !== 6 ? Math.max(0, Math.ceil(SHT.cfg.wave[ph] * SHT.f - SHT.phT)) : 0;
+  NET.set('w', { tk: TS.take, n: ++SHT.seq, ph, wv: wave, bt: SHT.bombOn ? r1(SHT.bombT) : -1, df: Math.round(SHT.defuse * 100), dfo: SHT.dfOn, end: SHT.end || 0, e, s: SHT.shots.splice(0, 80), k });
+  SHT.shots.length = 0;
+}
+function shSendAllies() {
+  const a = [];
+  for (const [pid, m] of MATES) { if (!STREET(m.zone)) continue; const p = TS.players[pid]; if (!p || !(p.slot >= 0)) continue; a.push([p.slot, r1(m.tx), r1(m.tz), Math.round(m.yaw * 100) / 100, (m.alive ? 1 : 0) | (m.peek ? 2 : 0) | (m.mv ? 4 : 0) | ((p.team & 3) << 3), p.no, m.zone]); }
+  NET.set('al', { tk: TS.take, a });
+}
+// 同學回報打中敵人：老師電腦扣血，擊倒就記在打出最後一槍的同學身上
+function ehIn(pid, v) {
+  if (!v || !SHT.on || TS.phase !== 'take') return; let st = SHT.hseq[pid]; if (!st || st.r !== v.r) st = SHT.hseq[pid] = { r: v.r, n: 0 };
+  for (const h of v.q || []) { if (!h || h[0] <= st.n) continue; st.n = h[0]; shApplyHit(pid, h[1], h[2], h[3]); }
+}
+function shApplyHit(pid, id, dmg, pc) {
+  const e = SHT.byId.get(id); if (!e || !e.alive) return; const part = pc === 2 ? 'head' : pc === 1 ? 'limb' : 'body';
+  if (e.damage(dmg, part)) {
+    const p = TS.players[pid]; SHT.kills.push([++SHT.kseq, id, p && p.slot >= 0 ? p.slot : -1, part === 'head' ? 1 : 0, NET.now()]); if (SHT.kills.length > 80) SHT.kills.shift();
+    const f = TS.fake.find((x) => x.pid === pid); if (f && f.S) { f.S.k++; f.S.s += part === 'head' ? PTS.head : PTS.kill; if (part === 'head') f.S.h++; }
+  }
+}
+function fakeHurt(pid, d) { const f = TS.fake.find((x) => x.pid === pid); if (!f || !f.S || f.S.dn > 0) return; f.S.hp -= d; if (f.S.hp <= 0) { f.S.dn = 3; f.S.d++; f.S.s = Math.max(0, f.S.s - 100); } }
+
+/* =========================================================
+   學生端：畫出全班共用的敵人、其他同學，回報命中
+   ========================================================= */
+const SHS = { w: null, wAt: 0, lastN: -1, ph: 0, wv: 0, bombOn: false, bombT: 0, bs: -1, defuse: 0, dfo: 0, end: 0, kseq: 0, slot: -1, jit: 0, shotQ: [], hq: [], hseq: 0, hr: '', hDirty: false, hT: 0, al: [], houseT: 0, bud: 0 };
+const REM = new Map(); // 敵人編號 → 畫在這支手機上的敵人
+const ALLY = { pool: [] };
+function shListen() {
+  NET.on('w', shW);
+  NET.on('al', (v) => { if (v && v.tk === META.take) SHS.al = v.a || []; });
+}
+function shReset() {
+  for (const e of REM.values()) e.dispose(); REM.clear();
+  Object.assign(SHS, { w: null, wAt: 0, lastN: -1, ph: 0, wv: 0, bombOn: false, bombT: 0, bs: -1, defuse: 0, dfo: 0, end: 0, kseq: 0, shotQ: [], hq: [], hseq: 0, hr: Math.random().toString(36).slice(2, 7), hDirty: false, hT: 0, al: [], houseT: 0, bud: 0 });
+  for (const c of ALLY.pool) { c.slot = null; c.root.visible = false; }
+  for (const k in CVJ) delete CVJ[k];
+}
+function shW(v) {
+  if (!v || v.tk !== META.take) return; if (v.n <= SHS.lastN && SHS.w && SHS.w.tk === v.tk) return;
+  SHS.lastN = v.n; SHS.w = v; SHS.wAt = performance.now(); SHS.ph = v.ph; SHS.wv = v.wv || 0;
+  SHS.bombOn = v.bt >= 0; if (SHS.bombOn) SHS.bombT = v.bt; SHS.defuse = (v.df || 0) / 100; SHS.dfo = v.dfo || 0; SHS.end = v.end || 0;
+  if (!SHARED.on || G.mode !== 'take') return;
+  const now = performance.now();
+  for (const s of v.s || []) if (s) SHS.shotQ.push({ at: now + R() * 300, id: s[0], slot: s[1], d: s[2] });
+  for (const k of v.k || []) { if (!k || k[0] <= SHS.kseq) continue; SHS.kseq = k[0]; const e = REM.get(k[1]); if (e) e.remoteKill(); if (SHS.slot >= 0 && k[2] === SHS.slot) shMyKill(k[3]); }
+}
+function shMyKill(head) {
+  if (!P || G.mode !== 'take') return; P.stats.kills++; if (head) P.stats.headshots++; const pts = head ? PTS.head : PTS.kill; P.addScore(pts);
+  SFX.kill(); hitmark(true); banner(head ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); onShot();
+}
+function shHit(e, amount, part) {
+  SHS.hq.push([++SHS.hseq, e.id, Math.round(amount), part === 'head' ? 2 : part === 'limb' ? 1 : 0]); if (SHS.hq.length > 16) SHS.hq.shift(); SHS.hDirty = true;
+}
+function shFlushHits(dt) { SHS.hT -= dt; if (SHS.hDirty && SHS.hT <= 0) { SHS.hT = 0.25; SHS.hDirty = false; NET.set('eh/' + ME.pid, { r: SHS.hr, q: SHS.hq }); } }
+// 中途加入：直接到全班目前所在的那一段
+function shJoinAt() {
+  const ph = SHS.w && SHS.w.tk === META.take ? SHS.ph : 0; if (ph < 1) return;
+  const z = ph >= 6 ? 6 : ph >= 5 ? 5 : ph; zoneEnter(z, true); const id = ZONES[z].covers[0]; const c = cvOf(id);
+  P.coverId = id; P.target = null; P.path = []; P.pos.set(c.x, 0, c.z); P.yaw = c.yaw; P.updateEye(); zoneArrive();
+  banner('加入全班的進度', 'info', 2000, SH_NAME[ph]);
+}
+function shLeaveHouse() {
+  for (const e of ENEMIES) if (!e.remote && e.alive && e.zone >= 2 && e.zone <= 4) { e.state = 'gone'; e.c.dispose(); }
+  if (MS.hostState === 'held') { MS.hostState = 'taken'; for (const h of HOSTAGES) if (!h.dead) { h.state = 'gone'; h.c.dispose(); } onHostagesTaken(); }
+  zoneEnter(5); banner('撤出民宅！', 'bad', 2600, '全班正在拆炸彈，快到街尾會合');
+}
+function shSlot() { const mine = PLAYERS[ME.pid]; const slot = mine && mine.slot >= 0 ? mine.slot : -1; if (slot !== SHS.slot) { SHS.slot = slot; SHS.jit = jitOf(slot); } }
+function shStudentTick(dt, P) {
+  shSlot();
+  if (SHS.end && !MS.done) { MS.done = true; if (SHS.end === 'win') { if (WORLD.bomb) WORLD.bomb.show('已拆除', '#3fd17a'); onBomb(true); } else { MS.fail = true; onBomb(false); } return; }
+  // 炸彈倒數用老師電腦的時間
+  MS.bombOn = SHS.bombOn;
+  if (SHS.bombOn) { MS.bombT = Math.max(0, SHS.bombT - (performance.now() - SHS.wAt) / 1000); const s = Math.ceil(MS.bombT); if (s !== SHS.bs && WORLD.bomb) { SHS.bs = s; WORLD.bomb.show(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`); } }
+  MS.defuse = SHS.defuse;
+  // 跟著全班推進
+  const z = MS.zone, ph = SHS.ph;
+  if (z === 0 && ph >= 1) { zoneEnter(1); onZoneClear(); }
+  else if (z === 1 && ph >= 2) { zoneEnter(2); onZoneClear(); }
+  else if (z === 5 && ph >= 6) { zoneEnter(6); onZoneClear(); }
+  if (MS.zone >= 2 && MS.zone <= 4) { SHS.houseT += dt; if (ph >= 5 && (SHS.houseT > 100 || (SHS.bombOn && MS.bombT < 30))) shLeaveHouse(); }
+  shSyncRemote(P); shShots(dt, P); shFlushHits(dt); shAllies(dt, P);
+}
+// 把老師電腦傳來的敵人畫出來（人物不夠時只畫最近的）
+function shSyncRemote(P) {
+  const w = SHS.w; const street = STREET(MS.zone);
+  if (!street || !w || w.tk !== META.take) { for (const e of [...REM.values()]) shDrop(e); return; }
+  const list = (w.e || []).filter(Boolean); const seen = new Set();
+  for (const a of list) { const e = REM.get(a[0]); if (e) { seen.add(a[0]); if (e.snapN !== w.n) { e.snapN = w.n; e.remoteSnap(a); } } }
+  const add = list.filter((a) => !REM.has(a[0]) && a[7] > 0).sort((a, b) => Math.hypot(a[1] - P.pos.x, a[2] - P.pos.z) - Math.hypot(b[1] - P.pos.x, b[2] - P.pos.z));
+  for (const a of add) {
+    let c = takeChar('soldier');
+    if (!c) { const d = [...REM.values()].find((x) => !x.alive); if (d) { shDrop(d); c = takeChar('soldier'); } }
+    if (!c) break;
+    const e = new Enemy(c, { k: 'stand', at: [a[1], a[2], a[3]] }, MS.zone); e.remote = true; e.id = a[0]; e.predHp = a[7]; e.snapN = w.n;
+    REM.set(a[0], e); ENEMIES.push(e); e.remoteSnap(a, true); seen.add(a[0]);
+  }
+  for (const [id, e] of [...REM]) if (!seen.has(id) && !(e.state === 'dead' && (e.deadT || 0) < 2.5)) shDrop(e);
+}
+function shDrop(e) { REM.delete(e.id); const i = ENEMIES.indexOf(e); if (i >= 0) ENEMIES.splice(i, 1); e.dispose(); }
+// 敵人開槍：打我的一定畫出來；打別人的有數量上限（全班幾十人的槍聲會把手機塞爆）
+const _sm = new THREE.Vector3(), _st = new THREE.Vector3(), _se = new THREE.Vector3();
+function shShots(dt, P) {
+  SHS.bud = Math.min(3, SHS.bud + dt * 4); const now = performance.now(); const q = SHS.shotQ; if (!q.length) return;
+  const eye = P.eye(_se);
+  for (let i = q.length - 1; i >= 0; i--) {
+    const s = q[i]; if (s.at > now) continue; q.splice(i, 1);
+    const e = REM.get(s.id); const m = e && e.alive ? e.muzzle(_sm) : null;
+    if (SHS.slot >= 0 && s.slot === SHS.slot) {
+      const exp = P.exposure(); SHS.rxN = (SHS.rxN || 0) + 1;
+      if (s.d > 0 && P.alive && exp > 0) { SHS.rxH = (SHS.rxH || 0) + 1; P.hurt(s.d, m ? m.clone() : eye.clone().add(V(0, 0, -20))); if (m) tracer(m, eye); }
+      else { if (m) tracer(m, _st.copy(eye).add(V((R() - 0.5) * 2.2, (R() - 0.3) * 1.4, (R() - 0.5) * 2.2))); if (exp > 0.2 && R() < 0.5) SFX.whizz(); else if (exp < 0.2 && R() < 0.4) SFX.impact(); }
+      if (e && e.c.flash) flashOn(e.c.flash, 0.05); if (m) SFX.enemyShot(m.distanceTo(eye));
+      if (e) e.shotAt = now;
+    } else if (m && SHS.bud >= 1) {
+      SHS.bud--; if (e.c.flash) flashOn(e.c.flash, 0.05); e.shotAt = now;
+      const al = ALLY.pool.find((c) => c.slot === s.slot && c.root.visible);
+      if (al) _st.set(al.pos.x + (R() - 0.5) * 1.6, 1.0 + R() * 0.8, al.pos.z + (R() - 0.5) * 1.6); else _st.set(Math.sin(e.heading), 0, Math.cos(e.heading)).multiplyScalar(25).add(m).add(V((R() - 0.5) * 3, -0.5, (R() - 0.5) * 3));
+      tracer(m, _st); if (R() < 0.6) SFX.enemyShot(m.distanceTo(eye) + 6);
+    }
+  }
+  if (q.length > 200) q.splice(0, q.length - 200);
+}
+// 敵人槍口對準的點：打我就對準我，打別的同學就對準他（畫得出來的話），否則朝前
+function shAimPoint(e, out) {
+  if (SHS.slot >= 0 && e.tgSlot === SHS.slot && P) return P.eye(out);
+  const al = e.tgSlot >= 0 ? ALLY.pool.find((c) => c.slot === e.tgSlot && c.root.visible) : null;
+  if (al) return out.set(al.pos.x, 1.3, al.pos.z);
+  return out.set(Math.sin(e.heading), 0, Math.cos(e.heading)).multiplyScalar(12).add(e.pos).setY(e.pos.y + 1.2);
+}
+/* ---------- 其他同學（手機上只畫最近的 5 位，其他人只是不畫） ---------- */
+function ownGeometry(c) {
+  const g0 = c.mesh.geometry; const g = new THREE.BufferGeometry(); for (const k in g0.attributes) g.setAttribute(k, g0.attributes[k]);
+  if (g0.index) g.setIndex(g0.index.clone()); for (const gr of g0.groups) g.addGroup(gr.start, gr.count, gr.materialIndex); g.boundingSphere = g0.boundingSphere; g.boundingBox = g0.boundingBox; c.mesh.geometry = g;
+}
+function buildAllies(n) {
+  const names = CHAR_SETS.soldier.filter((x) => MODELS[x]); if (!names.length || HEADLESS.size) return;
+  for (let i = 0; i < n; i++) { const c = new Character(names[i % names.length]); ownGeometry(c); c.root.visible = false; if (RIFLE_NPC) c.attachRifle(RIFLE_NPC.clone()); c.slot = null; ALLY.pool.push(c); }
+}
+const _aa = new THREE.Vector3();
+function shAllies(dt, P) {
+  const g = GROUP(MS.zone); const list = STREET(MS.zone) ? SHS.al.filter((a) => a && a[0] !== SHS.slot && GROUP(a[6]) === g && Math.hypot(a[1] - P.pos.x, a[2] - P.pos.z) < 45 && Math.hypot(a[1] - P.pos.x, a[2] - P.pos.z) > 1.8).sort((a, b) => Math.hypot(a[1] - P.pos.x, a[2] - P.pos.z) - Math.hypot(b[1] - P.pos.x, b[2] - P.pos.z)).slice(0, ALLY.pool.length) : [];
+  const want = new Set(list.map((a) => a[0]));
+  for (const c of ALLY.pool) if (c.slot !== null && !want.has(c.slot)) { c.slot = null; c.root.visible = false; }
+  for (const a of list) {
+    let c = ALLY.pool.find((x) => x.slot === a[0]); if (!c) { c = ALLY.pool.find((x) => x.slot === null); if (!c) continue; c.slot = a[0]; c.reset(); c.pos.set(a[1], 0, a[2]); }
+    const k = Math.min(1, dt * 6); c.pos.x += (a[1] - c.pos.x) * k; c.pos.z += (a[2] - c.pos.z) * k;
+    c.root.visible = true; c.root.rotation.y = a[3] + Math.PI; const f = a[4]; c.team = (f >> 3) & 3; c.no = a[5];
+    const alive = f & 1, peek = f & 2, mv = f & 4;
+    const anim = !alive ? 'Death01' : mv ? 'Jog_Aim' : peek ? 'Pistol_Aim_Neutral' : 'Crouch_Idle_Aim';
+    c.play(anim, anim === 'Death01' ? { loop: false, fade: 0.1 } : undefined); c.update(dt);
+    _aa.set(-Math.sin(a[3]), 0, -Math.cos(a[3])).multiplyScalar(10).add(c.pos); _aa.y = 1.5;
+    c.aimRifle(!alive ? 'drop' : mv ? 'run' : peek ? 'aim' : 'low', _aa);
+  }
 }
 
 /* =========================================================
@@ -4074,15 +4420,15 @@ class Player {
     this.coverId = null; this.target = null; this.path = []; this.peekK = 0; this._eye = new THREE.Vector3();
     this.weaponMeshes = {}; this.vm = new THREE.Group(); vmGroup.add(this.vm); this.flash = null; this.arms = null;
   }
-  get cover() { return this.target ? null : COVERS[this.coverId]; }
+  get cover() { return this.target ? null : cvOf(this.coverId); }
   eye(out = new THREE.Vector3()) { return out.copy(this._eye); }
   peekEye(out = new THREE.Vector3()) { const c = this.cover; return c ? coverEye(c, 1, out) : out.copy(this._eye); } // 探身時眼睛的位置（判斷看不看得到用）
   updateEye() { const c = this.cover; if (c) { coverEye(c, this.peekK, this._eye); this.pos.x = this._eye.x; this.pos.z = this._eye.z; } else this._eye.set(this.pos.x, 1.58, this.pos.z); }
   // 敵人打得到多少：蹲在掩體後面＝0；探身時只露出一部分
   exposure() { const c = this.cover; if (!c) return 1; if (c.kind === 'defuse') return this.peekK > 0.4 ? 1 : 0.35; if (this.peekK < 0.4) return 0; return (c.kind === 'low' ? 0.6 : 0.75) * this.peekK; }
   // 前往某個掩體（找路，繞過車子和牆）
-  goCover(id) { if (!COVERS[id] || id === this.coverId && !this.target || id === this.target) return; const c = COVERS[id]; this.path = findPath(this.pos, V(c.x, 0, c.z)); this.target = id; this.peekK = 0; }
-  arrive() { const c = COVERS[this.target]; this.coverId = this.target; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0);
+  goCover(id) { if (!COVERS[id] || id === this.coverId && !this.target || id === this.target) return; const c = cvOf(id); this.path = findPath(this.pos, V(c.x, 0, c.z)); this.target = id; this.peekK = 0; }
+  arrive() { const c = cvOf(this.target); this.coverId = this.target; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0);
     // 自動轉向：面向這一段最近的敵人，沒有就面向掩體的方向
     let best = null, bd = 1e9; for (const e of ENEMIES) if (e.alive && e.zone === MS.zone) { const d = e.pos.distanceTo(this.pos); if (d < bd) { bd = d; best = e; } }
     this.turnTo = best ? Math.atan2(-(best.pos.x - c.x), -(best.pos.z - c.z)) : c.yaw; this.turnPitch = 0;
@@ -4100,7 +4446,7 @@ class Player {
     for (const k in this.weaponMeshes) this.weaponMeshes[k].visible = k === id; this.mesh = this.weaponMeshes[id] || null;
   }
   spawnAt(z) { this.pos.set(0, 0, z); this.yaw = 0; this.pitch = 0; this.hp = 100; this.alive = true; this.ammo = this.w.mag; this.reloading = 0; }
-  start() { this.setGear('m4'); this.spawnAt(0); const c = COVERS[ZONES[0].covers[0]]; this.coverId = c.id; this.target = null; this.path = []; this.peekK = 0; this.pos.set(c.x, 0, c.z); this.yaw = c.yaw; this.stats = newStats(); this.hurtT = 0; this.lastHurtFrom = null; this.updateEye(); }
+  start() { this.setGear('m4'); this.spawnAt(0); const c = cvOf(ZONES[0].covers[0]); this.coverId = c.id; this.target = null; this.path = []; this.peekK = 0; this.pos.set(c.x, 0, c.z); this.yaw = c.yaw; this.stats = newStats(); this.hurtT = 0; this.lastHurtFrom = null; this.updateEye(); }
   addScore(n) { this.stats.score = Math.max(0, this.stats.score + n); }
   hurt(amount, from) {
     if (!this.alive) return; this.hp -= amount; this.hurtT = 0.5; this.regenT = 4; this.lastHurtFrom = from; SFX.hurt();
@@ -4108,7 +4454,7 @@ class Player {
   }
   update(dt) {
     const w = this.w;
-    if (!this.alive) { this.ngT -= dt; if (this.ngT <= 0) { const id = this.target && !MS.moving ? this.coverId : (this.coverId || ZONES[MS.zone].covers[0]); const y = this.yaw, pt = this.pitch; this.spawnAt(0); const c = COVERS[id]; this.coverId = id; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.yaw = y; this.pitch = pt; this.peekK = 0; MS.defuse = 0; if (MS.moving) this.goCover(ZONES[MS.zone].covers[0]); onPlayerEvent('respawn'); } return; }
+    if (!this.alive) { this.ngT -= dt; if (this.ngT <= 0) { const id = this.target && !MS.moving ? this.coverId : (this.coverId || ZONES[MS.zone].covers[0]); const y = this.yaw, pt = this.pitch; this.spawnAt(0); const c = cvOf(id); this.coverId = id; this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.yaw = y; this.pitch = pt; this.peekK = 0; MS.defuse = 0; if (MS.moving) this.goCover(ZONES[MS.zone].covers[0]); onPlayerEvent('respawn'); } return; }
     // 視角
     const sens = (MOBILE ? 0.0045 : 0.0017) * (this.adsK > 0.5 ? 0.4 : 1);
     if (this.turnTo !== undefined && this.turnTo !== null) { let d = this.turnTo - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); this.yaw += d * Math.min(1, dt * 7); this.pitch *= 1 - Math.min(1, dt * 5); if (Math.abs(d) < 0.02 || Math.abs(INPUT.look.dx) + Math.abs(INPUT.look.dy) > 2) this.turnTo = null; }
@@ -4118,7 +4464,7 @@ class Player {
     else if (MS.moving && !this.target) this.arrive2 = true;
     let vx = 0, vz = 0; this.hold = !this.target;
     if (this.target) {
-      const p = this.path[0] || V(COVERS[this.target].x, 0, COVERS[this.target].z); const dx = p.x - this.pos.x, dz = p.z - this.pos.z; const l = Math.hypot(dx, dz);
+      const p = this.path[0] || V(cvOf(this.target).x, 0, cvOf(this.target).z); const dx = p.x - this.pos.x, dz = p.z - this.pos.z; const l = Math.hypot(dx, dz);
       if (l < 0.25) { if (this.path.length > 1) this.path.shift(); else this.arrive(); }
       else { const sp = Math.min(this.ads ? 2.6 : 5.0, l * 3 + 1.2); vx = dx / l * sp; vz = dz / l * sp; }
     }
@@ -4161,13 +4507,13 @@ class Player {
     if (VS.boss && bossExposed()) { const h = VS.boss.hitTest(ro, rd); if (h && h.t < best) { best = h.t; kind = 'boss'; part = h.part; } }
     const hitP = ro.clone().addScaledVector(rd, best);
     if (kind === 'boss') {
-      this.stats.hits++; if (part === 'head') this.stats.headshots++; hitmark(false); SFX.hit(); banner(part === 'head' ? '命中老師頭部！' : '命中老師！', 'good', 700);
+      this.stats.hits++; hitmark(false); SFX.hit(); banner(part === 'head' ? '命中老師頭部！' : '命中老師！', 'good', 700);
       NET.push('th', { pid: ME.pid, t: ME.team, no: ME.no, d: part === 'head' ? 60 : part === 'limb' ? 15 : 25, at: NET.now() });
       PUFFS.burst(hitP, 6, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
     } else if (kind === 'enemy') {
-      this.stats.hits++; if (part === 'head') this.stats.headshots++;
+      this.stats.hits++;
       const killed = obj.damage(w.dmg, part); hitmark(killed);
-      if (killed) { this.stats.kills++; const pts = part === 'head' ? PTS.head : PTS.kill; this.addScore(pts); SFX.kill(); banner(part === 'head' ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); } else SFX.hit();
+      if (killed) { this.stats.kills++; if (part === 'head') this.stats.headshots++; const pts = part === 'head' ? PTS.head : PTS.kill; this.addScore(pts); SFX.kill(); banner(part === 'head' ? `爆頭　+${pts}` : `擊倒　+${pts}`, 'good', 800); } else SFX.hit();
       PUFFS.burst(hitP, 6, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
     } else if (kind === 'civ' || kind === 'hostage') {
       obj.damage(w.dmg, part); PUFFS.burst(hitP, 5, { spread: 1, up: 1, size: 0.15, c: [0.5, 0.2, 0.15] });
@@ -4233,7 +4579,7 @@ function onPlayerEvent(k) {
 }
 let statDirty = false; function onShot() { statDirty = true; }
 /* 任務流程的回呼（04_ai 呼叫） */
-function onZone() { renderTasks(); const Z = ZONES[MS.zone]; if (Z.hostStart) banner('攻入民宅！', 'bad', 2600, `人質關在最裡面的房間：${G.diff.hostage} 秒內一間一間清進去`); else if (Z.hostage) banner('人質房！', 'info', 2200, '看守站在人質旁邊，看清楚再開槍'); else if (Z.indoor) banner(Z.name.split('：')[1] || Z.name, 'info', 1400); else if (Z.bomb) banner('炸彈開始倒數！', 'bad', 2200, `清除敵人，${G.diff.bomb} 秒內拆除街尾的炸彈`); else if (Z.defuse) banner(DESKTOP ? '按住 E 拆彈' : '按住「拆彈」', 'info', 2200, '拆彈 4 秒，期間不能開槍；放開會暫停'); else banner(Z.name, 'info', 1400); }
+function onZone() { renderTasks(); const Z = ZONES[MS.zone]; if (Z.hostStart) banner('攻入民宅！', 'bad', 2600, `人質關在最裡面的房間：${G.diff.hostage} 秒內一間一間清進去`); else if (Z.hostage) banner('人質房！', 'info', 2200, '看守站在人質旁邊，看清楚再開槍'); else if (Z.indoor) banner(Z.name.split('：')[1] || Z.name, 'info', 1400); else if (Z.bomb) banner('炸彈開始倒數！', 'bad', 2200, SHARED.on ? '全班一起清除守衛，再到炸彈旁邊拆彈' : `清除敵人，${G.diff.bomb} 秒內拆除街尾的炸彈`); else if (Z.defuse) banner(DESKTOP ? '按住 E 拆彈' : '按住「拆彈」', 'info', 2200, SHARED.on ? '全班共用一個拆彈進度：有人拆、有人掩護' : '拆彈 4 秒，期間不能開槍；放開會暫停'); else banner(Z.name, 'info', 1400); }
 let coverTipShown = false;
 function onCover() { if (!coverTipShown && G.mode === 'take') { coverTipShown = true; setTimeout(() => banner('蹲在掩體後面，敵人打不到你', 'info', 3200, (DESKTOP ? '按住右鍵瞄準或按左鍵開火' : '按「瞄準」或「開火」') + '就會探身射擊；準心對到其他掩體可以換位置'), 1500); } }
 function onZoneClear() { banner('區域清除，前進！', 'good', 1400); SFX.good(); renderTasks(); onShot(); }
@@ -4271,7 +4617,7 @@ function joinTeam(t, silent) {
   if (!silent && teamCounts()[t] >= TEAM_MAX) return;
   ME.waitingJoin = true; if (!silent) renderPick();
   const last = store.get('me', null);
-  for (const p of ['players/', 'pos/', 'req/', 'ans/', 'stat/']) NET.onDisconnectRemove(p + ME.pid);
+  for (const p of ['players/', 'pos/', 'req/', 'ans/', 'stat/', 'eh/']) NET.onDisconnectRemove(p + ME.pid);
   NET.remove('ans/' + ME.pid);
   NET.set('req/' + ME.pid, { team: t, at: NET.now(), no: last && last.sid === META.sid && last.team === t ? last.no : 0 });
   if (silent) return;
@@ -4297,7 +4643,7 @@ function briefing(d) {
   return `<div class="rules"><p><b>任務簡報（難度：${d.name}）</b></p>
   <p>虛構的武裝組織「黑鴉」占領了港灣市的商店街，把 3 名人質關在廣場旁的民宅裡，還在街尾放了炸彈。</p>
   <p>① 突破路障　② 清除街口　③ 攻入民宅救人質（${d.hostage} 秒內清完三個房間）　④ 拆除炸彈（${d.bomb} 秒倒數）</p>
-  <p>敵人頭巾蒙面、拿 AK 步槍。穿便服的是平民和人質，打到會重扣分。你平常蹲在掩體後面，瞄準或開火時才探身。</p></div>`;
+  <p>敵人頭巾蒙面、拿 AK 步槍。穿便服的是平民和人質，打到會重扣分。你平常蹲在掩體後面，瞄準或開火時才探身。</p>${META.shared ? '<p><b>全班同一條街：</b>街上的敵人全班共用，敵人會一波一波湧來，大家一起推進；救人質時每個人各自攻入民宅，救完到街尾會合拆彈。</p>' : ''}</div>`;
 }
 function controlsText() { return (DESKTOP ? '電腦：滑鼠移動＝轉視角，右鍵按住＝3 倍瞄準鏡，左鍵＝開火，R＝換彈，空白鍵＝前往準心對到的掩體，E 按住＝拆彈，Esc＝放開滑鼠。' : '手機橫放：左手在畫面上滑動＝轉視角，右手按開火；「瞄準」開 3 倍瞄準鏡，「換彈」換彈匣；準心對到別的掩體會出現「前往掩體」。') + '平常蹲在掩體後面（敵人打不到），瞄準或開火時才探身。一段清完，電腦會帶你跑到下一個掩體。'; }
 function waitScreen() {
@@ -4316,9 +4662,10 @@ addEventListener('resize', renderRotate);
 function startTake(practice) {
   G.practice = !!practice; G.mode = 'take'; hideAll(); $('hudS').hidden = false; $('hNg').hidden = true;
   G.diff = DIFFS[META.diff || 'N']; G.startedAt = NET.now(); G.simT = 0; G.endsAt = practice ? NET.now() + TAKE_SEC * 1000 : META.endsAt;
-  P.start(); aiStart(); SFX.init(); SFX.resume(); renderTasks();
+  SHARED.on = !practice && !!META.shared; shReset(); shSlot();
+  P.start(); aiStart(); if (SHARED.on) shJoinAt(); SFX.init(); SFX.resume(); renderTasks();
   $('hDiff').textContent = '難度：' + G.diff.name + (G.practice ? '　練習' : '');
-  banner('任務開始', 'info', 1600, '突破路障：清除沙包後面和巷口衝出來的敵人'); statDirty = true;
+  if (!(SHARED.on && SHS.ph >= 1)) banner('任務開始', 'info', 1600, SHARED.on ? '全班一起突破路障：擋住黑鴉一波波的攻勢' : '突破路障：清除沙包後面和巷口衝出來的敵人'); statDirty = true;
   renderRotate(); renderDeskHint();
 }
 function grade(s) { const acc = s.shots ? s.hits / s.shots : 0; const pts = (s.bomb === 1 ? 3 : 0) + s.hr + (acc >= 0.4 ? 2 : acc >= 0.25 ? 1 : 0) - s.hh * 2 - s.civ * 2 - (s.deaths > 2 ? 1 : 0); return pts >= 7 ? '特優' : pts >= 5 ? '優等' : pts >= 2 ? '甲等' : '乙等'; }
@@ -4332,7 +4679,7 @@ function resultHTML(title, msg) {
 function endTake(reason) {
   if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; if (document.pointerLockElement) document.exitPointerLock(); renderDeskHint(); INPUT.fire = false; INPUT.defuse = false; MS.defusing = false;
   if (!MS.done) MS.done = true;
-  sendStat(true); aiReset();
+  sendStat(true); aiReset(); shReset(); SHARED.on = false;
   hideAll(); show('scrRes');
   const T = { win: ['任務完成', `炸彈拆除，用了 ${P.stats.ft} 秒。`], boom: ['任務失敗', '炸彈倒數歸零。'], end: ['時間到', '任務時間結束。'], cut: ['任務中止', '老師結束了這一回合。'] }[reason] || ['任務結束', ''];
   $('resCard').innerHTML = resultHTML(T[0], T[1] + (G.practice ? '（練習，不計分）' : '等老師公布各組成績。')) + (G.practice ? '<button class="btn" id="bBack">' + (G.solo && !PLAYERS[ME.pid] ? '回到選組畫面' : '回到等待畫面') + '</button>' : '');
@@ -4348,7 +4695,7 @@ function sendStat(force) {
 function showMine() { if (G.mode === 'take' || !P) return; hideAll(); show('scrRes'); $('resCard').innerHTML = resultHTML('請看大螢幕', `${TEAMS[ME.team]?.name || ''}　${ME.no} 號隊員的成績`); }
 function studentInit() {
   if (!NET.local && location.protocol !== 'file:') followLobby();
-  ROLE = 'student'; show('scrJoin'); renderPick(); vsListen();
+  ROLE = 'student'; show('scrJoin'); renderPick(); vsListen(); shListen();
   for (const k of ['N', 'H']) $('solo' + k).onclick = () => { if (ME.team < 0) { ME.team = 0; ME.no = 1; } META.diff = k; G.solo = true; startTake(true); };
   $('joinMsg').textContent = NET.local ? '練習連線模式：老師畫面要開在同一台電腦的另一個分頁。' : '選好組別後，等老師開始任務。';
   NET.on('players', (p) => {
@@ -4400,20 +4747,21 @@ function studentTick(dt) {
   setStyle('hDmg', 'opacity', String(P.alive ? Math.round((clamp(P.hurtT * 1.6, 0, 0.9) + (P.hp < 35 ? 0.35 : 0)) * 20) / 20 : 0));
   $('hCross').classList.toggle('ads', P.adsK > 0.6);
   // 倒數：人質、炸彈
-  let alarm = '';
-  if (MS.hostState === 'held' && MS.hostOn) alarm = `人質時限 ${mmss(MS.hostT * 1000)}`;
-  if (MS.bombOn && !MS.done) alarm = `炸彈倒數 ${mmss(MS.bombT * 1000)}`;
+  const al = [];
+  if (MS.hostState === 'held' && MS.hostOn && MS.zone >= 2 && MS.zone <= 4) al.push(`人質時限 ${mmss(MS.hostT * 1000)}`);
+  if (MS.bombOn && !MS.done) al.push(`炸彈倒數 ${mmss(MS.bombT * 1000)}`);
+  const alarm = al.join('　');
   setHTML('hAlarm', alarm); setHidden('hAlarm', !alarm);
   // 目前目標
-  const Z = ZONES[MS.zone]; const alive = ENEMIES.filter((e) => e.zone === MS.zone && e.alive).length + MS.pending.filter((p) => !p.done).length;
-  const obj = MS.moving ? '區域清除，前往下一個掩體…' : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
+  const Z = ZONES[MS.zone]; const shSt = SHARED.on && STREET(MS.zone); const alive = shSt ? (SHS.w && SHS.w.e || []).filter((a) => a && a[7] > 0).length : ENEMIES.filter((e) => e.zone === MS.zone && e.alive).length + MS.pending.filter((p) => !p.done).length;
+  const obj = MS.moving ? '區域清除，前往下一個掩體…' : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
   setHTML('hObj', obj);
   renderCover(dt); setClass('hScope', P.scoped ? 'scope on' : 'scope'); $('hCross').classList.toggle('hide', P.scoped);
   const c = P.cover; setHTML('hCov', !c ? '移動中…' : P.exposure() === 0 ? '隱蔽中：敵人打不到你' : '探身射擊中'); setClass('hCov', 'cov' + (!c ? ' mv' : P.exposure() === 0 ? ' safe' : ' out'));
   const canDefuse = Z.defuse && MS.arrived && !MS.done && P.coverId === 'D4' && !P.target; setHidden('bDefuse', !canDefuse); if (canDefuse) setStyle('bDefuse', 'background', `conic-gradient(rgba(63,209,122,0.75) ${Math.round(MS.defuse * 360)}deg, rgba(0,0,0,0.4) 0deg)`);
   renderMarks(dt); renderHurtDir();
   // 傳位置與成績
-  if (!G.practice) { ME.sendT -= dt; if (ME.sendT <= 0) { ME.sendT = 0.2; NET.set('pos/' + ME.pid, [Math.round(P.pos.x * 10) / 10, Math.round(P.pos.z * 10) / 10, Math.round(P.yaw * 100) / 100, P.alive ? 1 : 0, ME.team, P.exposure() > 0 ? 1 : 0, P.target ? 1 : 0, MS.zone]); } ME.statT -= dt; if (statDirty && ME.statT <= 0) { ME.statT = 1; sendStat(); } }
+  if (!G.practice) { ME.sendT -= dt; if (ME.sendT <= 0) { ME.sendT = SHARED.on ? 0.25 : 0.2; NET.set('pos/' + ME.pid, [Math.round(P.pos.x * 10) / 10, Math.round(P.pos.z * 10) / 10, Math.round(P.yaw * 100) / 100, P.alive ? 1 : 0, ME.team, P.exposure() > 0 ? 1 : 0, P.target ? 1 : 0, MS.zone, MS.defusing ? 1 : 0]); } ME.statT -= dt; if (statDirty && ME.statT <= 0) { ME.statT = 1; sendStat(); } }
 }
 // 前往掩體：準心對到這一段可用的掩體（不是現在這個）就跳出按鈕
 const CV = { cand: null, t: 0 }; const _cv = new THREE.Vector3(), _cf = new THREE.Vector3();
@@ -4444,14 +4792,15 @@ function renderMarks(dt) {
   for (const e of ENEMIES) { if (!e.alive || e.zone !== MS.zone || e.state === 'leave' && e.pos.distanceTo(P.pos) > 60) continue; if (recheck || e.los === undefined) e.los = lineOfSight(e, 1.45) || lineOfSight(e, 1.0); items.push([e, e.los ? 'mark' : 'mark dim', e.k === 'guard' ? '看守' : '敵', 1.95]); }
   for (const h of HOSTAGES) if (!h.dead && h.state === 'held' && MS.zone === HOST_ZONE) items.push([h, 'mark hos', '人質', 1.35]);
   for (const c of CIVS) if (!c.dead && c.state !== 'gone' && c.pos.distanceTo(P.pos) < 32) items.push([c, 'mark civ', '平民', 2.0]);
+  if (SHARED.on) for (const c of ALLY.pool) if (c.slot !== null && c.root.visible) items.push([c, 'mark ally', `${TEAMS[c.team]?.name?.[0] || ''}${c.no}`, 2.05, TEAMS[c.team]?.c]);
   if (VS.boss && bossOn() && !VS.tp.dn) items.push([VS.boss, bossExposed() ? 'mark boss' : 'mark boss dim', '老師', 2.2]);
   if (!MS.moving && !P.scoped) for (const id of ZONES[MS.zone].covers) { if (id === P.coverId && !P.target) continue; const c = COVERS[id]; const b = c.box; const o = { pos: _cvm[id] || (_cvm[id] = V((b[0] + b[1]) / 2, 0, (b[2] + b[3]) / 2)) }; items.push([o, id === CV.cand ? 'mark cov on' : 'mark cov', id === CV.cand ? '前往掩體' : '掩體', c.kind === 'side' ? 2.1 : 1.3]); }
   while (host.children.length < items.length) { const d = document.createElement('div'); d.innerHTML = '<span></span>'; host.appendChild(d); }
   for (let i = 0; i < host.children.length; i++) {
     const d = host.children[i]; if (i >= items.length) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
-    const [o, cls, label, y] = items[i]; _pv.set(o.pos.x, o.pos.y + y, o.pos.z).project(camera);
+    const [o, cls, label, y, col] = items[i]; _pv.set(o.pos.x, o.pos.y + y, o.pos.z).project(camera);
     if (_pv.z > 1 || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
-    if (d.style.display) d.style.display = ''; if (d.className !== cls) d.className = cls;
+    if (d.style.display) d.style.display = ''; if (d.className !== cls) d.className = cls; if (col && d._c !== col) { d._c = col; d.style.setProperty('--c', col); }
     d.style.transform = `translate(${Math.round((_pv.x + 1) / 2 * VW)}px, ${Math.round((1 - _pv.y) / 2 * VH)}px) translate(-50%, -100%)`;
     const txt = label === '敵' || label === '平民' || label === '掩體' || label === '老師' ? label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm' : label; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
   }
@@ -4502,7 +4851,7 @@ function setupInput() {
 /* =========================================================
    老師：指揮中心大螢幕（大廳、開始任務、全景、公布成績）
    ========================================================= */
-const TS = { fake: [], sid: null, phase: 'lobby', diff: 'N', take: 0, startAt: 0, endsAt: 0, players: {}, stats: {}, res: null, premStep: -1, dots: new Map() };
+const TS = { shared: true, fake: [], sid: null, phase: 'lobby', diff: 'N', take: 0, startAt: 0, endsAt: 0, players: {}, stats: {}, res: null, premStep: -1, dots: new Map() };
 const TLOG = [];
 function tLog(team, text) { TLOG.unshift({ team, text, at: Date.now() }); if (TLOG.length > 40) TLOG.pop(); renderTick(); }
 function renderTick() { const h = $('tTick'); if (!h) return; h.innerHTML = TLOG.map((l) => `<div style="--c:${TEAMS[l.team]?.c || '#888'}">${l.text}</div>`).join(''); }
@@ -4516,6 +4865,8 @@ function renderPanel() {
   <div class="teams">${TEAMS.map((t, i) => `<div style="--c:${t.c}"><b>${t.name}</b><span>${n[i]} 人${TS.res ? `　平均 ${TS.res.teams[i].avg}` : ''}</span></div>`).join('')}</div>
   <h2>難度</h2><div class="row">${Object.keys(DIFFS).map((k) => `<button data-d="${k}" class="${TS.diff === k ? 'on' : ''}">${DIFFS[k].name}</button>`).join('')}</div>
   <div class="small">人質時限 ${DIFFS[TS.diff].hostage} 秒，炸彈倒數 ${DIFFS[TS.diff].bomb} 秒${DIFFS[TS.diff].extra ? '，敵人較多、較準' : ''}</div>
+  <h2>對戰方式</h2><div class="row"><button data-sh="1" class="${TS.shared ? 'on' : ''}">全班同一個城鎮</button><button data-sh="0" class="${TS.shared ? '' : 'on'}">各自獨立</button></div>
+  <div class="small">${TS.shared ? '街上的敵人由這台電腦控制，全班看到同一批敵人、一起推進；救人質時各自攻入民宅。這台電腦的遊戲畫面要一直開著。' : '每位同學在自己的手機上各自打一場（舊版玩法）。'}</div>
   <h2>任務時間</h2><div class="row">${[240, 300, 360].map((s) => `<button data-sec="${s}" class="${TAKE_SEC === s ? 'on' : ''}">${s / 60 | 0}:${String(s % 60).padStart(2, '0')}</button>`).join('')}</div>
   ${cmdPanelHTML()}
   ${idle ? `<button class="big" id="bStart" ${total && TS.sid ? '' : 'disabled'}>${TS.sid ? '開始任務' : '連線中…'}</button>` : ''}
@@ -4529,6 +4880,7 @@ function renderPanel() {
   <div class="row" style="margin-top:auto"><button id="bSnd">音效：${SFX.on ? '開' : '關'}</button><button id="bFs">全螢幕</button></div>`;
   if ($('qr')) drawQR($('qr'), url); bindCmdPanel(p);
   p.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { if (ph === 'take' || ph === 'count') return; TS.diff = b.dataset.d; NET.update('meta', { diff: TS.diff }); renderPanel(); });
+  p.querySelectorAll('[data-sh]').forEach((b) => b.onclick = () => { if (ph === 'take' || ph === 'count') return; TS.shared = b.dataset.sh === '1'; renderPanel(); });
   p.querySelectorAll('[data-sec]').forEach((b) => b.onclick = () => { TAKE_SEC = +b.dataset.sec; renderPanel(); });
   if ($('bStart')) $('bStart').onclick = startCount; if ($('bCut')) $('bCut').onclick = () => cut('cut'); if ($('bPrem')) $('bPrem').onclick = () => premiere(0); if ($('bNew')) $('bNew').onclick = newSession;
   $('bFake').onclick = () => { if (TS.sid) addFake(12); }; $('bUnfake').onclick = removeFake;
@@ -4540,7 +4892,7 @@ function drawQR(cv, text) { try { const q = qrcode(0, 'M'); q.addData(text); q.m
 function claimLobby() { NET.set('lobby', { game: 'ct', at: NET.now() }); }
 function newSession() {
   TS.fake.length = 0; TS.sid = Date.now().toString(36); TS.take = 0; TS.res = null; TS.stats = {}; TS.players = {}; TLOG.length = 0;
-  for (const p of ['players', 'req', 'ans', 'pos', 'stat', 'ev', 'res', 'prem']) NET.remove(p);
+  for (const p of ['players', 'req', 'ans', 'pos', 'stat', 'ev', 'res', 'prem', 'w', 'al', 'eh']) NET.remove(p);
   TS.phase = 'lobby'; NET.set('meta', { sid: TS.sid, phase: 'lobby', diff: TS.diff, take: 0 }); claimLobby(); renderPanel();
 }
 function handleReq(pid, r) {
@@ -4548,20 +4900,21 @@ function handleReq(pid, r) {
   if (TS.players[pid]) { TS.players[pid].call = (TS.players[pid].call || 0) + 1; NET.set('players/' + pid, TS.players[pid]); return; }
   const n = tCounts()[r.team]; if (n >= TEAM_MAX) { NET.set('ans/' + pid, 'full'); return; }
   const used = new Set(Object.values(TS.players).filter((p) => p.team === r.team).map((p) => p.no)); let no = r.no && !used.has(r.no) ? r.no : 1; while (used.has(no)) no++;
-  const rec = { team: r.team, no, call: 1, at: NET.now() }; TS.players[pid] = rec; NET.set('players/' + pid, rec); renderPanel();
+  const rec = { team: r.team, no, call: 1, at: NET.now(), slot: nextSlot() }; TS.players[pid] = rec; NET.set('players/' + pid, rec); renderPanel();
 }
+function nextSlot() { let m = -1; for (const k in TS.players) { const s = TS.players[k].slot; if (s > m) m = s; } return m + 1; }
 function startCount() {
   TS.take++; TS.phase = 'count'; TS.startAt = NET.now() + COUNT_SEC * 1000; TS.endsAt = TS.startAt + TAKE_SEC * 1000; TS.stats = {}; TS.res = null; TS.premStep = -1;
-  for (const p of ['pos', 'stat', 'ev', 'res', 'prem', 'cmd', 'thit', 'tshot', 'tdown', 'th']) NET.remove(p); tpReset(); sendTP();
-  NET.set('meta', { sid: TS.sid, phase: 'count', diff: TS.diff, take: TS.take, startAt: TS.startAt, endsAt: TS.endsAt }); claimLobby();
+  for (const p of ['pos', 'stat', 'ev', 'res', 'prem', 'cmd', 'thit', 'tshot', 'tdown', 'th', 'w', 'al', 'eh']) NET.remove(p); tpReset(); sendTP(); shStop();
+  NET.set('meta', { sid: TS.sid, phase: 'count', diff: TS.diff, take: TS.take, startAt: TS.startAt, endsAt: TS.endsAt, shared: TS.shared ? 1 : 0 }); claimLobby();
   tLog(-1, `第 ${TS.take} 回合（${DIFFS[TS.diff].name}）倒數開始`); renderPanel(); SFX.init(); SFX.resume();
 }
 function cut() {
-  if (TS.phase !== 'take' && TS.phase !== 'count') return; TS.phase = 'cut'; if (TP.mode === 'sn') leaveSniper(); sendTP();
+  if (TS.phase !== 'take' && TS.phase !== 'count') return; TS.phase = 'cut'; if (TP.mode === 'sn') leaveSniper(); sendTP(); if (SHT.on) shSend();
   const teams = TEAMS.map((t, i) => ({ i, name: t.name, score: 0, avg: 0, kills: 0, n: 0, shots: 0, hits: 0, hr: 0, hh: 0, civ: 0, bomb: 0, boom: 0, deaths: 0 })); const rows = [];
   for (const pid in TS.stats) { const s = TS.stats[pid]; const t = teams[s.t]; if (!t) continue; t.score += s.s; t.kills += s.k; t.n++; t.shots += s.sh; t.hits += s.hi; t.hr += s.hr || 0; t.hh += s.hh || 0; t.civ += s.c || 0; t.bomb += s.b === 1 ? 1 : 0; t.boom += s.b === -1 ? 1 : 0; t.deaths += s.d; rows.push({ ...s, pid }); }
   for (const t of teams) t.avg = t.n ? Math.round(t.score / t.n) : 0;
-  TS.res = { teams, rows, diff: TS.diff, take: TS.take, at: NET.now(), teacher: { tk: TP.tk, downs: TP.downs, cmds: TP.cmdN } };
+  TS.res = { teams, rows, diff: TS.diff, take: TS.take, at: NET.now(), teacher: { tk: TP.tk, downs: TP.downs, cmds: TP.cmdN }, shared: SHT.on ? 1 : 0, dfBy: SHT.on ? Object.entries(SHT.dfBy).sort((a, b) => b[1] - a[1]).map(([pid, t]) => ({ pid, t: Math.round(t), p: TS.players[pid] })) : [] }; shStop();
   NET.set('res', { teams, diff: TS.diff, take: TS.take }); NET.update('meta', { phase: 'cut' }); for (const d of TS.dots.values()) d.visible = false;
   tLog(-1, `第 ${TS.take} 回合結束`); renderPanel(); renderBoard(); $('tTimer').hidden = true;
 }
@@ -4586,7 +4939,7 @@ function premiere(step) {
     `<div class="slide"><h1 class="gold">個人表現</h1><div class="rank">
       <div style="--c:#ffc83d"><span>神射手（命中率）</span><b>${sharp ? Math.round(100 * sharp.hi / sharp.sh) + '%' : '—'}</b><span>${sharp ? nameOf(sharp) : '開槍 15 發以上才列入'}</span></div>
       <div style="--c:#ff5a4e"><span>擊倒最多</span><b>${killer ? killer.k : '—'}</b><span>${killer ? nameOf(killer) : ''}</span></div>
-      <div style="--c:#3fd17a"><span>最快拆彈</span><b>${fast ? fast.ft + ' 秒' : '—'}</b><span>${fast ? nameOf(fast) : '沒有人拆彈成功'}</span></div>
+      ${r.shared ? `<div style="--c:#3fd17a"><span>拆彈功臣（拆最久）</span><b>${r.dfBy[0] ? r.dfBy[0].t + ' 秒' : '—'}</b><span>${r.dfBy[0] && r.dfBy[0].p ? `${TEAMS[r.dfBy[0].p.team]?.name || ''} ${r.dfBy[0].p.no} 號` : '沒有人拆彈'}${r.dfBy.length > 1 ? `　共 ${r.dfBy.length} 人參與` : ''}</span></div>` : `<div style="--c:#3fd17a"><span>最快拆彈</span><b>${fast ? fast.ft + ' 秒' : '—'}</b><span>${fast ? nameOf(fast) : '沒有人拆彈成功'}</span></div>`}
       <div style="--c:#4ea3ff"><span>零誤傷又拆彈成功</span><b>${clean} 人</b><span>全班 ${N} 人</span></div></div></div>`,
     `<div class="slide"><h1 class="gold">老師 vs 全班</h1><div class="rank">
       <div style="--c:#ff5a4e"><span>老師命中同學</span><b>${tc.tk || 0} 次</b><span>屋頂狙擊手</span></div>
@@ -4617,7 +4970,7 @@ function addFake(n) {
   for (let i = 0; i < n; i++) {
     const team = i % 4; const pid = 'fake' + Math.random().toString(36).slice(2, 8);
     const used = new Set(Object.values(TS.players).filter((p) => p.team === team).map((p) => p.no)); let no = 1; while (used.has(no)) no++;
-    const rec = { team, no, call: 1, at: NET.now(), fake: 1 }; TS.players[pid] = rec; NET.set('players/' + pid, rec);
+    const rec = { team, no, call: 1, at: NET.now(), fake: 1, slot: nextSlot() }; TS.players[pid] = rec; NET.set('players/' + pid, rec);
     TS.fake.push({ pid, team, no, S: null, sendT: R(), statT: R() });
   }
   renderPanel(); tLog(-1, `加入 ${n} 位假學生`);
@@ -4626,6 +4979,7 @@ function removeFake() { for (const f of TS.fake) { delete TS.players[f.pid]; for
 function fakeTick(dt) {
   for (const f of TS.fake) {
     if (TS.phase !== 'take') { f.S = null; continue; }
+    if (SHT.on) { fakeShared(f, dt); continue; }
     const NZ = ZONES.length; const st0 = COVERS[ZONES[0].covers[0]];
     if (!f.S) f.S = { zone: 0, x: st0.x, z: st0.z, wait: 8 + R() * 10, s: 0, k: 0, sh: 0, hi: 0, h: 0, d: 0, c: 0, hh: 0, hr: 0, b: 0, ft: 0, t0: NET.now() };
     const S = f.S; if (S.b) { } else if (S.wait > 0) {
@@ -4642,6 +4996,37 @@ function fakeTick(dt) {
     f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; const mv = S.wait <= 0 && !S.b ? 1 : 0; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, 1, f.team, mv ? 0 : S.peek, mv, S.zone]); }
     f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
   }
+}
+// 全班同一個城鎮的假學生：跟著全班進度走、打共用的敵人（走真正的命中回報路徑）、被敵人打中會倒下
+function fakeCover(z, j) {
+  if (z >= 2 && z <= 4) return COVERS.D1a; const ids = ZONES[z].covers; const c = COVERS[ids[Math.floor((j + 1) / 2 * ids.length) % ids.length]];
+  if (c.kind === 'side' || !c.box) return c; const b = c.box; const half = Math.max(0, (b[1] - b[0]) / 2 - 0.55); return { x: c.kind === 'defuse' ? c.x + j * 1.3 : clamp((b[0] + b[1]) / 2 + j * half, b[0] + 0.5, b[1] - 0.5), z: c.z };
+}
+function fakeShared(f, dt) {
+  const slot = TS.players[f.pid]?.slot ?? 0; const j = jitOf(slot);
+  if (!f.S) { const c = fakeCover(0, j); f.S = { zone: 0, tz: 0, x: c.x, z: c.z, hp: 100, dn: 0, s: 0, k: 0, sh: 0, hi: 0, h: 0, d: 0, c: 0, hh: 0, hr: 0, b: 0, ft: 0, t0: NET.now(), hT: 30 + R() * 45, dfw: R() < 0.4, q: [], qn: 0, r: Math.random().toString(36).slice(2, 6), qT: 0 }; }
+  const S = f.S; const ph = SHT.ph;
+  if (SHT.end && !S.b) { S.b = SHT.end === 'win' ? 1 : -1; S.ft = Math.round((NET.now() - S.t0) / 1000); if (S.b === 1) S.s += 500; }
+  if (S.dn > 0) { S.dn -= dt; if (S.dn <= 0) S.hp = 100; }
+  // 要去哪一段
+  if (S.zone === S.tz) {
+    if (S.zone <= 1 && ph > S.zone) S.tz = Math.min(2, S.zone + 1);
+    else if (S.zone === 2) { S.hT -= dt; if (S.hT <= 0) { S.hr = R() < 0.7 ? 3 : 0; S.s += S.hr * 200; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.hr ? 'hr' : 'taken', n: S.hr, pid: f.pid }); S.tz = 5; } }
+    else if (S.zone === 5 && ph >= 6) S.tz = 6;
+  }
+  let mv = 0; if (S.zone !== S.tz && S.dn <= 0) { const c = fakeCover(S.tz, j); const dx = c.x - S.x, dz = c.z - S.z; const l = Math.hypot(dx, dz); if (l < 0.5) S.zone = S.tz; else { const sp = Math.min(l, 5 * dt); S.x += dx / l * sp; S.z += dz / l * sp; mv = 1; } }
+  S.peekT = (S.peekT || 0) - dt; if (S.peekT <= 0) { S.peek = R() < 0.5 ? 1 : 0; S.peekT = 0.6 + R() * 1.6; }
+  const alive = S.dn <= 0; const street = STREET(S.zone) && S.zone === S.tz;
+  // 開槍：挑一個同一段、活著的敵人回報命中
+  if (alive && street && S.peek && R() < dt * 0.7) { // 只打探身、站著的敵人（跟真人一樣要看得到才打得到）
+    S.sh += 3; const g = GROUP(S.zone); const list = ENEMIES.filter((e) => e.alive && GROUP(e.zone) === g && (e.peek > 0 || e.state === 'stand') && Math.hypot(e.pos.x - S.x, e.pos.z - S.z) < 70);
+    if (list.length && R() < 0.5) { const e = list[Math.floor(R() * list.length)]; const head = R() < 0.2; S.hi++; S.q.push([++S.qn, e.id, 40, head ? 2 : 0]); if (S.q.length > 12) S.q.shift(); }
+  }
+  S.qT -= dt; if (S.qT <= 0 && S.q.length) { S.qT = 0.2; NET.set('eh/' + f.pid, { r: S.r, q: S.q }); }
+  const df = alive && S.zone === 6 && S.tz === 6 && S.dfw ? 1 : 0;
+  if (TP.mode === 'sn' && TP.aim && TP.down <= 0 && S.peek && street && R() < dt * 0.12) { const n = nestPos(TP.nest, new THREE.Vector3()); if (Math.hypot(n.x - S.x, n.z - S.z) < 70) NET.push('th', { pid: f.pid, t: f.team, no: f.no, d: 25, at: NET.now() }); }
+  f.sendT -= dt; if (f.sendT <= 0) { f.sendT = 0.25; NET.set('pos/' + f.pid, [Math.round(S.x * 10) / 10, Math.round(S.z * 10) / 10, 0, alive ? 1 : 0, f.team, mv ? 0 : S.peek, mv, S.zone, df]); }
+  f.statT -= dt; if (f.statT <= 0) { f.statT = 1.5; NET.set('stat/' + f.pid, { s: S.s, k: S.k, sh: S.sh, hi: S.hi, h: S.h, d: S.d, c: S.c, hh: S.hh, hr: S.hr, b: S.b, ft: S.ft, z: S.zone, t: f.team, no: f.no, at: NET.now() }); }
 }
 function renderBoard() {
   const b = $('tBoard'); const n = tCounts(); const agg = TEAMS.map(() => ({ s: 0, k: 0, hh: 0, b: 0, m: 0 }));
@@ -4671,7 +5056,8 @@ function teacherInit() {
     else newSession();
     NET.on('players', (p) => { TS.players = p || {}; renderPanel(); for (const [pid, d] of TS.dots) if (!TS.players[pid]) { scene.remove(d); TS.dots.delete(pid); } });
     NET.onChild('req', { added: (pid, r) => handleReq(pid, r) });
-    NET.onChild('pos', { added: posIn, changed: posIn, removed: (pid) => { const d = TS.dots.get(pid); if (d) d.visible = false; AV.st.delete(pid); } });
+    NET.onChild('pos', { added: posIn, changed: posIn, removed: (pid) => { const d = TS.dots.get(pid); if (d) d.visible = false; AV.st.delete(pid); MATES.delete(pid); } });
+    NET.onChild('eh', { added: ehIn, changed: ehIn });
     NET.onChild('stat', { added: (pid, s) => { TS.stats[pid] = s; renderBoard(); }, changed: (pid, s) => { TS.stats[pid] = s; renderBoard(); } });
     NET.onChild('th', { added: (k, v) => { NET.remove('th/' + k); teacherHit(v); } });
     NET.onChild('ev', {  added: (key, e) => { NET.remove('ev/' + key); if (!e || TS.phase !== 'take') return; let what = EV_TEXT[e.kind] || e.kind; if (e.kind === 'hr') what = `救出 ${e.n} 名人質`; if (e.kind === 'bomb') what += `（${e.ft} 秒）`; tLog(e.team, `${TEAMS[e.team]?.name} ${e.no} 號：${what}`); } });
@@ -4680,7 +5066,7 @@ function teacherInit() {
   setupTeacherInput(); NET.set('tp', { m: 'cmd', n: 0 });
   addEventListener('keydown', (e) => { if (TS.phase === 'prem') { if (e.code === 'ArrowRight' || e.code === 'Space') $('pNext')?.click(); if (e.code === 'ArrowLeft') $('pPrev')?.click(); } });
 }
-function posIn(pid, a) { if (!a || TS.phase !== 'take') return; avatarIn(pid, a); const d = dotFor(pid, a[4]); d.visible = true; d.position.set(a[0], 0, a[1]); d.children[0].material.color.set(a[3] ? (TEAMS[a[4]]?.c || '#fff') : '#555'); }
+function posIn(pid, a) { if (!a || TS.phase !== 'take') return; avatarIn(pid, a); if (SHT.on) mateIn(pid, a); const d = dotFor(pid, a[4]); d.visible = true; d.position.set(a[0], 0, a[1]); d.children[0].material.color.set(a[3] ? (TEAMS[a[4]]?.c || '#fff') : '#555'); }
 function renderLabels() {
   const host = $('tLabels'); const items = [...TS.dots.values()].filter((d) => d.visible);
   while (host.children.length < items.length) host.appendChild(document.createElement('div'));
@@ -4699,8 +5085,9 @@ function teacherTick(dt) {
   avatarsTick(dt); if (sn) avatarLabels(); else renderLabels(); fakeTick(dt);
   const now = NET.now();
   if (TS.phase === 'take') { TP.ptsT += dt; if (TP.ptsT >= PTS_EVERY) { TP.ptsT = 0; if (TP.pts < PTS_MAX) { TP.pts++; if (TP.mode !== 'sn') renderPanel(); } } }
-  if (TS.phase === 'count' && now >= TS.startAt) { TS.phase = 'take'; NET.update('meta', { phase: 'take' }); renderPanel(); tLog(-1, '任務開始'); }
-  if (TS.phase === 'count' || TS.phase === 'take') { const left = Math.max(0, (TS.phase === 'count' ? TS.startAt : TS.endsAt) - now); $('tTimer').hidden = false; $('tTimer').innerHTML = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}<small>${TS.phase === 'count' ? '倒數' : '任務進行中　' + DIFFS[TS.diff].name}</small>`; if (TS.phase === 'take' && left <= 0) cut('end'); }
+  if (TS.phase === 'count' && now >= TS.startAt) { TS.phase = 'take'; NET.update('meta', { phase: 'take' }); if (TS.shared) shStart(); renderPanel(); tLog(-1, '任務開始'); }
+  if (TS.phase === 'take' && SHT.on) shTeacherTick(dt);
+  if (TS.phase === 'count' || TS.phase === 'take') { const left = Math.max(0, (TS.phase === 'count' ? TS.startAt : TS.endsAt) - now); $('tTimer').hidden = false; $('tTimer').innerHTML = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}<small>${TS.phase === 'count' ? '倒數' : '任務進行中　' + DIFFS[TS.diff].name}</small>${SHT.on ? `<small>全班進度：${SH_NAME[SHT.ph]}　街上敵人 ${ENEMIES.filter((e) => e.alive).length}${SHT.bombOn ? `　炸彈 ${mmss(SHT.bombT * 1000)}` : ''}${SHT.ph === 6 ? `　拆彈 ${Math.round(SHT.defuse * 100)}%` : ''}</small>` : ''}`; if (TS.phase === 'take' && left <= 0) cut('end'); }
 }
 
 /* =========================================================
@@ -4709,8 +5096,8 @@ function teacherTick(dt) {
    ========================================================= */
 const TP = { mode: 'cmd', nest: 0, yaw: 0, pitch: -0.12, aim: false, aimK: 0, hp: 100, down: 0, pts: 3, ptsT: 0, sendT: 0, ammo: 10, reload: 0, fireT: 0, shotN: 0, hitN: {}, downN: 0, tk: 0, downs: 0, cmdN: 0, hurtT: 0 };
 const CMDS = [
-  { k: 'reinf', name: '增援槍手', cost: 1, desc: '每位同學所在的區域多 2 名敵人' },
-  { k: 'roof', name: '屋頂狙擊手', cost: 2, desc: '街上的區域多一名屋頂槍手' },
+  { k: 'reinf', name: '增援槍手', cost: 1, desc: '每位同學所在的區域多 2 名敵人', sh: '街上衝出 3 名敵人；在民宅裡的同學屋內多 2 名' },
+  { k: 'roof', name: '屋頂狙擊手', cost: 2, desc: '街上的區域多一名屋頂槍手', sh: '街上多 2 名屋頂槍手' },
   { k: 'hurry', name: '催促押走人質', cost: 2, desc: '人質時限 −15 秒' },
   { k: 'bombfast', name: '炸彈加速', cost: 2, desc: '炸彈倒數 −10 秒' },
   { k: 'ambush', name: '拆彈伏擊', cost: 1, desc: '拆彈時多一名屋頂槍手' },
@@ -4719,7 +5106,7 @@ const PTS_MAX = 8, PTS_EVERY = 15;
 function cmdPanelHTML() {
   if (TS.phase !== 'take' && TS.phase !== 'count') return '';
   return `<h2>你是黑鴉指揮官</h2><div class="pts">指令點數 <b>${TP.pts}</b>／${PTS_MAX}<span>每 ${PTS_EVERY} 秒 +1</span></div>
-  <div class="cmds">${CMDS.map((c) => `<button data-cmd="${c.k}" ${TP.pts >= c.cost && TS.phase === 'take' ? '' : 'disabled'}><b>${c.name}</b><span>${c.cost} 點・${c.desc}</span></button>`).join('')}</div>
+  <div class="cmds">${CMDS.map((c) => `<button data-cmd="${c.k}" ${TP.pts >= c.cost && TS.phase === 'take' ? '' : 'disabled'}><b>${c.name}</b><span>${c.cost} 點・${TS.shared && c.sh ? c.sh : c.desc}</span></button>`).join('')}</div>
   <h2>親自上場：屋頂狙擊手</h2><div class="row">${NESTS.map((n, i) => `<button data-nest="${i}">${n.name}</button>`).join('')}</div>
   <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來用瞄準鏡（同學也打得到你），左鍵開火，R 換彈，C 回到指揮官。</div>`;
 }
@@ -4729,13 +5116,13 @@ function bindCmdPanel(p) {
 }
 function sendCmd(k) {
   const c = CMDS.find((x) => x.k === k); if (!c || TS.phase !== 'take' || TP.pts < c.cost) return;
-  TP.pts -= c.cost; TP.cmdN++; NET.push('cmd', { k, at: NET.now() }); tLog(-1, `老師下令：${c.name}`); SFX.init(); SFX.bad(); renderPanel();
+  TP.pts -= c.cost; TP.cmdN++; NET.push('cmd', { k, at: NET.now() }); shCmd(k); tLog(-1, `老師下令：${c.name}`); SFX.init(); SFX.bad(); renderPanel();
 }
 function tpReset() { Object.assign(TP, { mode: 'cmd', aim: false, aimK: 0, hp: 100, down: 0, pts: 3, ptsT: 0, ammo: 10, reload: 0, tk: 0, downs: 0, cmdN: 0 }); showSniperHUD(false); }
 /* ---------- 全班同學的化身（老師在屋頂上看到的士兵） ---------- */
 const AV = { pool: [], st: new Map() };
 function buildAvatars() {
-  CHAR_SETS.soldier.forEach((n) => { for (let k = 0; k < 6; k++) { if (!MODELS[n]) continue; const c = new Character(n); c.root.visible = false; if (RIFLE_NPC) c.attachRifle(RIFLE_NPC.clone()); c.pid = null; AV.pool.push(c); } });
+  CHAR_SETS.soldier.forEach((n) => { for (let k = 0; k < 6; k++) { if (!MODELS[n]) continue; const c = new Character(n); ownGeometry(c); c.root.visible = false; if (RIFLE_NPC) c.attachRifle(RIFLE_NPC.clone()); c.pid = null; AV.pool.push(c); } });
 }
 function avatarIn(pid, a) {
   let s = AV.st.get(pid); if (!s) { s = { x: a[0], z: a[1] }; AV.st.set(pid, s); }
@@ -4858,7 +5245,7 @@ async function loadAll() {
   PUFFS = new Puffs(MOBILE ? 220 : 400);
   $('loadMsg').textContent = '整理貼圖…';
   await Promise.race([Promise.all(LOADSTAT.tex.map((p) => p.catch(() => {}))), new Promise((r) => setTimeout(r, 20000))]);
-  if (ROLE !== 'teacher' && ANIMS) buildPools(); if (ROLE === 'teacher' && ANIMS) buildAvatars();
+  if (ROLE !== 'teacher' && ANIMS) { buildAllies(MOBILE ? 4 : 5); buildPools(); } if (ROLE === 'teacher' && ANIMS) { buildAvatars(); buildPools(); } // 有頭的人物（同學）要在拿掉頭部之前先建
   $('loadBar').style.width = '100%'; DBG(`載入完成：模型 ${Object.keys(MODELS).length}，失敗 ${LOADSTAT.fail} 項` + (LOADSTAT.failed.length ? '：' + LOADSTAT.failed.join('、') : '')); if (!LOADSTAT.fail && !Q.has('debug')) setTimeout(() => { $('dbg').hidden = true; }, 4000);
 }
 function applyQuality() {
@@ -4868,10 +5255,15 @@ function applyQuality() {
   camera.aspect = w / h; camera.updateProjectionMatrix(); vmCamera.aspect = w / h; vmCamera.updateProjectionMatrix();
 }
 addEventListener('resize', applyQuality);
-let last = performance.now();
+let last = performance.now(), lastFrame = performance.now();
+// 老師的電腦是裁判：分頁切到背景時瀏覽器會停掉畫面更新，這裡改用計時器補上遊戲時間（敵人、炸彈不會停）
+setInterval(() => {
+  if (ROLE !== 'teacher') return; const now = performance.now(); if (now - lastFrame < 400) return;
+  let el = Math.min(1.5, (now - last) / 1000); last = now; while (el > 0.001) { const d = Math.min(0.05, el); teacherTick(d); el -= d; }
+}, 250);
 function frame() {
   requestAnimationFrame(frame);
-  const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now; lastFrame = now;
   if (ROLE === 'student') {
     studentTick(dt);
     if (P) {
@@ -4885,7 +5277,7 @@ function frame() {
     tracersTick(dt); if (PUFFS) PUFFS.update(dt);
     // 等待畫面也畫一下場景（靜態背景）
     if (G.mode !== 'take') { for (const e of ENEMIES) { e.c.update(dt); e.c.aimRifle('low'); } for (const c of CIVS) c.c.update(dt); for (const h of HOSTAGES) h.c.update(dt); }
-  } else { teacherTick(dt); if (TP.mode === 'sn') { const n = nestPos(TP.nest, new THREE.Vector3()); sun.position.set(n.x + 30, 60, n.z + 10); sun.target.position.set(n.x - 6, 0, n.z + 20); } else { sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); } }
+  } else { teacherTick(dt); tracersTick(dt); if (PUFFS) PUFFS.update(dt); if (TP.mode === 'sn') { const n = nestPos(TP.nest, new THREE.Vector3()); sun.position.set(n.x + 30, 60, n.z + 10); sun.target.position.set(n.x - 6, 0, n.z + 20); } else { sun.position.set(30, 60, -80); sun.target.position.set(0, 0, -70); } }
   // 學生還沒開拍時（選組、等待、結果畫面蓋住場景）不必每格都畫，省電也不發燙
   if (ROLE === 'student' && G.mode !== 'take' && (FRAME_N++ % 6) !== 0) return;
   if (Q.has('norender') && (FRAME_N++ % 40) !== 0) return; // 測試用：只跑遊戲邏輯
@@ -4898,7 +5290,7 @@ function warmUp() {
   const shown = [];
   const show = (o) => { if (!o) return; shown.push([o, o.visible]); o.visible = true; };
   camera.position.set(0, 1.6, 6); camera.rotation.set(0, 0, 0); camera.updateMatrixWorld(true);
-  let i = 0; const all = [...POOL.soldier, ...POOL.civ, ...AV.pool];
+  let i = 0; const all = [...POOL.soldier, ...POOL.civ, ...AV.pool, ...ALLY.pool];
   for (const c of all) { show(c.root); c.root.position.set(((i % 6) - 2.5) * 1.2, 0, -2 - Math.floor(i / 6) * 1.5); c.play('Idle_Loop'); c.update(0.01); c.aimRifle('low'); if (c.flash) { show(c.flash); } i++; }
   if (P) { for (const k in P.weaponMeshes) show(P.weaponMeshes[k]); show(P.flash); }
   if (WORLD.bomb) show(WORLD.bomb.g);
@@ -4932,7 +5324,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
