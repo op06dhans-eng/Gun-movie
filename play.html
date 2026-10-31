@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.1（狙擊槍拉槍機改成把槍往左翻、看得到右側槍機與右手動作，拉槍機時離開瞄準鏡、拉完自動回去；室內被門框擋住的敵人位置修正；人質等同學進到人質房才跑出去，進房後倒數暫停）';
+const VERSION = '2.4.2（修正：突擊步槍按右鍵開瞄準鏡失效）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -4730,7 +4730,7 @@ class Player {
     this.updateEye();
     const speed = Math.hypot(this.vel.x, this.vel.z); this.moving = speed > 0.5; this.bob += dt * speed * 2.2; this.sprinting = false;
     // 瞄準
-    this.ads = INPUT.ads && !this.sprinting && (!this.cover || this.peekK > 0.6) && this.boltT <= 0; // 拉槍機時離開瞄準鏡，拉完自動回到鏡內 this.adsK = lerp(this.adsK, this.ads ? 1 : 0, Math.min(1, dt * 10)); if (!this.ads && this.adsK < 0.02) this.adsK = 0;
+    this.ads = INPUT.ads && !this.sprinting && (!this.cover || this.peekK > 0.6) && this.boltT <= 0; /* 拉槍機時離開瞄準鏡，拉完自動回到鏡內 */ this.adsK = lerp(this.adsK, this.ads ? 1 : 0, Math.min(1, dt * 10)); if (!this.ads && this.adsK < 0.02) this.adsK = 0;
     // 換彈
     if (this.reloading > 0) {
       const before = 1 - this.reloading / w.reload; this.reloading -= dt; const k = 1 - this.reloading / w.reload;
