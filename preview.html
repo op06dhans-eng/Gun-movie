@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.10（老師狙擊：打中頭或身體一發擊倒、手腳兩發；命中／擊倒會在畫面中間顯示）';
+const VERSION = '2.4.11（真實性：敵人子彈傷害提高、探身越久越容易被打中、少數頭部中彈一發擊倒、縮回掩體才快速回血）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -3781,15 +3781,16 @@ class Enemy {
     const dir = eye.clone().sub(m); const L = dir.length(); dir.divideScalar(L);
     if (rayWorld(m, dir, L) < L - 0.3) return; // 視線被擋就不打
     const expo = P.exposure(); // 躲在掩體後面＝0（打不到），探身＝部分身體露出
-    const pHit = clamp(0.3 - dist / 200, 0.08, 0.28) * G.diff.acc * expo * (this.inside ? 1.25 : 1) * (P.isProxy ? SHT.accM : 1); const pHit2 = Math.min(0.6, pHit);
-    const hit = R() < pHit2; const dmg = (6 + R() * 4) * G.diff.dmg;
+    const zero = 1 + Math.min(0.5, Math.max(0, (P.expT || 0) - 1.5) * 0.25); /* 連續探身超過 1.5 秒後敵人越瞄越準（約 3.5 秒後命中率 1.5 倍）：要短點放、打完就縮 */
+    const pHit = clamp(0.3 - dist / 200, 0.08, 0.28) * G.diff.acc * expo * zero * (this.inside ? 1.25 : 1) * (P.isProxy ? SHT.accM : 1); const pHit2 = Math.min(0.6, pHit);
+    const hit = R() < pHit2; const head = hit && R() < 0.05 * G.diff.acc; const dmg = head ? 100 : (10 + R() * 6) * G.diff.dmg; /* 步槍子彈：身體約 7 發擊倒；少數打中頭部一發擊倒 */
     const target = hit ? eye.clone() : eye.clone().add(V((R() - 0.5) * 2.2, (R() - 0.3) * 1.4, (R() - 0.5) * 2.2));
     tracer(m, target);
     if (this.c.flash) flashOn(this.c.flash, 0.05);
     if (P.isProxy) { SHT.shots.push([this.id, P.slot, hit ? Math.round(dmg) : 0]); if (hit && P.fake) fakeHurt(P.pid, dmg); if (R() < 0.06) SFX.enemyShot(camera.position.distanceTo(m) + 10); return; } // 老師電腦：記下這一槍，傳給同學
     SFX.enemyShot(dist);
     AI.lastShotAt = performance.now(); AI.lastShotPos.copy(m);
-    if (hit) P.hurt(dmg, m);
+    if (hit) { if (head) P.headHit = true; P.hurt(dmg, m); }
     else { if (eye.distanceTo(target) < 1.4 && R() < 0.5 && expo > 0.2) SFX.whizz(); if (expo < 0.2 && R() < 0.4) SFX.impact(); const d2 = target.clone().sub(m).normalize(); const t = rayWorld(m, d2, 80); const hp = m.clone().addScaledVector(d2, t - 0.1); if (t < 80 && PUFFS && hp.distanceTo(eye) > 2.5) PUFFS.burst(hp, 4, { spread: 1, up: 1, size: 0.18 }); }
   }
   dispose() { this.c.dispose(); }
@@ -4058,8 +4059,8 @@ const GROUP = (z) => (z <= 1 ? 0 : z >= Z_BOMB ? 2 : 1); // 0：前段街道　1
 const SH_NAME = { 0: '突破路障', 1: '清除街口', 2: '各自肅清商行、狙擊救援、攻入民宅', 9: '拆除炸彈：清除守衛', 10: '拆除炸彈' };
 // wave：這一段敵人持續湧入幾秒；house：最多等幾秒就開始炸彈戰；bomb：炸彈倒數；defuse：拆彈要幾秒
 const SH_CFG = {
-  N: { wave: { 0: 50, 1: 50, 9: 40 }, house: 150, bomb: 115, defuse: 15, cap: 0, roofMax: 2, hps: 0.7, ambush: 2, hp: 0 },
-  H: { wave: { 0: 55, 1: 55, 9: 45 }, house: 140, bomb: 100, defuse: 18, cap: 2, roofMax: 3, hps: 0.9, ambush: 3, hp: 0.25 },
+  N: { wave: { 0: 50, 1: 50, 9: 40 }, house: 150, bomb: 115, defuse: 15, cap: 0, roofMax: 2, hps: 1.0, ambush: 2, hp: 0 },
+  H: { wave: { 0: 55, 1: 55, 9: 45 }, house: 140, bomb: 100, defuse: 18, cap: 2, roofMax: 3, hps: 1.3, ambush: 3, hp: 0.25 },
 };
 // 每一段街道：敵人出現的位置（cover：跑到車子、沙包後面；rush：從遠處衝過來；roof：屋頂）
 const SPAWN_T = {
@@ -4150,11 +4151,11 @@ function shAlt(e, P) {
 }
 function shTeacherTick(dt) {
   if (!SHT.on) return; const C = SHT.cfg;
-  let nSt = 0, nExp = 0; for (const m of MATES.values()) { const k = Math.min(1, dt * 8); m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; if (STREET(m.zone) && m.zone === SHT.ph || (SHT.ph === Z_DEF && m.zone === Z_BOMB)) { nSt++; if (m.alive && m.exposure() > 0) nExp++; } }
+  let nSt = 0, nExp = 0; for (const m of MATES.values()) { const k = Math.min(1, dt * 8); m.expT = m.exposure() > 0 ? (m.expT || 0) + dt : Math.max(0, (m.expT || 0) - dt * 3); m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; if (STREET(m.zone) && m.zone === SHT.ph || (SHT.ph === Z_DEF && m.zone === Z_BOMB)) { nSt++; if (m.alive && m.exposure() > 0) nExp++; } }
   SHT.nSt = nSt; SHT.mult = clamp(Math.sqrt(nSt / 4), 1, 4);
   // 全班人多時，每位探身的同學分到的子彈變少：自動提高命中率，讓探身的同學每秒挨到的子彈和單人時差不多
   let nE = 0; for (const e of ENEMIES) if (e.alive && e.zone === SHT.ph) nE++;
-  const perStu = nE * 3.5 * SHT.mult / 2.6 / Math.max(1, nExp); SHT.accM = clamp(C.hps / Math.max(0.05, perStu * 0.12), 1, 5);
+  const perStu = nE * 3.5 * SHT.mult / 2.6 / Math.max(1, nExp); SHT.accM = clamp(C.hps / Math.max(0.05, perStu * 0.12), 1, 8);
   MS.zone = SHT.ph; MS.arrived = true; MS.done = !!SHT.end; G.diff = DIFFS[TS.diff] || DIFFS.N;
   if (SHT.end) { SHT.endT += dt; if (SHT.endT > 6 && TS.phase === 'take') cut('end'); }
   SHT.phT += dt; const ph = SHT.ph;
@@ -4305,7 +4306,7 @@ function shShots(dt, P) {
     const e = REM.get(s.id); const m = e && e.alive ? e.muzzle(_sm) : null;
     if (SHS.slot >= 0 && s.slot === SHS.slot) {
       const exp = P.exposure(); SHS.rxN = (SHS.rxN || 0) + 1;
-      if (s.d > 0 && P.alive && exp > 0) { SHS.rxH = (SHS.rxH || 0) + 1; P.hurt(s.d, m ? m.clone() : eye.clone().add(V(0, 0, -20))); if (m) tracer(m, eye); }
+      if (s.d > 0 && P.alive && exp > 0) { SHS.rxH = (SHS.rxH || 0) + 1; if (s.d >= 100) P.headHit = true; P.hurt(s.d, m ? m.clone() : eye.clone().add(V(0, 0, -20))); if (m) tracer(m, eye); }
       else { if (m) tracer(m, _st.copy(eye).add(V((R() - 0.5) * 2.2, (R() - 0.3) * 1.4, (R() - 0.5) * 2.2))); if (exp > 0.2 && R() < 0.5) SFX.whizz(); else if (exp < 0.2 && R() < 0.4) SFX.impact(); }
       if (e && e.c.flash) flashOn(e.c.flash, 0.05); if (m) SFX.enemyShot(m.distanceTo(eye));
       if (e) e.shotAt = now;
@@ -4751,7 +4752,7 @@ class Player {
   start() { this.ammoOf = {}; this.hasAK = false; this.gearId = null; this.setGear('m4'); this.swapT = 0; this.spawnAt(0); const c = cvOf(ZONES[0].covers[0]); this.coverId = c.id; this.target = null; this.path = []; this.peekK = 0; this.pos.set(c.x, 0, c.z); this.yaw = c.yaw; this.stats = newStats(); this.hurtT = 0; this.lastHurtFrom = null; this.updateEye(); }
   addScore(n) { this.stats.score = Math.max(0, this.stats.score + n); }
   hurt(amount, from) {
-    if (!this.alive) return; this.hp -= amount; this.hurtT = 0.5; this.regenT = 4; this.lastHurtFrom = from; SFX.hurt();
+    if (!this.alive) return; this.hp -= amount; this.hurtT = 0.5; this.regenT = 5; this.lastHurtFrom = from; SFX.hurt();
     if (this.hp <= 0) { this.alive = false; this.ngT = 3; this.stats.deaths++; this.addScore(PTS.death); onPlayerEvent('down'); }
   }
   update(dt) {
@@ -4803,7 +4804,7 @@ class Player {
     this.sway.t += dt; const sk = this.scoped ? 1 : 0; this.sway.x = sk * (Math.sin(this.sway.t * 1.3) * 0.0011 + Math.sin(this.sway.t * 0.47) * 0.0007); this.sway.y = sk * (Math.sin(this.sway.t * 0.9 + 1) * 0.0009 + Math.sin(this.sway.t * 0.31) * 0.0006);
     this.defK = lerp(this.defK || 0, MS.defusing ? 1 : 0, Math.min(1, dt * 8));
     this.recoil = lerp(this.recoil, 0, Math.min(1, dt * 9)); this.kick = lerp(this.kick, 0, Math.min(1, dt * 14));
-    const safe = this.exposure() === 0; this.hurtT = Math.max(0, this.hurtT - dt); if (this.regenT > 0) this.regenT -= dt * (safe ? 2.5 : 1); else this.hp = Math.min(100, this.hp + (safe ? 26 : 14) * dt);
+    const safe = this.exposure() === 0; this.hurtT = Math.max(0, this.hurtT - dt); if (this.regenT > 0) this.regenT -= dt * (safe ? 2 : 0.5); else this.hp = Math.min(100, this.hp + (safe ? 16 : 4) * dt); /* 縮回掩體回血快，探身時很慢 */ this.expT = safe ? Math.max(0, Math.min(this.expT || 0, 3) - dt * 6) : (this.expT || 0) + dt;
   }
   shoot() {
     const w = this.w; this.ammo--; this.stats.shots++; this.fireT = 60 / w.rpm; this.shotAt = performance.now();
@@ -4897,7 +4898,7 @@ function banner(text, kind = 'bad', ms = 1500, sub = '') { const b = $('hBanner'
 function hitmark(kill) { const c = $('hCross'); c.classList.add(kill ? 'kill' : 'hit'); setTimeout(() => c.classList.remove('hit', 'kill'), kill ? 300 : 120); }
 function evPush(kind, extra = {}) { if (G.mode === 'take' && !G.practice) NET.push('ev', { t: NET.now(), team: ME.team, no: ME.no, kind, pid: ME.pid, ...extra }); }
 function onPlayerEvent(k) {
-  if (k === 'down') { $('hNg').hidden = false; $('hNg').innerHTML = '你被擊倒了<small>3 秒後回到這一段的起點　分數 −100</small>'; }
+  if (k === 'down') { const why = P && P.headHit ? '頭部中彈' : P && P.expT > 2.5 ? '探身太久，被敵人瞄準了' : ''; P.headHit = false; $('hNg').hidden = false; $('hNg').innerHTML = `你被擊倒了${why ? '（' + why + '）' : ''}<small>3 秒後回到這一段的起點　分數 −100</small>`; }
   if (k === 'respawn') $('hNg').hidden = true;
   if (k === 'civ' || k === 'hh') evPush(k);
   onShot();
@@ -5219,7 +5220,7 @@ function botTick() {
   I.defuse = !!(Z.defuse && MS.arrived && P.coverId === 'D4' && !P.target && (!tgt || P.hp > 60));
   if (I.defuse) { I.fire = false; I.ads = false; return; }
   if (!P.hasAK && WB.near && Math.random() < 0.02) weaponBtn(); // 偶爾撿起敵人的 AK
-  if (!tgt || P.hp < 35) { I.fire = false; I.ads = false; return; }
+  if (P.hp < 40) BOT.duck = true; if (P.hp > 75) BOT.duck = false; /* 血少就縮回掩體，回到 75 再探身（像真人） */ if (!tgt || BOT.duck) { I.fire = false; I.ads = false; return; }
   BOT.lockT += 0.1; const ro = P.peekK > 0.5 ? P.eye() : P.peekEye(); const crouch = tgt.c.curName === 'Crouch_Idle_Aim';
   const dx = tgt.pos.x - ro.x, dy = tgt.pos.y + (crouch ? 0.85 : 1.3) - ro.y, dz = tgt.pos.z - ro.z; const h = Math.hypot(dx, dz);
   const err = (0.012 + 0.03 / BOT.skill) * Math.max(0.25, 1.4 - BOT.lockT);
