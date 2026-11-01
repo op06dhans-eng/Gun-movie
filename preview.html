@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.16（指揮官面板的位置地圖改成直式，修正被壓扁看不到的問題）';
+const VERSION = '2.4.17（老師只能選同學最前線前方的屋頂；同學推進過老師所在的樓後，老師不能開槍）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5607,6 +5607,10 @@ function cmdPanelHTML() {
   <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來瞄準（同學也打得到你），左鍵開火（M4／AK 按住連發，會自動站起來），R 換彈；1 狙擊槍、2 M4、3 AK；狙擊鏡開鏡時滾輪或 Z 調倍率（4／8／12／15）；M 打開地圖換位置；C 回到指揮官。</div>`;
 }
 /* 位置地圖：俯視整條街（左邊是起點路障、右邊是街尾炸彈），兩側每一棟樓都可以點；圓點是同學現在的位置 */
+/* 不能繞到同學後方：屋頂要在全班最前面那位同學的前方 6 公尺以外（同學從 z 大往 z 小推進）；屋內埋伏點不限 */
+let _frontT = 0, _front = 99;
+function snFront() { const now = performance.now(); if (now - _frontT < 400) return _front; _frontT = now; let f = 99; for (const [pid, st] of AV.st) { if (!TS.players[pid] || now - st.at > 3000) continue; if (st.tz < f) f = st.tz; } _front = f; return f; }
+const nestOK = (i) => { const n = NESTS[i]; return !!n && (n.in || n.z <= snFront() - 6); };
 /* 指揮官面板用的直式地圖（面板很窄）：上面是起點、下面是街尾；屋內埋伏點做成下方的按鈕 */
 function nestMapV() {
   const Z0 = 16, Z1 = -156, H = 760, k = H / (Z0 - Z1), Y = (z) => (Z0 - z) * k, LX = 8, RX = 212, BW = 92, RL = 106, RW = 100;
@@ -5614,11 +5618,12 @@ function nestMapV() {
   h += `<rect x="${RL}" y="0" width="${RW}" height="${H}" fill="#3a3f43"/><line x1="${RL + RW / 2}" y1="0" x2="${RL + RW / 2}" y2="${H}" stroke="#bbb" stroke-dasharray="10 10" stroke-width="2"/>`;
   for (const [nm, z] of [['起點', 12], ['路障', 0], ['街口', -22], ['商行', -55], ['民宅', -84], ['炸彈街', -118], ['街尾', -150]]) h += `<text x="${RL + RW / 2}" y="${Y(z) + 6}" fill="#ffd27a" font-size="17" font-weight="900" text-anchor="middle" stroke="#3a3f43" stroke-width="4" paint-order="stroke">${nm}</text>`;
   NESTS.forEach((n, i) => { if (n.in) return; const on = i === TP.nest && TP.mode === 'sn'; const b = n.b, y = Y(b.z0), hh = (b.z0 - b.z1) * k, x = n.side < 0 ? LX : RX;
-    h += `<g data-nest="${i}"><rect x="${x}" y="${y + 1}" width="${BW}" height="${hh - 2}" rx="5" fill="${on ? '#ffd27a' : b.shop ? '#7a5a3a' : '#56636b'}" stroke="#9fb0b8" stroke-width="1.5"/><text x="${x + BW / 2}" y="${y + hh / 2 + 6}" fill="${on ? '#222' : '#fff'}" font-size="17" font-weight="900" text-anchor="middle">${b.shop ? '商行 ' : ''}${n.fl}樓</text></g>`; });
+    const ok = nestOK(i); h += `<g ${ok ? `data-nest="${i}"` : 'style="cursor:not-allowed"'}><rect x="${x}" y="${y + 1}" width="${BW}" height="${hh - 2}" rx="5" fill="${on ? '#ffd27a' : !ok ? '#24282b' : b.shop ? '#7a5a3a' : '#56636b'}" stroke="${ok ? '#9fb0b8' : '#3a3f43'}" stroke-width="1.5"/><text x="${x + BW / 2}" y="${y + hh / 2 + 6}" fill="${on ? '#222' : ok ? '#fff' : '#666'}" font-size="${ok ? 17 : 13}" font-weight="900" text-anchor="middle">${ok ? (b.shop ? '商行 ' : '') + n.fl + '樓' : '同學後方'}</text></g>`; });
+  { const f = snFront(); if (f < 90) h += `<line x1="0" y1="${Y(f)}" x2="312" y2="${Y(f)}" stroke="#ff6a5a" stroke-width="3"/><text x="${RL + RW / 2}" y="${Y(f) - 6}" fill="#ff6a5a" font-size="15" font-weight="900" text-anchor="middle" stroke="#1b1f22" stroke-width="4" paint-order="stroke">同學最前線</text>`; }
   const now = performance.now(); for (const [pid, st] of AV.st) { if (!TS.players[pid] || now - st.at > 3000) continue; h += `<circle cx="${RL + RW / 2 + clamp(st.tx, -8, 8) * 5.5}" cy="${Y(st.tz)}" r="5" fill="${TEAMS[TS.players[pid].team]?.c || '#fff'}" stroke="#000" stroke-width="1"/>`; }
   h += '</svg>';
   h += `<div class="row">${NESTS.map((n, i) => n.in ? `<button data-nest="${i}" style="${i === TP.nest && TP.mode === 'sn' ? 'border-color:#ffd27a' : ''}">${n.name}</button>` : '').join('')}</div>`;
-  return h + '<div class="small">方塊＝可以上去的屋頂（數字是樓層，越高看越遠）；按鈕＝屋內埋伏點；小圓點＝同學現在的位置。</div>';
+  return h + '<div class="small">方塊＝可以上去的屋頂（數字是樓層，越高看越遠）；深色「同學後方」的屋頂不能選（紅線是同學最前線，老師只能在它前方）；按鈕＝屋內埋伏點；小圓點＝同學現在的位置。</div>';
 }
 function nestMapSVG() {
   const Z0 = 16, Z1 = -156, W = 1000, k = W / (Z0 - Z1), X = (z) => (Z0 - z) * k, Y = (side) => (side < 0 ? 34 : 150), RY = 78, RH = 68;
@@ -5629,9 +5634,10 @@ function nestMapSVG() {
   NESTS.forEach((n, i) => { const on = i === TP.nest && TP.mode === 'sn';
     if (n.in) { const cx = X(n.z), top = n.x < 0, cy = top ? 16 : 214; const anchor = n.name.startsWith('民宅前廳') ? 'end' : 'start'; const tx = cx + (anchor === 'end' ? -15 : 15);
       h += `<g data-nest="${i}"><circle cx="${cx}" cy="${cy}" r="10" fill="${on ? '#ffd27a' : '#c0503a'}" stroke="#fff" stroke-width="2"/><text x="${tx}" y="${cy + 5}" fill="#fff" font-size="14" font-weight="900" text-anchor="${anchor}">${n.name.replace('（屋內）', '（屋內）')}</text></g>`; return; }
-    const b = n.b, x = X(b.z0), w = (b.z0 - b.z1) * k; h += `<g data-nest="${i}"><rect x="${x + 1}" y="${Y(n.side)}" width="${w - 2}" height="40" rx="4" fill="${on ? '#ffd27a' : b.shop ? '#7a5a3a' : '#56636b'}" stroke="#9fb0b8" stroke-width="1.5"/><text x="${x + w / 2}" y="${Y(n.side) + 26}" fill="${on ? '#222' : '#fff'}" font-size="14" font-weight="900" text-anchor="middle">${b.shop ? '商行' : ''}${n.fl}樓</text></g>`; });
+    const ok = nestOK(i), b = n.b, x = X(b.z0), w = (b.z0 - b.z1) * k; h += `<g ${ok ? `data-nest="${i}"` : 'style="cursor:not-allowed"'}><rect x="${x + 1}" y="${Y(n.side)}" width="${w - 2}" height="40" rx="4" fill="${on ? '#ffd27a' : !ok ? '#24282b' : b.shop ? '#7a5a3a' : '#56636b'}" stroke="${ok ? '#9fb0b8' : '#3a3f43'}" stroke-width="1.5"/><text x="${x + w / 2}" y="${Y(n.side) + 26}" fill="${on ? '#222' : ok ? '#fff' : '#666'}" font-size="${ok ? 14 : 11}" font-weight="900" text-anchor="middle">${ok ? (b.shop ? '商行' : '') + n.fl + '樓' : '後方'}</text></g>`; });
+  { const f = snFront(); if (f < 90) h += `<line x1="${X(f)}" y1="20" x2="${X(f)}" y2="200" stroke="#ff6a5a" stroke-width="3"/><text x="${X(f) + 4}" y="${RY + 16}" fill="#ff6a5a" font-size="13" font-weight="900">同學最前線</text>`; }
   const now = performance.now(); for (const [pid, st] of AV.st) { if (!TS.players[pid] || now - st.at > 3000) continue; h += `<circle cx="${X(st.tz)}" cy="${RY + RH / 2 + clamp(st.tx, -8, 8) * 3.6}" r="4.5" fill="${TEAMS[TS.players[pid].team]?.c || '#fff'}" stroke="#000" stroke-width="1"/>`; }
-  return h + '</svg><div class="small">方塊＝可以上去的屋頂（數字是樓層，越高看越遠；黃色是你現在的位置）；紅色圓點＝屋內埋伏點；小圓點＝同學現在的位置。</div>';
+  return h + '</svg><div class="small">方塊＝可以上去的屋頂（數字是樓層，越高看越遠；黃色是你現在的位置；深色是同學後方，不能選）；紅線＝同學最前線；紅色圓點＝屋內埋伏點；小圓點＝同學現在的位置。</div>';
 }
 function nestMenu(on) {
   let el = $('tNestMenu'); if (!on) { if (el) el.hidden = true; return; }
@@ -5678,9 +5684,9 @@ function avatarsTick(dt) {
 }
 /* ---------- 第一人稱狙擊 ---------- */
 function showSniperHUD(on) { $('tSn').hidden = !on; $('tPanel').hidden = on; $('tBoard').hidden = on; if (!on && document.pointerLockElement) document.exitPointerLock(); }
-function setNest(i) { if (!NESTS[i]) return; TP.nest = i; const n = NESTS[i]; TP.yaw = n.yaw ?? 2.5; TP.pitch = n.in ? -0.05 : -0.2; if (n.in && TP.gear === 'sniper') tpGear('ak'); sendTP(); }
+function setNest(i) { if (!NESTS[i] || !nestOK(i)) return; TP.nest = i; const n = NESTS[i]; TP.yaw = n.yaw ?? 2.5; TP.pitch = n.in ? -0.05 : -0.2; if (n.in && TP.gear === 'sniper') tpGear('ak'); sendTP(); }
 function tpGear(g) { if (!TG[g] || g === TP.gear) return; TP.ammoOf[TP.gear] = TP.ammo; TP.gear = g; TP.ammo = TP.ammoOf[g] ?? TG[g].mag; TP.reload = 0; TP.fireT = 0.45; if (TV) { TV.setGear(g); TV.boltT = TV.boltQ = 0; } SFX.pickup && SFX.pickup(); renderSnHUD(); }
-function enterSniper(i) { if (TS.phase !== 'take') return; TP.mode = 'sn'; TP.hp = Math.max(TP.hp, 1); setNest(i); showSniperHUD(true); tLog(-1, `老師上場：${NESTS[i].name}`); SFX.init(); SFX.resume(); sendTP(); }
+function enterSniper(i) { if (TS.phase !== 'take' || !nestOK(i)) return; TP.mode = 'sn'; TP.hp = Math.max(TP.hp, 1); setNest(i); showSniperHUD(true); tLog(-1, `老師上場：${NESTS[i].name}`); SFX.init(); SFX.resume(); sendTP(); }
 function leaveSniper() { if (TV) TV.vm.visible = false; TP.mode = 'cmd'; TP.aim = false; showSniperHUD(false); renderPanel(); sendTP(); }
 function sendTP() { const np = nestPos(TP.nest, _sp), nn = NESTS[TP.nest] || {}; NET.set('tp', { px: Math.round(np.x * 10) / 10, py: Math.round(np.y * 10) / 10, pz: Math.round(np.z * 10) / 10, in: nn.in ? 1 : 0, nm: nn.name || '', m: TP.mode === 'sn' && TS.phase === 'take' ? 'sn' : 'cmd', n: TP.nest, y: Math.round(TP.yaw * 100) / 100, p: Math.round(TP.pitch * 100) / 100, a: TP.aim && !TP.down ? 1 : 0, dn: TP.down > 0 ? 1 : 0 }); }
 const TIN = { fire: false, aim: false, dx: 0, dy: 0 }; const _sp = new THREE.Vector3();
@@ -5727,7 +5733,7 @@ function teacherHit(v) {
 }
 function renderSnHUD() {
   if (TP.mode !== 'sn') return;
-  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・${TG[TP.gear].name}${TG[TP.gear].zooms ? `（${tgZoom()} 倍，開鏡時滾輪或 Z 調整）` : ''}</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／' + TG[TP.gear].mag}　命中同學 ${TP.tk}</span><span style="font-size:14px;opacity:.85">1 狙擊槍　2 M4　3 AK　M 地圖換位置</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>${snCrowd()}`;
+  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・${TG[TP.gear].name}${TG[TP.gear].zooms ? `（${tgZoom()} 倍，開鏡時滾輪或 Z 調整）` : ''}</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／' + TG[TP.gear].mag}　命中同學 ${TP.tk}</span><span style="font-size:14px;opacity:.85">1 狙擊槍　2 M4　3 AK　M 地圖換位置</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>${TP.behind ? '<span style="color:#ff6a5a;font-size:20px;font-weight:900">同學已經推進過這棟樓：不能從背後開槍，按 M 換到前方的屋頂</span>' : ''}${snCrowd()}`;
   $('tSnHint').hidden = document.pointerLockElement === canvas;
   const sc = TG[TP.gear].scope && TP.adsK > 0.85; $('tSnScope').classList.toggle('on', sc); $('tSnX').hidden = sc || TP.adsK > 0.85;
   $('tSnDmg').style.opacity = String(TP.down > 0 ? 0.8 : Math.min(0.8, TP.hurtT * 1.6));
@@ -5750,7 +5756,7 @@ function sniperTick(dt) {
   TP.aim = can && (TIN.aim || (TIN.fire && g.auto)); TP.aimK = lerp(TP.aimK, TP.aim ? 1 : 0, Math.min(1, dt * 9)); /* aim＝站起來（同學打得到）；M4／AK 按開火也會站起來 */
   TP.adsK = lerp(TP.adsK, can && TIN.aim ? 1 : 0, Math.min(1, dt * 9));
   if (TP.reload > 0) { TP.reload -= dt; if (TP.reload <= 0) TP.ammo = g.mag; }
-  TP.fireT -= dt; if (TIN.fire && (g.auto ? TP.aimK > 0.6 : TP.adsK > 0.8) && TP.fireT <= 0 && TP.reload <= 0) tpFire();
+  TP.behind = !nestOK(TP.nest); TP.fireT -= dt; if (TIN.fire && !TP.behind && (g.auto ? TP.aimK > 0.6 : TP.adsK > 0.8) && TP.fireT <= 0 && TP.reload <= 0) tpFire(); /* 同學推進過這棟樓之後就不能開槍（不能從背後打） */
   TP.hurtT = Math.max(0, TP.hurtT - dt);
   const n = nestPos(TP.nest, _ap); camera.position.set(n.x, n.y + (TP.down > 0 ? 0.4 : lerp(1.0, 1.62, TP.aimK)), n.z);
   camera.rotation.set(TP.pitch, TP.yaw, TP.down > 0 ? 0.5 : 0, 'YXZ'); camera.fov = lerp(70, zoomFov(tgZoom()), TP.adsK); camera.updateProjectionMatrix();
@@ -5897,7 +5903,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { snFront, nestOK, renderPanel, nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
