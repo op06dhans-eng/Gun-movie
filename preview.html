@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.9（老師上屋頂時手上有手拉槍機狙擊槍：開槍、拉槍機、拋殼、換彈；指令點數三倍；載入失敗自動重試）';
+const VERSION = '2.4.10（老師狙擊：打中頭或身體一發擊倒、手腳兩發；命中／擊倒會在畫面中間顯示）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5471,8 +5471,8 @@ function fakeShootTeacher(f, S) {
 }
 // 老師狙擊打中假學生：扣血，倒下 4 秒（畫面上的化身會倒地）
 function fakeHitByTeacher(pid, d) {
-  const f = TS.fake.find((x) => x.pid === pid); if (!f || !f.S || f.S.dn > 0) return;
-  f.S.hp = (f.S.hp ?? 100) - d; if (f.S.hp <= 0) { f.S.hp = 100; f.S.dn = 4; f.S.d++; f.S.s = Math.max(0, f.S.s - 100); }
+  const f = TS.fake.find((x) => x.pid === pid); if (!f || !f.S || f.S.dn > 0) return false;
+  f.S.hp = (f.S.hp ?? 100) - d; if (f.S.hp <= 0) { f.S.hp = 100; f.S.dn = 4; f.S.d++; f.S.s = Math.max(0, f.S.s - 100); return true; } return false;
 }
 function renderBoard() {
   const b = $('tBoard'); const n = tCounts(); const agg = TEAMS.map(() => ({ s: 0, k: 0, hh: 0, b: 0, m: 0 }));
@@ -5610,6 +5610,10 @@ function setupTeacherInput() {
   addEventListener('keydown', (e) => { if (ROLE !== 'teacher' || TP.mode !== 'sn') return; if (e.code === 'KeyC' || e.code === 'Tab') { e.preventDefault(); leaveSniper(); } if (e.code === 'KeyR' && TP.ammo < 10 && TP.reload <= 0) TP.reload = 2.4; if (e.code === 'Digit1') TP.nest = 0; if (e.code === 'Digit2') TP.nest = 1; });
   document.addEventListener('pointerlockchange', () => { if (!locked()) { TIN.fire = false; TIN.aim = false; } renderSnHUD(); });
 }
+function snToast(txt, big) {
+  let el = $('tSnMsg'); if (!el) { el = document.createElement('div'); el.id = 'tSnMsg'; el.style.cssText = 'position:fixed;left:50%;top:58%;transform:translateX(-50%);z-index:40;font:900 30px "Noto Sans TC",sans-serif;color:#fff;text-shadow:0 2px 6px #000,0 0 2px #000;pointer-events:none;transition:opacity .3s'; document.body.appendChild(el); }
+  el.textContent = txt; el.style.color = big ? '#ff6a5a' : '#ffd27a'; el.style.opacity = 1; clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = 0; }, 1400);
+}
 function tpFire() {
   if (TP.ammo <= 0) { TP.reload = 2.4; return; }
   TP.ammo--; TP.fireT = 1.3; SFX.shot('sniper'); if (TV) { TV.kick = 1; flashOn(TV.flash, 0.07); if (TP.ammo > 0) TV.boltQ = 0.25; } /* 手拉槍機：每發之間要拉一次槍機 */
@@ -5620,8 +5624,8 @@ function tpFire() {
   const hp = ro.clone().addScaledVector(rd, best); PUFFS.burst(hp, 6, { spread: 1, up: 1.2, size: 0.2, c: hit ? [0.5, 0.2, 0.15] : [0.55, 0.48, 0.38] });
   NET.set('tshot', { n: ++TP.shotN, x: Math.round(hp.x * 10) / 10, y: Math.round(hp.y * 10) / 10, z: Math.round(hp.z * 10) / 10, at: NET.now() });
   if (hit) {
-    const pid = hit.pid; const d = part === 'head' ? 100 : part === 'limb' ? 20 : 34; TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
-    NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid]; fakeHitByTeacher(pid, d);
+    const pid = hit.pid; const d = part === 'limb' ? 60 : 100; /* 狙擊槍：打中頭或身體一發擊倒，打中手腳要兩發 */ TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
+    NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid]; const fd = fakeHitByTeacher(pid, d); snToast((fd || d >= 100 ? '擊倒 ' : '命中 ') + (p ? `${TEAMS[p.team]?.name || ''} ${p.no} 號` : '') + (part === 'head' ? '（爆頭）' : part === 'limb' ? '（手腳，再一發）' : ''), fd || d >= 100);
     if (p) tLog(p.team, `老師命中 ${TEAMS[p.team]?.name} ${p.no} 號${part === 'head' ? '（爆頭）' : ''}`);
     $('tSnX').classList.add('hit'); setTimeout(() => $('tSnX').classList.remove('hit'), 160);
   }
