@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.12（老師：街尾屋頂打不到同學的錯誤修好；可換狙擊槍／M4／AK；可攻進商行倉庫、民宅前廳、人質房埋伏）';
+const VERSION = '2.4.13（修正老師開槍時後座力先作用、子彈全部打偏的錯誤）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5652,10 +5652,11 @@ function snToast(txt, big) {
 }
 function tpFire() {
   const g = TG[TP.gear]; if (TP.ammo <= 0) { TP.reload = g.reload; return; }
-  TP.ammo--; TP.fireT = g.gap; SFX.shot(g.snd); TP.pitch += g.kick * (0.7 + R() * 0.6); TP.yaw += (R() - 0.5) * g.kick * 0.6;
+  TP.ammo--; TP.fireT = g.gap; SFX.shot(g.snd);
   if (TV) { TV.kick = 1; flashOn(TV.flash, g.auto ? 0.045 : 0.07); if (!g.auto) { if (TP.ammo > 0) TV.boltQ = 0.25; } else if (TV.mesh) ejectCase(TV, TV.w, TV.mesh); } /* 狙擊槍每發之間拉一次槍機；M4／AK 開槍就拋殼 */
   const ro = camera.position.clone(); const spread = lerp(g.hip, g.ads, TP.adsK) * Math.PI / 180;
   const rd = V(0, 0, -1).applyEuler(new THREE.Euler(TP.pitch + (R() - 0.5) * spread, TP.yaw + (R() - 0.5) * spread, 0, 'YXZ')).normalize();
+  TP.pitch += g.kick * (0.7 + R() * 0.6); TP.yaw += (R() - 0.5) * g.kick * 0.6; /* 後座力：子彈射出之後槍口才上揚（2.4.12 誤放在射出之前，遠距離全部打偏） */
   let best = rayWorld(ro, rd, 300), hit = null, part = null;
   for (const c of AV.pool) { if (!c.pid || !c.root.visible) continue; const s = AV.st.get(c.pid); if (!s || !s.alive || !(s.peek || s.mv)) continue; const h = c.hitTest(ro, rd); if (h && h.t < best) { best = h.t; hit = c; part = h.part; } }
   const hp = ro.clone().addScaledVector(rd, best); PUFFS.burst(hp, 6, { spread: 1, up: 1.2, size: 0.2, c: hit ? [0.5, 0.2, 0.15] : [0.55, 0.48, 0.38] });
