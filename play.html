@@ -142,7 +142,7 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
 .tpanel .row button.on { border-color: var(--hot); background: rgba(255,150,60,0.25); }
 .tpanel .big { padding: 14px; border-radius: 12px; border: 3px solid var(--film); background: rgba(232,197,71,0.2); color: #fff; font-size: 22px; font-weight: 900; }
 .tpanel .big.red { border-color: var(--red); background: rgba(255,60,40,0.2); }
-.tpanel .big:disabled { opacity: 0.35; }
+.tpanel .big:disabled { opacity: 0.35; } .tpanel button:disabled { opacity: 0.35; cursor: default; } .tpanel button.on small { font-size: 13px; font-weight: 700; }
 .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .teams div { border-radius: 10px; padding: 8px; background: color-mix(in srgb, var(--c) 18%, #111); border: 2px solid var(--c); }
 .teams b { display: block; font-size: 18px; }
@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.6（新增一人試玩全班模式：老師用一支手機就能自己下場當學生，電腦模擬 12 位同學、全班同一個城鎮）';
+const VERSION = '2.4.7（老師畫面：按「加入假學生」後按鈕會顯示已加入幾位，並提示可以直接開始；停用中的按鈕會變暗）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5286,7 +5286,8 @@ function renderPanel() {
   ${ph === 'count' || ph === 'take' ? `<button class="big red" id="bCut">結束任務（提前）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bPrem">公布成績（翻牌）</button>` : ''}
   ${ph === 'cut' ? `<button class="big" id="bNew" style="border-color:#666;background:#222;font-size:16px">清空成績，重新選組</button>` : ''}
-  <h2>測試（沒有學生手機時）</h2><div class="row"><button id="bFake">加入 12 位假學生</button><button id="bUnfake" ${TS.fake.length ? '' : 'disabled'}>移除假學生</button></div>
+  <h2>測試（沒有學生手機時）</h2><div class="row"><button id="bFake" ${TS.sid && tCounts().some((c) => c < TEAM_MAX) ? '' : 'disabled'} class="${TS.fake.length ? 'on' : ''}">${!TS.sid ? '連線中，請稍等…' : TS.fake.length ? `✔ 已加入 ${TS.fake.length} 位假學生<br><small>再按一次再加 12 位</small>` : '加入 12 位假學生'}</button><button id="bUnfake" ${TS.fake.length ? '' : 'disabled'}>移除假學生</button></div>
+  ${TS.fake.length ? `<div class="small" style="color:#ffd27a">假學生已經分到四組（上方各組人數會增加），可以直接按「開始任務」。</div>` : ''}
   <div class="row"><button id="bStu">在新分頁開學生畫面（同機試玩）</button><button id="bBot">開一個自動遊玩的學生視窗</button></div>
   <div class="row"><button id="bClass">我自己下場當學生（電腦模擬全班，手機也能用）</button></div>
   <div class="small">假學生：不畫畫面，自己選組、出任務、會被你狙擊倒下、也會朝屋頂的你開槍，可以走完整個流程到公布成績。<br>自動遊玩的學生：開一個小視窗，裡面是真的學生畫面由電腦自己打（會瞄準、開槍、換掩體、拆彈），可以多按幾次開好幾個；這台電腦比較吃力，開 2～4 個就好。</div>
@@ -5389,7 +5390,7 @@ function premiere(step) {
 /* ---------- 假學生（老師電腦自己模擬，走真正的資料路徑） ---------- */
 function addFake(n) {
   for (let i = 0; i < n; i++) {
-    const team = i % 4; const pid = 'fake' + Math.random().toString(36).slice(2, 8);
+    const cn = tCounts(); let team = i % 4; if (cn[team] >= TEAM_MAX) { team = cn.indexOf(Math.min(...cn)); if (cn[team] >= TEAM_MAX) break; } const pid = 'fake' + Math.random().toString(36).slice(2, 8);
     const used = new Set(Object.values(TS.players).filter((p) => p.team === team).map((p) => p.no)); let no = 1; while (used.has(no)) no++;
     const rec = { team, no, call: 1, at: NET.now(), fake: 1, slot: nextSlot() }; TS.players[pid] = rec; NET.set('players/' + pid, rec);
     TS.fake.push({ pid, team, no, S: null, sendT: R(), statT: R() });
