@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.7（老師畫面：按「加入假學生」後按鈕會顯示已加入幾位，並提示可以直接開始；停用中的按鈕會變暗）';
+const VERSION = '2.4.8（老師屋頂狙擊：假學生不再擠成一團、名牌被牆擋住時不顯示、顯示街上／屋內人數；重新整理後清掉上次留下的假學生；新增清空名單按鈕）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5289,6 +5289,7 @@ function renderPanel() {
   <h2>測試（沒有學生手機時）</h2><div class="row"><button id="bFake" ${TS.sid && tCounts().some((c) => c < TEAM_MAX) ? '' : 'disabled'} class="${TS.fake.length ? 'on' : ''}">${!TS.sid ? '連線中，請稍等…' : TS.fake.length ? `✔ 已加入 ${TS.fake.length} 位假學生<br><small>再按一次再加 12 位</small>` : '加入 12 位假學生'}</button><button id="bUnfake" ${TS.fake.length ? '' : 'disabled'}>移除假學生</button></div>
   ${TS.fake.length ? `<div class="small" style="color:#ffd27a">假學生已經分到四組（上方各組人數會增加），可以直接按「開始任務」。</div>` : ''}
   <div class="row"><button id="bStu">在新分頁開學生畫面（同機試玩）</button><button id="bBot">開一個自動遊玩的學生視窗</button></div>
+  <div class="row"><button id="bClear" ${idle ? '' : 'disabled'}>清空名單（所有人重新選組）</button></div>
   <div class="row"><button id="bClass">我自己下場當學生（電腦模擬全班，手機也能用）</button></div>
   <div class="small">假學生：不畫畫面，自己選組、出任務、會被你狙擊倒下、也會朝屋頂的你開槍，可以走完整個流程到公布成績。<br>自動遊玩的學生：開一個小視窗，裡面是真的學生畫面由電腦自己打（會瞄準、開槍、換掩體、拆彈），可以多按幾次開好幾個；這台電腦比較吃力，開 2～4 個就好。</div>
   <h2>現場狀況</h2><div class="tick" id="tTick"></div>
@@ -5300,6 +5301,7 @@ function renderPanel() {
   if ($('bStart')) $('bStart').onclick = startCount; if ($('bCut')) $('bCut').onclick = () => cut('cut'); if ($('bPrem')) $('bPrem').onclick = () => premiere(0); if ($('bNew')) $('bNew').onclick = newSession;
   $('bFake').onclick = () => { if (TS.sid) addFake(12); }; $('bUnfake').onclick = removeFake;
   $('bBot').onclick = () => { const u = new URL(location.href); u.hash = 'student-bot'; u.searchParams.set('q', 'low'); const n = (TS.botN = (TS.botN || 0) + 1); const w = window.open(u.toString(), 'bot' + n + Date.now(), `popup,width=560,height=320,left=${40 + (n % 4) * 580},top=${60 + Math.floor(n / 4) * 360}`); if (!w) $('tTick').insertAdjacentHTML('afterbegin', '<div>瀏覽器擋住新視窗：請在網址列右邊允許「彈出式視窗」，再按一次</div>'); else tLog(-1, `開了第 ${n} 個自動遊玩的學生視窗`); };
+  $('bClear').onclick = () => { if (TS.phase !== 'lobby' && TS.phase !== 'cut') return; newSession(); tLog(-1, '名單已清空：同學要重新選組'); };
   $('bClass').onclick = () => { location.href = new URL('play.html?local&class', location.href).toString(); };
   $('bStu').onclick = () => { const u = new URL(location.href); u.hash = 'student'; const w = window.open(u.toString(), '_blank'); if (!w) { $('tTick').insertAdjacentHTML('afterbegin', `<div>瀏覽器擋住新分頁：請自己開新分頁貼上網址，後面加 #student</div>`); } };
   $('bSnd').onclick = () => { SFX.init(); SFX.toggle(); renderPanel(); }; $('bFs').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); };
@@ -5422,7 +5424,7 @@ function fakeTick(dt) {
 }
 // 全班同一個城鎮的假學生：跟著全班進度走、打共用的敵人（走真正的命中回報路徑）、被敵人打中會倒下
 function fakeCover(z, j) {
-  if (INDIV(z)) return COVERS.E1a; const ids = ZONES[z].covers; const c = COVERS[ids[Math.floor((j + 1) / 2 * ids.length) % ids.length]];
+  if (INDIV(z)) { const c = COVERS[ZONES[z].covers[0]] || COVERS.E1a; return z === Z_SNIPE ? c : { x: c.x + j * 0.5, z: c.z + (j * 7.3 % 1) * 0.5 }; } /* 個別攻堅時假學生在屋內（各自的掩體位置），屋頂看不到 */ const ids = ZONES[z].covers; const u = (j + 1) / 2 * ids.length; const c = COVERS[ids[Math.floor(u) % ids.length]]; j = (u % 1) * 2 - 1; /* 先分配到哪個掩體，剩下的小數決定在掩體後面的左右位置（不會擠成一團） */
   if (c.kind === 'side' || !c.box) return c; const b = c.box; const half = Math.max(0, (b[1] - b[0]) / 2 - 0.55); return { x: c.kind === 'defuse' ? c.x + j * 1.3 : clamp((b[0] + b[1]) / 2 + j * half, b[0] + 0.5, b[1] - 0.5), z: c.z };
 }
 function fakeShared(f, dt) {
@@ -5434,10 +5436,14 @@ function fakeShared(f, dt) {
   // 要去哪一段
   if (S.zone === S.tz) {
     if (S.zone <= 1 && ph > S.zone) S.tz = Math.min(2, S.zone + 1);
-    else if (S.zone === 2) { S.hT -= dt; if (S.hT <= 0) { S.hr = (R() < 0.7 ? 3 : 0) + (R() < 0.6 ? 2 : 0); S.s += S.hr * 200; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.hr ? 'hr' : 'taken', n: S.hr, pid: f.pid }); S.tz = Z_BOMB; } }
+    else if (S.zone === 2) { S.hT -= dt; if (S.hT <= 0) { S.hr = (R() < 0.7 ? 3 : 0) + (R() < 0.6 ? 2 : 0); S.s += S.hr * 200; NET.push('ev', { t: NET.now(), team: f.team, no: f.no, kind: S.hr ? 'hr' : 'taken', n: S.hr, pid: f.pid }); S.exit = 1; } }
     else if (S.zone === Z_BOMB && ph >= Z_DEF) S.tz = Z_DEF;
   }
   let mv = 0; if (S.zone !== S.tz && S.dn <= 0) { const c = fakeCover(S.tz, j); const dx = c.x - S.x, dz = c.z - S.z; const l = Math.hypot(dx, dz); if (l < 0.5) S.zone = S.tz; else { const sp = Math.min(l, 5 * dt); S.x += dx / l * sp; S.z += dz / l * sp; mv = 1; } }
+    if (S.zone === 2 && S.tz === 2 && S.dn <= 0) { /* 個別攻堅：先在商行門口，6 秒後進到店裡；結束時從門口出來再去炸彈那條街 */
+    S.inT = (S.inT || 0) + dt; const c = S.exit ? fakeCover(2, j) : S.inT > 6 ? fakeCover(3, j) : null;
+    if (c) { const dx = c.x - S.x, dz = c.z - S.z; const l = Math.hypot(dx, dz); if (l > 0.3) { const sp = Math.min(l, 2.6 * dt); S.x += dx / l * sp; S.z += dz / l * sp; mv = 1; } else if (S.exit) { S.exit = 0; S.inT = 0; S.tz = Z_BOMB; } }
+  }
   S.peekT = (S.peekT || 0) - dt; if (S.peekT <= 0) { S.peek = R() < 0.5 ? 1 : 0; S.peekT = 0.6 + R() * 1.6; }
   const alive = S.dn <= 0; const street = STREET(S.zone) && S.zone === S.tz;
   // 開槍：挑一個同一段、活著的敵人回報命中
@@ -5491,7 +5497,8 @@ function teacherInit() {
     unsub();
     if (m && m.sid) { TS.sid = m.sid; TS.take = m.take || 0; TS.diff = m.diff || 'N'; TS.phase = 'lobby'; NET.set('meta', { sid: TS.sid, phase: 'lobby', diff: TS.diff, take: TS.take }); claimLobby(); }
     else newSession();
-    NET.on('players', (p) => { TS.players = p || {}; renderPanel(); for (const [pid, d] of TS.dots) if (!TS.players[pid]) { scene.remove(d); TS.dots.delete(pid); } });
+    let first = true;
+    NET.on('players', (p) => { TS.players = p || {}; if (first) { first = false; for (const k in TS.players) if (TS.players[k].fake && !TS.fake.some((f) => f.pid === k)) { delete TS.players[k]; NET.remove('players/' + k); NET.remove('pos/' + k); NET.remove('stat/' + k); } } renderPanel(); for (const [pid, d] of TS.dots) if (!TS.players[pid]) { scene.remove(d); TS.dots.delete(pid); } });
     NET.onChild('req', { added: (pid, r) => handleReq(pid, r) });
     NET.onChild('pos', { added: posIn, changed: posIn, removed: (pid) => { const d = TS.dots.get(pid); if (d) d.visible = false; AV.st.delete(pid); MATES.delete(pid); } });
     NET.onChild('eh', { added: ehIn, changed: ehIn });
@@ -5623,7 +5630,7 @@ function teacherHit(v) {
 }
 function renderSnHUD() {
   if (TP.mode !== 'sn') return;
-  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・狙擊手</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／10'}　命中同學 ${TP.tk}</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>`;
+  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・狙擊手</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／10'}　命中同學 ${TP.tk}</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>${snCrowd()}`;
   $('tSnHint').hidden = document.pointerLockElement === canvas;
   $('tSnScope').classList.toggle('on', TP.aimK > 0.85); $('tSnX').hidden = TP.aimK > 0.85;
   $('tSnDmg').style.opacity = String(TP.down > 0 ? 0.8 : Math.min(0.8, TP.hurtT * 1.6));
@@ -5641,12 +5648,23 @@ function sniperTick(dt) {
   TP.sendT -= dt; if (TP.sendT <= 0) { TP.sendT = 0.2; sendTP(); }
   snHudT -= dt; if (snHudT <= 0) { snHudT = 0.15; renderSnHUD(); }
 }
+/* 化身被牆擋住時不顯示名牌（避免看到名牌卻找不到人）；每 0.2 秒檢查一次 */
+const _ae = new THREE.Vector3(), _ad = new THREE.Vector3();
+function avSeen(c) {
+  const now = performance.now(); if (c._seenAt && now - c._seenAt < 200 && c._seenPid === c.pid) return c._seen; c._seenAt = now; c._seenPid = c.pid; _ae.copy(camera.position);
+  c._seen = [0.7, 1.15, 1.6].some((h) => { _ad.set(c.pos.x, h, c.pos.z).sub(_ae); const L = _ad.length(); _ad.divideScalar(L); return rayWorld(_ae, _ad, L) >= L - 0.35; }); return c._seen;
+}
+/* 屋頂上看得到幾位同學：個別攻堅（商行、狙擊救援、民宅）時大家都在屋內，屋頂看不到 */
+function snCrowd() {
+  let out = 0, inn = 0; const now = performance.now(); for (const [pid, st] of AV.st) { if (!TS.players[pid] || now - st.at > 3000) continue; if (INDIV(st.zone)) inn++; else out++; }
+  if (!out && !inn) return ''; return `<span style="color:#ffd27a">街上 ${out} 人　屋內 ${inn} 人${!out ? '：大家都在屋內攻堅，屋頂看不到，等他們回到街上（炸彈階段）' : ''}</span>`;
+}
 function avatarLabels() {
   const host = $('tLabels'); const items = AV.pool.filter((c) => c.pid && c.root.visible);
   while (host.children.length < items.length) host.appendChild(document.createElement('div'));
   for (let i = 0; i < host.children.length; i++) {
     const el = host.children[i]; if (i >= items.length) { el.style.display = 'none'; continue; }
-    const c = items[i]; const p = TS.players[c.pid]; _pv.set(c.pos.x, 2.15, c.pos.z).project(camera);
+    const c = items[i]; const p = TS.players[c.pid]; if (!avSeen(c)) { el.style.display = 'none'; continue; } _pv.set(c.pos.x, 2.15, c.pos.z).project(camera);
     if (_pv.z > 1 || Math.abs(_pv.x) > 1.05 || Math.abs(_pv.y) > 1.05) { el.style.display = 'none'; continue; }
     el.style.display = ''; el.className = 'tlab'; el.style.setProperty('--c', TEAMS[p?.team]?.c || '#fff'); el.style.left = ((_pv.x + 1) / 2 * VW) + 'px'; el.style.top = ((1 - _pv.y) / 2 * VH) + 'px'; el.textContent = p ? `${TEAMS[p.team]?.name?.[0] || ''}${p.no}` : '';
   }
