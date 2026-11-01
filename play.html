@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.15（老師：1/2/3 換槍、滾輪只調倍率、M 地圖可選任何一棟屋頂；AK 換彈左手改從槍下方拉槍機；老師換彈時槍不再放低）';
+const VERSION = '2.4.16（指揮官面板的位置地圖改成直式，修正被壓扁看不到的問題）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5603,13 +5603,26 @@ function cmdPanelHTML() {
   if (TS.phase !== 'take' && TS.phase !== 'count') return '';
   return `<h2>你是黑鴉指揮官</h2><div class="pts">指令點數 <b>${TP.pts}</b>／${PTS_MAX}<span>每 ${PTS_EVERY} 秒 +1</span></div>
   <div class="cmds">${CMDS.map((c) => `<button data-cmd="${c.k}" ${TP.pts >= c.cost && TS.phase === 'take' ? '' : 'disabled'}><b>${c.name}</b><span>${c.cost} 點・${TS.shared && c.sh ? c.sh : c.desc}</span></button>`).join('')}</div>
-  <h2>親自上場：點地圖上的任何一棟屋頂，或屋內埋伏點</h2>${nestMapSVG()}
+  <h2>親自上場：點地圖上的任何一棟屋頂，或屋內埋伏點</h2>${nestMapV()}
   <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來瞄準（同學也打得到你），左鍵開火（M4／AK 按住連發，會自動站起來），R 換彈；1 狙擊槍、2 M4、3 AK；狙擊鏡開鏡時滾輪或 Z 調倍率（4／8／12／15）；M 打開地圖換位置；C 回到指揮官。</div>`;
 }
 /* 位置地圖：俯視整條街（左邊是起點路障、右邊是街尾炸彈），兩側每一棟樓都可以點；圓點是同學現在的位置 */
+/* 指揮官面板用的直式地圖（面板很窄）：上面是起點、下面是街尾；屋內埋伏點做成下方的按鈕 */
+function nestMapV() {
+  const Z0 = 16, Z1 = -156, H = 760, k = H / (Z0 - Z1), Y = (z) => (Z0 - z) * k, LX = 8, RX = 212, BW = 92, RL = 106, RW = 100;
+  let h = `<svg viewBox="0 0 312 ${H}" style="width:100%;height:auto;aspect-ratio:312/${H};flex-shrink:0;display:block;background:#1b1f22;border-radius:10px;margin:6px 0;cursor:pointer">`;
+  h += `<rect x="${RL}" y="0" width="${RW}" height="${H}" fill="#3a3f43"/><line x1="${RL + RW / 2}" y1="0" x2="${RL + RW / 2}" y2="${H}" stroke="#bbb" stroke-dasharray="10 10" stroke-width="2"/>`;
+  for (const [nm, z] of [['起點', 12], ['路障', 0], ['街口', -22], ['商行', -55], ['民宅', -84], ['炸彈街', -118], ['街尾', -150]]) h += `<text x="${RL + RW / 2}" y="${Y(z) + 6}" fill="#ffd27a" font-size="17" font-weight="900" text-anchor="middle" stroke="#3a3f43" stroke-width="4" paint-order="stroke">${nm}</text>`;
+  NESTS.forEach((n, i) => { if (n.in) return; const on = i === TP.nest && TP.mode === 'sn'; const b = n.b, y = Y(b.z0), hh = (b.z0 - b.z1) * k, x = n.side < 0 ? LX : RX;
+    h += `<g data-nest="${i}"><rect x="${x}" y="${y + 1}" width="${BW}" height="${hh - 2}" rx="5" fill="${on ? '#ffd27a' : b.shop ? '#7a5a3a' : '#56636b'}" stroke="#9fb0b8" stroke-width="1.5"/><text x="${x + BW / 2}" y="${y + hh / 2 + 6}" fill="${on ? '#222' : '#fff'}" font-size="17" font-weight="900" text-anchor="middle">${b.shop ? '商行 ' : ''}${n.fl}樓</text></g>`; });
+  const now = performance.now(); for (const [pid, st] of AV.st) { if (!TS.players[pid] || now - st.at > 3000) continue; h += `<circle cx="${RL + RW / 2 + clamp(st.tx, -8, 8) * 5.5}" cy="${Y(st.tz)}" r="5" fill="${TEAMS[TS.players[pid].team]?.c || '#fff'}" stroke="#000" stroke-width="1"/>`; }
+  h += '</svg>';
+  h += `<div class="row">${NESTS.map((n, i) => n.in ? `<button data-nest="${i}" style="${i === TP.nest && TP.mode === 'sn' ? 'border-color:#ffd27a' : ''}">${n.name}</button>` : '').join('')}</div>`;
+  return h + '<div class="small">方塊＝可以上去的屋頂（數字是樓層，越高看越遠）；按鈕＝屋內埋伏點；小圓點＝同學現在的位置。</div>';
+}
 function nestMapSVG() {
   const Z0 = 16, Z1 = -156, W = 1000, k = W / (Z0 - Z1), X = (z) => (Z0 - z) * k, Y = (side) => (side < 0 ? 34 : 150), RY = 78, RH = 68;
-  let h = `<svg class="nestmap" viewBox="0 0 ${W} 232" style="width:100%;display:block;background:#1b1f22;border-radius:10px;margin:6px 0;cursor:pointer">`;
+  let h = `<svg class="nestmap" viewBox="0 0 ${W} 232" style="width:100%;height:auto;flex-shrink:0;display:block;background:#1b1f22;border-radius:10px;margin:6px 0;cursor:pointer">`;
   h += `<rect x="0" y="${RY}" width="${W}" height="${RH}" fill="#3a3f43"/><line x1="0" y1="${RY + RH / 2}" x2="${W}" y2="${RY + RH / 2}" stroke="#bbb" stroke-dasharray="10 10" stroke-width="2"/>`;
   h += `<text x="6" y="${RY + 22}" fill="#ddd" font-size="15" font-weight="900">起點</text><text x="${W - 6}" y="${RY + 22}" fill="#ddd" font-size="15" font-weight="900" text-anchor="end">街尾</text>`;
   for (const [nm, z] of [['路障', 0], ['街口', -22], ['商行', -55], ['民宅', -84], ['炸彈街', -118]]) h += `<text x="${X(z)}" y="${RY + RH - 8}" fill="#ffd27a" font-size="14" font-weight="900" text-anchor="middle">${nm}</text>`;
