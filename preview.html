@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.18（新外觀樣品：網址加 ?look2 才會開啟；預設畫面不變）';
+const VERSION = '2.4.19（新外觀樣品第二版：零件不會擋住玩家看敵人；機車、電線桿、變壓器、路燈、水塔、冷氣、招牌、沙包、護欄全部重做）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2869,9 +2869,9 @@ function buildWorld() {
   ];
   for (const c of covers) {
     if (c.k === 'sand') sandbagLine(c.x, c.z, c.w, 0.9, c.ry);
-    else if (c.k === 'bar') { block(c.w, 1.0, 0.5, 'concrete', c.x, 0, c.z, { rotY: c.ry }); }
+    else if (c.k === 'bar') { GEO_MUTE = LOOK2; block(c.w, 1.0, 0.5, 'concrete', c.x, 0, c.z, { rotY: c.ry }); GEO_MUTE = false; if (LOOK2) jersey(c.w, c.x, c.z, c.ry); } /* 新外觀：紐澤西護欄的斷面（碰撞盒不變） */
     else if (c.k === 'car') WORLD.dyn.push({ model: 'gclass', x: c.x, z: c.z, ry: c.ry, w: 2.1, d: 4.9, h: 2.0 });
-    else if (c.k === 'drums') { for (let i = 0; i < 3; i++) { const dx = Math.cos(c.ry) * i * 0.75, dz = Math.sin(c.ry) * i * 0.75; cylinderProp(0.32, 0.9, 'rust', c.x + dx, c.z + dz); } }
+    else if (c.k === 'drums') { for (let i = 0; i < 3; i++) { const dx = Math.cos(c.ry) * i * 0.75, dz = Math.sin(c.ry) * i * 0.75; cylinderProp(0.32, 0.9, 'rust', c.x + dx, c.z + dz); if (LOOK2) drumRings(c.x + dx, c.z + dz); } }
     else if (c.k === 'crates') { block(1.1, 1.0, 1.1, 'planks', c.x, 0, c.z, { rotY: c.ry }); block(0.9, 0.8, 0.9, 'planks', c.x + 0.9, 0, c.z - 0.4, { rotY: c.ry + 0.4 }); }
     else if (c.k === 'stall') stall(c.x, c.z, c.ry);
     if (c.k !== 'stall' && c.k !== 'crates') WORLD.covers.push({ x: c.x, z: c.z - 1.2, ry: c.ry, kind: c.k });
@@ -2886,12 +2886,13 @@ function buildWorld() {
   buildInterior(); buildShop(); if (LOOK2) dressStreet();
   // 合併靜態幾何
   // 室內材質（in_ 開頭）不接收陰影：屋頂的影子會讓室內一片黑，當作室內有開燈
-  for (const m in GEOS) { const g = mergeGeometries(GEOS[m], false); const mesh = new THREE.Mesh(g, matFor(m)); mesh.userData.m = m; const inside = m.startsWith('in_'); const flat = /^(cv_|d2_(alu|glass|glass2|curtain|curtain2|reveal|wire|curbR|curbY|patch|lamp))/.test(m) && !/^cv_(tile|shutter|signH|signV|ac)/.test(m); mesh.castShadow = !inside && !flat; /* 貼花、玻璃、細電線不投影（省手機效能） */ mesh.receiveShadow = !inside; STATIC.add(mesh); }
+  for (const m in GEOS) { const L = GEOS[m], mixed = L.some((x) => !x.index) && L.some((x) => x.index); const g = mergeGeometries(mixed ? L.map((x) => (x.index ? x.toNonIndexed() : x)) : L, false); /* 有的零件沒有索引，要先統一才能合併 */ if (!g) { DBG('合併失敗 ' + m); continue; } const mesh = new THREE.Mesh(g, matFor(m)); mesh.userData.m = m; const inside = m.startsWith('in_'); const flat = /^(cv_|d2_(alu|glass|glass2|curtain|curtain2|reveal|wire|curbR|curbY|patch|lamp|copper|tape|lens|redlens|porcelain|tag))/.test(m) && !/^cv_(tile|shutter|signH|signV|ac|stripe)/.test(m); mesh.castShadow = !inside && !flat; /* 貼花、玻璃、細電線不投影（省手機效能） */ mesh.receiveShadow = !inside; STATIC.add(mesh); }
 }
 function matFor(m) {
   if (m.startsWith('cv_') || m.startsWith('d2_')) { const mt = matFor2(m); if (mt) return mt; }
   if (LOOK2 && m === 'road') return pbr('road', 1, 1, { color: '#8f8f8b' }); /* 新外觀：路面暗一點、人行道偏紅磚色 */
   if (LOOK2 && m === 'paving') return pbr('paving', 1, 1, { color: '#cfa597' });
+  if (LOOK2 && m === 'hessian') return pbr('hessian', 1, 1, { color: '#b3a07c' });
   if (LOOK2 && (m === 'concrete2' || m === 'concrete' || m === 'roof')) return pbr(m, 1, 1, { color: '#bdb8ae' }); /* 屋頂與水泥面不要那麼白（俯瞰時刺眼） */
   const opt = {}; if (m.startsWith('in_')) { const base = m.slice(3); const mt = pbr(base, 1, 1, { env: 0.9, color: base === 'planks' ? '#c9b49a' : '#e8e2d8' }); return mt; }
   if (m === 'metal' || m === 'corrugated' || m === 'rust' || m === 'greenmetal') { opt.metal = 0.6; opt.env = 0.8; }
@@ -2927,7 +2928,7 @@ function sandbagLine(x, z, w, h, ry) {
   // 一排沙包：下層寬、上層窄
   const n = Math.round(w / 0.55);
   for (let r = 0; r < 2; r++) for (let i = 0; i < n - r; i++) {
-    const t = (i + 0.5 + r * 0.5) / n - 0.5; const g = new THREE.BoxGeometry(0.55, 0.42, 0.75); const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 0.55, uv.getY(k) * 0.42);
+    const t = (i + 0.5 + r * 0.5) / n - 0.5; const g = LOOK2 ? bagGeo() : new THREE.BoxGeometry(0.55, 0.42, 0.75); const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 0.55, uv.getY(k) * 0.42);
     g.rotateY(ry + (rnd() - 0.5) * 0.25); g.translate(x + Math.cos(ry) * t * w, 0.21 + r * 0.4, z + Math.sin(ry) * t * w); addGeo('hessian', g);
   }
   WORLD.colliders.push(aabbRot(x, z, w, 0.8, ry, 0, h));
@@ -3072,7 +3073,8 @@ function buildShop() {
   // 面街那一面：門左右兩段、門上方、二樓整面
   const fx = x0 + o; const fq = (w, h, zc, yc) => quad(w, h, skin, [fx, yc, zc], Math.PI / 2);
   fq(-50 - -56.2 + t / 2, H, (-50 + t / 2 + -56.2) / 2, H / 2); fq(-57.8 - (z1 - t / 2), H, (-57.8 + z1 - t / 2) / 2, H / 2); fq(1.6, H - DOOR_H, -57, DOOR_H + (H - DOOR_H) / 2);
-  for (const z of [-52.4, -61.4, -64.2]) { quad(1.6, 1.4, 'frame', [fx + 0.01, 1.6, z], Math.PI / 2); quad(1.4, 1.2, 'glass', [fx + 0.02, 1.6, z], Math.PI / 2); } // 一樓櫥窗（假的，打不穿）
+  GEO_MUTE = LOOK2; for (const z of [-52.4, -61.4, -64.2]) { quad(1.6, 1.4, 'frame', [fx + 0.01, 1.6, z], Math.PI / 2); quad(1.4, 1.2, 'glass', [fx + 0.02, 1.6, z], Math.PI / 2); } GEO_MUTE = false; // 一樓櫥窗（假的，打不穿）
+  if (LOOK2) for (const z of [-52.4, -61.4, -64.2]) window2(fx, 1, 0.95, z, 1.4, 1.3, { grille: 'd2_grille2', ac: false });
   GEO_MUTE = LOOK2; for (const f of [1, 2]) for (const z of [-52, -55.5, -59, -62.5]) { quad(1.4, 1.5, 'frame', [fx + 0.01, f * h1 + 1.9, z], Math.PI / 2); quad(1.2, 1.3, 'glass', [fx + 0.02, f * h1 + 1.9, z], Math.PI / 2); } GEO_MUTE = false; if (LOOK2) dressShop(fx, h1, H);
   awning(fx, 2.75, -57, -1, 3.0);
   // 招牌
@@ -3207,7 +3209,7 @@ function findPath(from, to) {
    - 零件依材質合併成少數幾個網格（跟原本的建築一樣），手機負擔有限
    ========================================================= */
 const LOOK2 = Q.has('look2') || /\/sample\//.test(location.pathname);
-let seed2 = 20261111;
+let seed2 = 20261111; const SIGNS_V = []; const DRESS = { poles: [], scooters: [] }; /* 測試用：記下零件位置 */
 const rnd2 = () => { seed2 = (seed2 * 16807) % 2147483647; return (seed2 - 1) / 2147483646; };
 const pick2 = (a) => a[Math.floor(rnd2() * a.length)];
 // 原本的牆面貼圖 → 新外觀用的牆面（facade 那張貼圖本身畫了窗戶，換成磁磚，窗戶改用立體零件）
@@ -3242,6 +3244,9 @@ function texs2() {
   TEXS2.signV = cvTex(1024, 1024, (g, W, H) => { SIGN_V.forEach(([t, bg, fg], i) => { const x = i * 128; g.fillStyle = bg; g.fillRect(x, 0, 128, H); g.strokeStyle = 'rgba(0,0,0,.3)'; g.lineWidth = 6; g.strokeRect(x + 3, 3, 122, H - 6); g.fillStyle = fg; g.font = `900 96px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; const n = t.length, step = Math.min(118, (H - 60) / n); [...t].forEach((ch, k) => g.fillText(ch, x + 64, 40 + step * (k + 0.5) + (H - 60 - step * n) / 2)); }); }, false);
   TEXS2.shutter = cvTex(256, 256, (g, W, H) => { for (let y = 0; y < H; y += 8) { const v = 168 + Math.random() * 18; g.fillStyle = `rgb(${v},${v + 2},${v + 4})`; g.fillRect(0, y, W, 6); g.fillStyle = 'rgb(110,112,114)'; g.fillRect(0, y + 6, W, 2); } for (let i = 0; i < 6; i++) { const x = Math.random() * W; const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(120,70,30,0)'); gr.addColorStop(1, 'rgba(120,70,30,0.35)'); g.fillStyle = gr; g.fillRect(x, H * 0.4, 6 + Math.random() * 10, H * 0.6); } });
   TEXS2.ac = cvTex(128, 96, (g, W, H) => { g.fillStyle = '#e4e4df'; g.fillRect(0, 0, W, H); g.fillStyle = '#3a3c3e'; g.beginPath(); g.arc(78, 48, 34, 0, 7); g.fill(); g.strokeStyle = '#cfd0cc'; g.lineWidth = 2; for (let r = 8; r < 34; r += 6) { g.beginPath(); g.arc(78, 48, r, 0, 7); g.stroke(); } for (let y = 12; y < 86; y += 6) { g.fillStyle = '#b9bab5'; g.fillRect(8, y, 26, 2); } }, false);
+  TEXS2.acside = cvTex(64, 64, (g) => { g.fillStyle = '#d9d9d3'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#7d7f7c'; for (let y = 6; y < 60; y += 5) g.fillRect(6, y, 52, 2); }, false);
+  TEXS2.stripe = cvTex(64, 128, (g) => { for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? '#141414' : '#e8c21a'; g.beginPath(); g.moveTo(0, i * 16 - 16); g.lineTo(64, i * 16); g.lineTo(64, i * 16 + 16); g.lineTo(0, i * 16); g.fill(); } });
+  TEXS2.plate = cvTex(128, 64, (g) => { g.fillStyle = '#f4f4f0'; g.fillRect(0, 0, 128, 64); g.strokeStyle = '#222'; g.lineWidth = 4; g.strokeRect(3, 3, 122, 58); g.fillStyle = '#222'; g.font = `900 34px ${FONT}`; g.textAlign = 'center'; g.fillText('ABC-' + (100 + Math.floor(Math.random() * 899)), 64, 44); }, false);
   TEXS2.manhole = cvTex(128, 128, (g, W) => { g.fillStyle = '#2b2b2a'; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.strokeStyle = '#555'; g.lineWidth = 3; for (let r = 14; r < 60; r += 10) { g.beginPath(); g.arc(64, 64, r, 0, 7); g.stroke(); } g.fillStyle = '#777'; g.font = `900 22px ${FONT}`; g.textAlign = 'center'; g.fillText('污水', 64, 72); }, false);
   TEXS2.stain = cvTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(10,10,8,.55)'); gr.addColorStop(0.6, 'rgba(10,10,8,.25)'); gr.addColorStop(1, 'rgba(10,10,8,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }, false);
   TEXS2.streak = cvTex(64, 256, (g) => { for (let i = 0; i < 9; i++) { const x = 8 + Math.random() * 48, w = 2 + Math.random() * 6; const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(30,28,22,.45)'); gr.addColorStop(1, 'rgba(30,28,22,0)'); g.fillStyle = gr; g.fillRect(x, 0, w, 120 + Math.random() * 136); } }, false);
@@ -3263,6 +3268,20 @@ function matFor2(m) {
     case 'cv_stain': return std({ map: T.stain, transparent: true, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -3 });
     case 'cv_streak': return std({ map: T.streak, transparent: true, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
     case 'cv_patch': return std({ map: T.patch, transparent: true, depthWrite: false, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -1 });
+    case 'cv_acside': return std({ map: T.acside, roughness: 0.6 });
+    case 'cv_stripe': return std({ map: T.stripe, roughness: 0.7 });
+    case 'cv_plate': return std({ map: T.plate, roughness: 0.4, metalness: 0.2 });
+    case 'd2_tire': return std({ color: '#141414', roughness: 0.92 });
+    case 'd2_rim': return std({ color: '#b8bcc0', roughness: 0.28, metalness: 0.9, envMapIntensity: 1.1 });
+    case 'd2_lens': return std({ color: '#f5f2e6', emissive: '#fff6d8', emissiveIntensity: 0.25, roughness: 0.1, metalness: 0.3 });
+    case 'd2_redlens': return std({ color: '#b3121a', emissive: '#6a0508', emissiveIntensity: 0.3, roughness: 0.15 });
+    case 'd2_porcelain': return std({ color: '#ece9e1', roughness: 0.25, metalness: 0.05 });
+    case 'd2_transformer': return std({ color: '#8e958f', roughness: 0.55, metalness: 0.5, envMapIntensity: 0.8 });
+    case 'd2_copper': return std({ color: '#b07a4a', roughness: 0.4, metalness: 0.7 });
+    case 'd2_tag': return std({ color: '#e5c21d', roughness: 0.5 });
+    case 'd2_tape': return std({ color: '#c9a86a', roughness: 0.4 });
+    case 'd2_leaf2': return std({ color: '#5d8a3a', roughness: 0.85 });
+    case 'd2_white': return std({ color: '#f0f0ec', roughness: 0.5 });
     case 'cv_base': return std({ map: T.base, transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
     case 'd2_trim': return std({ color: '#cfcac0', roughness: 0.75 });
     case 'd2_reveal': return std({ color: '#5f5b55', roughness: 0.9 });
@@ -3317,6 +3336,15 @@ function zq(mat, x, y, z, w, h, faceZ, uv) { // 面向 ±z 的一片（直立招
   if (faceZ < 0) g.rotateY(Math.PI); g.translate(x, y, z); addGeo(mat, g); return g;
 }
 /* ---------- 一扇窗：外框突出、鋁窗框、玻璃、有時窗簾、鐵窗、冷氣機、雨水痕 ---------- */
+/* 窗型冷氣：機身、上蓋、側面散熱孔、斜撐鐵架、接到牆裡的冷媒管 */
+function acUnit(fx, n, out, ay, az) {
+  bx('d2_plastW', fx, n, out, ay, az, 0.42, 0.46, 0.68);
+  bx('d2_plastW', fx, n, out - 0.01, ay + 0.46, az, 0.44, 0.03, 0.7);
+  fq('cv_ac', fx, n, out + 0.425, ay + 0.23, az, 0.66, 0.44);
+  for (const s of [-1, 1]) zq('cv_acside', fx + n * (out + 0.21), ay + 0.23, az + s * 0.342, 0.4, 0.42, s);
+  for (const dz of [-0.25, 0.25]) { bx('d2_grille2', fx, n, 0, ay - 0.04, az + dz, out + 0.42, 0.04, 0.04); const g = new THREE.BoxGeometry(0.03, Math.hypot(out + 0.4, 0.35), 0.03); g.rotateZ(n * Math.atan2(out + 0.4, 0.35)); g.translate(fx + n * (out + 0.4) / 2, ay - 0.2, az + dz); addGeo('d2_grille2', g); }
+  { const a = new THREE.Vector3(fx + n * (out + 0.1), ay + 0.12, az + 0.36), b = new THREE.Vector3(fx + n * 0.02, ay + 0.35, az + 0.5); wire(a, b, -0.05, 'd2_copper', 0.012); }
+}
 function window2(fx, n, y, z, w, h, opt) {
   const tr = opt.trim || 'd2_trim';
   bx(tr, fx, n, 0, y - 0.12, z, 0.2, 0.12, w + 0.3);                 // 窗台（突出）
@@ -3335,8 +3363,7 @@ function window2(fx, n, y, z, w, h, opt) {
     const roof = new THREE.BoxGeometry(D + 0.12, 0.03, w + 0.3); roof.rotateZ(n * 0.18); roof.translate(fx + n * (D / 2 + 0.04), y + h + 0.24, z); addGeo(rnd2() < 0.5 ? 'd2_roofblue' : 'corrugated', roof); }
   // 窗型冷氣：掛在窗下或窗邊
   if (opt.ac) { const az = z + (rnd2() < 0.5 ? -1 : 1) * (w / 2 - 0.35) * (opt.grille ? 0 : 1), ay = y - 0.62, out = opt.grille ? 0.4 : 0.02;
-    bx('d2_plastW', fx, n, out, ay, az, 0.42, 0.46, 0.68); fq('cv_ac', fx, n, out + 0.425, ay + 0.23, az, 0.66, 0.44);
-    for (const dz of [-0.25, 0.25]) bx('d2_grille2', fx, n, 0, ay - 0.04, az + dz, out + 0.42, 0.04, 0.04);
+    acUnit(fx, n, out, ay, az);
     fq('cv_streak', fx, n, 0.012, ay - 0.9, az, 0.5, 1.7); }                   // 冷氣滴水的污痕
   if (rnd2() < 0.35) fq('cv_streak', fx, n, 0.011, y - 0.95, z + (rnd2() - 0.5) * w * 0.6, 0.6, 1.7); // 窗台下的雨水痕
 }
@@ -3372,17 +3399,12 @@ function facade2(x, z, depth, w, h, floors, style, side, bare) {
     if (balc) { bx('d2_trim', fx, n, 0, f * 3.3 + 0.05, z, 1.0, 0.15, W - 0.8); for (let k = 0; k <= Math.round((W - 0.8) / 0.15); k++) fq(grilleMat, fx, n, 0.98, f * 3.3 + 0.7, z0 + 0.4 + k * 0.15, 0.02, 1.0); bx(grilleMat, fx, n, 0.95, f * 3.3 + 1.2, z, 0.05, 0.05, W - 0.8); }
   }
   // 直立招牌：從牆面伸出來，兩面都有字
-  if (!bare && rnd2() < 0.55 && floors >= 2) { const c = Math.floor(rnd2() * 8), u0 = c / 8, u1 = (c + 1) / 8; const sh = Math.min(h - 4, 3.2 + rnd2() * 3.5), sy = 3.6, out = 0.9, szz = (rnd2() < 0.5 ? z0 + 0.6 : z1 - 0.6), sx = fx + n * (0.35 + out / 2);
-    { const g = new THREE.BoxGeometry(out, sh, 0.2); g.translate(sx, sy + sh / 2, szz); addGeo('d2_black', g); }
-    zq('cv_signV', sx, sy + sh / 2, szz + 0.105, out - 0.06, sh - 0.08, 1, [u0, 0, u1, 1]); zq('cv_signV', sx, sy + sh / 2, szz - 0.105, out - 0.06, sh - 0.08, -1, [u0, 0, u1, 1]);
-    for (const yy of [sy + 0.3, sy + sh - 0.3]) bx('d2_grille2', fx, n, 0, yy, szz, 0.4, 0.05, 0.05); }
+  if (!bare && rnd2() < 0.55 && floors >= 2) { const c = Math.floor(rnd2() * 8); const sh = Math.min(h - 4, 3.2 + rnd2() * 3.5); SIGNS_V.push({ fx, n, c, sh, sy: 3.6, out: 0.9, szz: rnd2() < 0.5 ? z0 + 0.6 : z1 - 0.6, alt: [z0 + 0.6, z1 - 0.6, z] }); } /* 直立招牌等全部建築蓋好後再放（要先檢查會不會擋到玩家看敵人） */
   // 屋頂：不鏽鋼水塔、鐵皮加蓋、天線（離街邊 2.5 公尺以上，不擋屋頂槍手和老師的視線）
   if (!bare) { const back = (k) => x + side * (depth / 2 - 2.5 - k);
     const nT = rnd2() < 0.75 ? 1 + (rnd2() < 0.4 ? 1 : 0) : 0;
-    for (let i = 0; i < nT; i++) { const tx = back(rnd2() * Math.max(0.5, depth - 7)), tz = z + (rnd2() - 0.5) * (w - 3); const st = 0.9;
-      for (const [dx, dz] of [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]]) { const g = new THREE.BoxGeometry(0.06, st, 0.06); g.translate(tx + dx, h + 0.5 + st / 2, tz + dz); addGeo('d2_grille2', g); }
-      const g = new THREE.CylinderGeometry(0.62, 0.62, 1.25, 14); g.rotateZ(Math.PI / 2 * (rnd2() < 0.5 ? 1 : 0)); g.translate(tx, h + 0.5 + st + 0.63, tz); addGeo('d2_steel', g); }
-    if (rnd2() < 0.55) { const sw2 = Math.min(w - 2, 4 + rnd2() * 5), sd = Math.min(depth - 5, 3 + rnd2() * 3), sx = x + side * (depth / 2 - 1 - sd / 2); block(sd, 2.3, sw2, 'corrugated', sx, h + 0.5, z + (rnd2() - 0.5) * (w - sw2 - 1), { collide: false, top: rnd2() < 0.5 ? 'd2_roofblue' : 'd2_roofgreen' }); }
+    for (let i = 0; i < nT; i++) waterTank(back(rnd2() * Math.max(0.5, depth - 7)), h + 0.5, z + (rnd2() - 0.5) * (w - 3), rnd2() < 0.4);
+    if (rnd2() < 0.55) { const sw2 = Math.min(w - 2, 4 + rnd2() * 5), sd = Math.min(depth - 5, 3 + rnd2() * 3), sx = x + side * (depth / 2 - 1 - sd / 2); roofShed(sx, h + 0.5, z + (rnd2() - 0.5) * (w - sw2 - 1), sd, sw2, side, rnd2() < 0.5 ? 'd2_roofblue' : 'd2_roofgreen'); }
     if (rnd2() < 0.5) { const g = new THREE.CylinderGeometry(0.025, 0.025, 2.4, 5); g.translate(back(1), h + 0.5 + 1.2, z + (rnd2() - 0.5) * (w - 2)); addGeo('d2_grille2', g); }
   }
 }
@@ -3392,7 +3414,7 @@ function dressShop(fx, h1, H) {
   for (let k = 0; k < 9; k++) fq('cv_streak', fx, 1, 0.011, H - 1.4 - rnd2() * 0.5, -50.5 - rnd2() * 15, 0.8, 2.6);
   fq('cv_base', fx, 1, 0.012, 0.35, -58, 16, 0.7);
   for (const f of [1, 2]) bx('d2_trim', fx, 1, 0, f * h1 - 0.12, -58, 0.1, 0.24, 15.6);
-  { const g = new THREE.CylinderGeometry(0.62, 0.62, 1.25, 14); g.translate(-17.2, H + 1.6, -60.5); addGeo('d2_steel', g); for (const [dx, dz] of [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]]) { const l = new THREE.BoxGeometry(0.06, 0.9, 0.06); l.translate(-17.2 + dx, H + 0.95, -60.5 + dz); addGeo('d2_grille2', l); } }
+  waterTank(-17.2, H + 0.5, -60.5, false);
 }
 function dressHouse() {
   const { x0, z0, z1, h, t } = HOUSE, fx = x0 - t / 2, n = -1;
@@ -3404,69 +3426,180 @@ function dressHouse() {
   fq('cv_base', fx, n, 0.014, 0.35, (z0 + z1) / 2, z0 - z1, 0.7);
   for (let k = 0; k < 6; k++) fq('cv_streak', fx, n, 0.013, h - 1.1, z0 - 1 - rnd2() * (z0 - z1 - 2), 0.7, 2.0);
   // 屋頂水塔、鐵皮小屋
-  { const g = new THREE.CylinderGeometry(0.62, 0.62, 1.25, 14); g.translate(19.5, h + 1.9, -90); addGeo('d2_steel', g); for (const [dx, dz] of [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]]) { const l = new THREE.BoxGeometry(0.06, 0.9, 0.06); l.translate(19.5 + dx, h + 0.8, -90 + dz); addGeo('d2_grille2', l); } }
-  block(3.6, 2.2, 4.5, 'corrugated', 20.2, h + 0.35, -78, { collide: false, top: 'd2_roofblue' });
+  waterTank(19.5, h + 0.35, -90, false); roofShed(20.2, h + 0.35, -78, 3.6, 4.5, 1, 'd2_roofblue');
 }
 /* ---------- 街道：機車、電線桿與電線、路燈、人孔蓋、路面補丁、紅黃線、垃圾、花盆、三角錐 ---------- */
+/* ---------- 掩體外觀：圓鼓鼓的沙包、紐澤西護欄、油桶的補強環（只換外觀，碰撞盒不變） ---------- */
+function bagGeo() {
+  const g = new THREE.SphereGeometry(1, 10, 6); const P = g.attributes.position;
+  for (let i = 0; i < P.count; i++) { let x = P.getX(i), y = P.getY(i), z = P.getZ(i); const sx = Math.sign(x) * Math.pow(Math.abs(x), 0.55), sz = Math.sign(z) * Math.pow(Math.abs(z), 0.45); P.setXYZ(i, sx * 0.3, y * 0.19 * (1 - 0.2 * Math.abs(z)) + (x * 0.02), sz * 0.39); }
+  g.computeVertexNormals(); const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 1.2, uv.getY(k) * 0.6); return g;
+}
+function jersey(w, x, z, ry) {
+  const sh = new THREE.Shape(); sh.moveTo(-0.3, 0); sh.lineTo(0.3, 0); sh.lineTo(0.3, 0.08); sh.lineTo(0.2, 0.3); sh.lineTo(0.09, 1.0); sh.lineTo(-0.09, 1.0); sh.lineTo(-0.2, 0.3); sh.lineTo(-0.3, 0.08); sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.015, bevelSegments: 1 });
+  g.translate(0, 0, -w / 2); g.rotateY(Math.PI / 2); const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) / 3, uv.getY(k) / 3); g.rotateY(ry); g.translate(x, 0, z); addGeo('concrete', g);
+  for (const s of [-1, 1]) { const st = new THREE.PlaneGeometry(w * 0.9, 0.12); st.rotateY(s > 0 ? 0 : Math.PI); st.rotateX(s * -0.04); st.translate(0, 0.85, s * 0.105); st.rotateY(ry); st.translate(x, 0, z); addGeo('cv_stripe', st); } // 黃黑反光條
+}
+function drumRings(x, z) { for (const y of [0.3, 0.6, 0.9]) { const g = new THREE.TorusGeometry(0.325, 0.018, 4, 20); g.rotateX(Math.PI / 2); g.translate(x, y, z); addGeo('rust', g); } const lid = new THREE.CircleGeometry(0.3, 18); lid.rotateX(-Math.PI / 2); lid.translate(x, 0.905, z); addGeo('d2_grille2', lid); }
+/* ---------- 屋頂：不鏽鋼水塔（圓頂、補強環、鐵架、進水管）與鐵皮加蓋（斜屋頂、門窗） ---------- */
+function waterTank(x, y, z, lying) {
+  const st = 0.85, r = 0.6, L = 1.3;
+  for (const [dx, dz] of [[-0.48, -0.48], [0.48, -0.48], [-0.48, 0.48], [0.48, 0.48]]) { const g = new THREE.BoxGeometry(0.06, st, 0.06); g.translate(x + dx, y + st / 2, z + dz); addGeo('d2_grille2', g); }
+  for (const [sx, sz] of [[1.02, 0.05], [0.05, 1.02]]) for (const yy of [y + 0.3, y + st]) { const g = new THREE.BoxGeometry(sx, 0.05, sz); for (const o of [-0.48, 0.48]) { const gg = g.clone(); gg.translate(x + (sx < 0.5 ? o : 0), yy, z + (sz < 0.5 ? o : 0)); addGeo('d2_grille2', gg); } }
+  const t = new THREE.Group(); const parts = [];
+  { const g = new THREE.CylinderGeometry(r, r, L, 18); parts.push(g); }
+  { const g = new THREE.SphereGeometry(r, 18, 6, 0, Math.PI * 2, 0, Math.PI / 2); g.scale(1, 0.35, 1); g.translate(0, L / 2, 0); parts.push(g); }
+  { const g = new THREE.CylinderGeometry(r * 0.98, r, 0.06, 18); g.translate(0, -L / 2 - 0.03, 0); parts.push(g); }
+  const rings = []; for (const yy of [-L / 4, L / 4]) { const g = new THREE.TorusGeometry(r + 0.012, 0.018, 4, 24); g.rotateX(Math.PI / 2); g.translate(0, yy, 0); rings.push(g); }
+  const cap = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 10); cap.translate(0, L / 2 + r * 0.35, 0);
+  const pipe = new THREE.CylinderGeometry(0.035, 0.035, 1.4, 6); pipe.translate(r + 0.05, -0.2, 0);
+  const all = [[parts, 'd2_steel'], [rings, 'd2_steel'], [[cap], 'd2_steel'], [[pipe], 'd2_white']];
+  for (const [gs, m] of all) for (const g of gs) { if (lying) g.rotateZ(Math.PI / 2); g.translate(x, y + st + (lying ? r : L / 2 + 0.03), z); addGeo(m, g); }
+}
+function roofShed(x, y, z, d, w, side, roofMat) {
+  block(d, 2.25, w, 'corrugated', x, y, z, { collide: false, top: 'corrugated' });
+  { const g = new THREE.BoxGeometry(d + 0.5, 0.05, w + 0.5); g.rotateZ(side * 0.08); g.translate(x, y + 2.4, z); addGeo(roofMat, g); }      // 斜屋頂（往外伸出一點）
+  const fx = x - side * d / 2, n = -side;
+  bx('d2_door2', fx, n, 0, y, z + w / 4, 0.04, 1.95, 0.85);                                                                               // 鐵門
+  fq('d2_glass2', fx, n, 0.02, y + 1.5, z - w / 4, 0.9, 0.6); bx('d2_alu', fx, n, 0.01, y + 1.18, z - w / 4, 0.04, 0.04, 0.95);         // 小窗
+}
+/* ---------- 機車：完整的輪胎（輪胎＋輪框＋輪轂）、流線車身、前擋板、土除、座墊、龍頭、後照鏡、大燈、尾燈、車牌、排氣管、後扶手、側柱 ---------- */
 function scooter(x, z, ry, color) {
-  const parts = []; const add = (mat, g) => parts.push([mat, g]);
-  const box = (mat, sx, sy, sz, px, py, pz, rx = 0) => { const g = new THREE.BoxGeometry(sx, sy, sz); if (rx) g.rotateX(rx); g.translate(px, py, pz); add(mat, g); };
-  const wheel = (pz, r) => { const g = new THREE.CylinderGeometry(r, r, 0.11, 10, 1, true); g.rotateZ(Math.PI / 2); g.translate(0, r, pz); add('d2_black', g); const h = new THREE.CylinderGeometry(r * 0.6, r * 0.6, 0.1, 8); h.rotateZ(Math.PI / 2); h.translate(0, r, pz); add('d2_plastS', h); };
-  wheel(0.64, 0.25); wheel(-0.6, 0.25);
-  { const g = new THREE.CapsuleGeometry(0.19, 0.62, 2, 8); g.rotateX(Math.PI / 2); g.scale(1, 1.05, 1); g.translate(0, 0.55, -0.32); add(color, g); }   // 後車身（圓弧）
-  box(color, 0.3, 0.09, 0.5, 0, 0.3, 0.2);                                                    // 腳踏板
-  { const g = new THREE.CapsuleGeometry(0.17, 0.5, 2, 8); g.scale(1.15, 1, 0.55); g.rotateX(-0.28); g.translate(0, 0.66, 0.55); add(color, g); } // 前擋板
-  { const g = new THREE.SphereGeometry(0.12, 7, 4); g.scale(1.3, 0.8, 0.8); g.translate(0, 1.0, 0.72); add('d2_plastS', g); }               // 車頭燈
-  { const g = new THREE.CapsuleGeometry(0.15, 0.5, 2, 6); g.rotateX(Math.PI / 2); g.scale(1, 0.45, 1); g.translate(0, 0.8, -0.28); add('d2_black', g); } // 座墊
-  box('d2_plastR', 0.2, 0.06, 0.04, 0, 0.62, -0.96);                                          // 尾燈
-  box(color, 0.16, 0.16, 0.36, 0, 0.36, 0.7);                                                 // 前土除
-  { const g = new THREE.CylinderGeometry(0.02, 0.02, 0.66, 4, 1, true); g.rotateZ(Math.PI / 2); g.translate(0, 1.07, 0.56); add('d2_black', g); }      // 把手
-  { const g = new THREE.CylinderGeometry(0.035, 0.035, 0.52, 5, 1, true); g.rotateX(-0.3); g.translate(0, 0.84, 0.64); add('d2_plastS', g); }        // 龍頭
-  for (const s of [-1, 1]) { const g = new THREE.BoxGeometry(0.09, 0.06, 0.012); g.translate(s * 0.27, 1.22, 0.52); add('d2_plastS', g); const st = new THREE.CylinderGeometry(0.008, 0.008, 0.16, 3, 1, true); st.translate(s * 0.25, 1.14, 0.53); add('d2_black', st); } // 後照鏡
-  const lean = (rnd2() - 0.5) * 0.12; for (const [mat, g] of parts) { g.rotateZ(lean); g.rotateY(ry); g.translate(x, 0.15, z); addGeo(mat, g); }
+  const P = []; const add = (m, g) => P.push([m, g]);
+  const box = (m, sx, sy, sz, px, py, pz, rx = 0) => { const g = new THREE.BoxGeometry(sx, sy, sz); if (rx) g.rotateX(rx); g.translate(px, py, pz); add(m, g); };
+  const R = 0.255;
+  const wheel = (pz) => {
+    const t = new THREE.TorusGeometry(R - 0.06, 0.06, 6, 16); t.rotateY(Math.PI / 2); t.translate(0, R, pz); add('d2_tire', t);       // 輪胎（實心的環）
+    const rim = new THREE.CylinderGeometry(R - 0.1, R - 0.1, 0.075, 14); rim.rotateZ(Math.PI / 2); rim.translate(0, R, pz); add('d2_rim', rim);
+    const hub = new THREE.CylinderGeometry(0.05, 0.05, 0.13, 8); hub.rotateZ(Math.PI / 2); hub.translate(0, R, pz); add('d2_plastK', hub); };
+  wheel(0.64); wheel(-0.6);
+  { const g = new THREE.SphereGeometry(1, 14, 9); g.scale(0.205, 0.235, 0.56); g.translate(0, 0.57, -0.38); add(color, g); }            // 後車身
+  { const g = new THREE.BoxGeometry(0.26, 0.2, 0.62); g.translate(0, 0.38, -0.32); add('d2_plastK', g); }                              // 引擎（黑色）
+  { const g = new THREE.CylinderGeometry(0.035, 0.035, 0.32, 6); g.rotateX(0.5); g.translate(-0.11, 0.42, -0.6); add('d2_rim', g); }    // 後避震
+  box(color, 0.34, 0.08, 0.48, 0, 0.33, 0.2); box('d2_tire', 0.3, 0.012, 0.42, 0, 0.375, 0.2);                                         // 踏板＋止滑墊
+  { const g = new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.62); g.scale(0.22, 0.42, 0.13); g.rotateX(-0.25); g.translate(0, 0.62, 0.5); add(color, g); } // 前擋板（弧面）
+  box('d2_plastK', 0.3, 0.5, 0.04, 0, 0.62, 0.43, -0.25);                                                                                // 前擋板內側（置物格）
+  { const g = new THREE.TorusGeometry(R + 0.03, 0.045, 5, 10, Math.PI * 0.85); g.rotateY(Math.PI / 2); g.rotateX(-0.25); g.translate(0, R, 0.64); add(color, g); }   // 前土除
+  { const g = new THREE.SphereGeometry(1, 12, 6); g.scale(0.17, 0.075, 0.37); g.translate(0, 0.83, -0.34); add('d2_black', g); }        // 座墊
+  box('d2_rim', 0.3, 0.03, 0.18, 0, 0.8, -0.82);                                                                                        // 後扶手
+  box(color, 0.3, 0.13, 0.17, 0, 1.02, 0.58);                                                                                           // 龍頭蓋
+  { const g = new THREE.SphereGeometry(0.07, 8, 6); g.scale(1.4, 0.8, 0.6); g.translate(0, 1.0, 0.68); add('d2_lens', g); }             // 大燈
+  { const g = new THREE.CylinderGeometry(0.035, 0.035, 0.52, 6); g.rotateX(-0.3); g.translate(0, 0.78, 0.66); add('d2_rim', g); }       // 前叉
+  { const g = new THREE.CylinderGeometry(0.018, 0.018, 0.64, 6); g.rotateZ(Math.PI / 2); g.translate(0, 1.08, 0.55); add('d2_rim', g); } // 把手
+  for (const s of [-1, 1]) { const gr = new THREE.CylinderGeometry(0.024, 0.024, 0.12, 6); gr.rotateZ(Math.PI / 2); gr.translate(s * 0.29, 1.08, 0.55); add('d2_tire', gr);
+    const st = new THREE.CylinderGeometry(0.008, 0.008, 0.2, 4); st.rotateZ(s * 0.3); st.translate(s * 0.2, 1.18, 0.56); add('d2_rim', st);
+    const mi = new THREE.SphereGeometry(0.05, 8, 5); mi.scale(1.3, 0.8, 0.3); mi.translate(s * 0.24, 1.28, 0.56); add('d2_black', mi); }  // 握把、後照鏡
+  box('d2_redlens', 0.2, 0.06, 0.04, 0, 0.66, -0.94);                                                                                   // 尾燈
+  { const g = new THREE.PlaneGeometry(0.17, 0.085); g.rotateY(Math.PI); g.translate(0, 0.5, -0.92); add('cv_plate', g); }               // 車牌
+  { const g = new THREE.CylinderGeometry(0.055, 0.045, 0.42, 8); g.rotateX(Math.PI / 2 - 0.15); g.translate(0.14, 0.36, -0.62); add('d2_rim', g); } // 排氣管
+  { const g = new THREE.BoxGeometry(0.02, 0.02, 0.3); g.rotateX(0.6); g.translate(-0.12, 0.12, -0.05); add('d2_rim', g); }              // 側柱
+  const lean = (rnd2() < 0.5 ? -1 : 1) * (0.06 + rnd2() * 0.05); for (const [m, g] of P) { g.rotateZ(lean); g.rotateY(ry); g.translate(x, 0.15, z); addGeo(m, g); }
 }
 function wire(a, b, sag, mat = 'd2_wire', r = 0.012) {
-  const pts = []; for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t - sag * 4 * t * (1 - t), a.z + (b.z - a.z) * t)); }
-  const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, r, 3, false); addGeo(mat, g);
+  const pts = []; for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t - sag * 4 * t * (1 - t), a.z + (b.z - a.z) * t)); }
+  const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, r, 4, false); addGeo(mat, g);
+}
+/* ---------- 玩家看敵人的視線：任何零件都不能擋在中間（街道、屋頂、狙擊點） ---------- */
+let SIGHT = null;
+function sightLines() {
+  if (SIGHT) return SIGHT; SIGHT = []; const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  const roof = (side, z, out) => { for (const dz of [-3, 0, 3]) { const r = roofSpot(side, z + dz); if (r) { out.push(V3(r.x, r.y + 1.2, r.z)); out.push(V3(r.x, r.y + 1.65, r.z)); } } };
+  for (let zi = 0; zi < ZONES.length; zi++) { const Z = ZONES[zi]; const E = [], T = [];
+    for (const id of Z.covers || []) { const c = COVERS[id]; if (!c) continue; for (const pk of [0, 0.5, 1]) E.push(coverEye(c, pk, V3(0, 0, 0)));
+      if (c.box && c.kind !== 'side') for (const bxx of [c.box[0] + 0.5, c.box[1] - 0.5]) for (const pk of [0.5, 1]) E.push(coverEye({ ...c, x: bxx }, pk, V3(0, 0, 0))); } /* 全班時同學沿著掩體左右分開 */
+    const ST = SPAWN_T[zi]; if (ST) { for (const c of ST.cover || []) { T.push(V3(c[0], 1.2, c[1])); T.push(V3(c[0], 1.6, c[1])); } for (const r of ST.rush || []) for (const p of r) T.push(V3(p[0], 1.3, p[1])); for (const r of ST.roof || []) roof(r[0], r[1], T); }
+    if (Z.defuse) for (let i = 0; i < 6; i++) roof(i % 2 ? 1 : -1, (i % 2 ? -126 : -124) - Math.floor(i / 2) * 6, T); /* 拆彈伏擊的屋頂槍手 */
+    const take = (s) => { if (!s) return; if (s.k === 'roof') roof(s.side, s.z, T); if (s.alt) for (const az of s.alt) roof(s.side, az, T); if (s.at) { T.push(V3(s.at[0], 1.2, s.at[1])); T.push(V3(s.at[0], 1.6, s.at[1])); } if (s.from) T.push(V3(s.from[0], 1.3, s.from[1])); if (s.patrol) for (const p of s.patrol) T.push(V3(p[0], 1.3, p[1])); };
+    (Z.spawns || []).forEach(take); (REINF[zi] || []).forEach(take); if (ROOFS[zi]) roof(ROOFS[zi].side, ROOFS[zi].z, T); for (const p of Z.spots || []) T.push(V3(p[0], 1.3, p[1]));
+    if (Z.snipe) { SN_GUARDS.forEach(take); for (const p of SN_HOSTAGES) T.push(V3(p[0], 1.2, p[1])); }
+    if (Z.bomb || Z.defuse) for (const s of REINF[9] || []) take(s);
+    for (const e of E) for (const t of T) SIGHT.push([e, t]); }
+  return SIGHT;
+}
+function segHitsBox(a, b, B) { let t0 = 0, t1 = 1; for (const [o, d, lo, hi] of [[a.x, b.x - a.x, B[0], B[1]], [a.y, b.y - a.y, B[2], B[3]], [a.z, b.z - a.z, B[4], B[5]]]) { if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) return false; continue; } let u0 = (lo - o) / d, u1 = (hi - o) / d; if (u0 > u1) [u0, u1] = [u1, u0]; t0 = Math.max(t0, u0); t1 = Math.min(t1, u1); if (t0 > t1) return false; } return true; }
+const blocksSight = (boxes) => sightLines().some(([a, b]) => boxes.some((B) => segHitsBox(a, b, B)));
+/* ---------- 直立招牌：燈箱、上下鋁蓋、兩支掛架加斜撐 ---------- */
+function signV(S, szz) {
+  const { fx, n, c, sh, sy, out } = S, sx = fx + n * (0.35 + out / 2), u0 = c / 8, u1 = (c + 1) / 8;
+  { const g = new THREE.BoxGeometry(out, sh, 0.22); g.translate(sx, sy + sh / 2, szz); addGeo('d2_black', g); }
+  zq('cv_signV', sx, sy + sh / 2, szz + 0.112, out - 0.08, sh - 0.1, 1, [u0, 0, u1, 1]); zq('cv_signV', sx, sy + sh / 2, szz - 0.112, out - 0.08, sh - 0.1, -1, [u0, 0, u1, 1]);
+  for (const yy of [sy - 0.04, sy + sh]) { const g = new THREE.BoxGeometry(out + 0.04, 0.06, 0.26); g.translate(sx, yy + 0.02, szz); addGeo('d2_alu', g); }
+  for (const yy of [sy + 0.35, sy + sh - 0.35]) { bx('d2_grille2', fx, n, 0, yy, szz, 0.38, 0.05, 0.05); const g = new THREE.BoxGeometry(0.03, 0.62, 0.03); g.rotateZ(n * 0.62); g.translate(fx + n * 0.2, yy - 0.25, szz); addGeo('d2_grille2', g); }
+}
+/* ---------- 電線桿（台灣常見的水泥桿）：黃黑警示套、號碼牌、踏腳釘、兩層橫擔、礙子、變壓器（散熱片、套管、引線）、路燈 ---------- */
+function pole(x, z, tr, side) {
+  const H = 10.6, o = -side; // o：往馬路的方向
+  { const g = new THREE.CylinderGeometry(0.12, 0.19, H, 12); g.translate(x, H / 2, z); addGeo('d2_pole', g); }
+  { const g = new THREE.CylinderGeometry(0.2, 0.2, 1.6, 12, 1, true); g.translate(x, 0.95, z); addGeo('cv_stripe', g); }
+  { const g = new THREE.BoxGeometry(0.012, 0.3, 0.16); g.translate(x + o * 0.17, 2.3, z); addGeo('d2_tag', g); }
+  for (let k = 0; k < 9; k++) { const g = new THREE.CylinderGeometry(0.012, 0.012, 0.32, 4); g.rotateZ(Math.PI / 2); g.rotateY(k % 2 ? 0 : Math.PI / 2); g.translate(x, 3 + k * 0.55, z); addGeo('d2_grille2', g); }
+  const arms = [[H - 0.5, 2.4], [H - 1.25, 1.6]];
+  for (const [y, L] of arms) { const g = new THREE.BoxGeometry(0.1, 0.1, L); g.translate(x, y, z); addGeo('d2_transformer', g);
+    for (const s of [-1, 1]) { const b = new THREE.BoxGeometry(0.035, 0.035, Math.hypot(L / 2.4, 0.5)); b.rotateX(s * Math.atan2(0.5, L / 2.4)); b.translate(x, y - 0.25, z + s * L / 4.8); addGeo('d2_grille2', b); }
+    for (const dz of L > 2 ? [-1.05, 0, 1.05] : [-0.7, 0.7]) { for (const yy of [0.08, 0.16, 0.24]) { const d = new THREE.CylinderGeometry(0.06, 0.06, 0.04, 10); d.translate(x, y + yy, z + dz); addGeo('d2_porcelain', d); } const c = new THREE.CylinderGeometry(0.025, 0.04, 0.3, 8); c.translate(x, y + 0.17, z + dz); addGeo('d2_porcelain', c); } }
+  if (tr) { const tx = x - o * 0.48, ty = H - 3.2;
+    { const g = new THREE.CylinderGeometry(0.3, 0.3, 1.0, 16); g.translate(tx, ty, z); addGeo('d2_transformer', g); const lid = new THREE.CylinderGeometry(0.33, 0.31, 0.07, 16); lid.translate(tx, ty + 0.53, z); addGeo('d2_transformer', lid); }
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const f = new THREE.BoxGeometry(0.07, 0.7, 0.012); f.rotateY(-a); f.translate(tx + Math.cos(a) * 0.33, ty - 0.05, z + Math.sin(a) * 0.33); addGeo('d2_transformer', f); }
+    for (const dz of [-0.12, 0.12]) { const b = new THREE.CylinderGeometry(0.03, 0.045, 0.22, 8); b.translate(tx, ty + 0.68, z + dz); addGeo('d2_porcelain', b); wire(new THREE.Vector3(tx, ty + 0.79, z + dz), new THREE.Vector3(x, H - 1.1, z + dz * 5), -0.05, 'd2_wire', 0.01); }
+    for (const yy of [ty + 0.25, ty - 0.3]) { const g = new THREE.BoxGeometry(0.48, 0.06, 0.08); g.translate(x - o * 0.24, yy, z); addGeo('d2_grille2', g); } }
+  // 路燈（彎臂＋燈頭）伸向馬路
+  { const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(x, H - 2.6, z), new THREE.Vector3(x + o * 1.2, H - 1.9, z), new THREE.Vector3(x + o * 2.3, H - 2.1, z)); addGeo('d2_pole', new THREE.TubeGeometry(curve, 10, 0.045, 6, false));
+    const hd = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2); hd.scale(0.42, 0.13, 0.2); hd.translate(x + o * 2.45, H - 2.15, z); addGeo('d2_transformer', hd);
+    const l = new THREE.CircleGeometry(1, 14); l.scale(0.36, 0.16, 1); l.rotateX(Math.PI / 2); l.translate(x + o * 2.45, H - 2.16, z); addGeo('d2_lamp', l); }
+  return null;
+}
+/* 一棵盆栽：陶盆（有盆緣）＋幾團葉子 */
+function pot(x, z) {
+  const p = new THREE.CylinderGeometry(0.26, 0.19, 0.42, 14); p.translate(x, 0.36, z); addGeo('d2_pot', p);
+  const rim = new THREE.TorusGeometry(0.26, 0.03, 5, 16); rim.rotateX(Math.PI / 2); rim.translate(x, 0.57, z); addGeo('d2_pot', rim);
+  const k = 3 + Math.floor(rnd2() * 3); for (let i = 0; i < k; i++) { const l = new THREE.IcosahedronGeometry(0.2 + rnd2() * 0.14, 1); const P = l.attributes.position; for (let q = 0; q < P.count; q++) { const s = 0.85 + 0.3 * Math.abs(Math.sin(q * 7.3 + i)); P.setXYZ(q, P.getX(q) * s, P.getY(q) * s, P.getZ(q) * s); } l.computeVertexNormals(); const a = rnd2() * 6.28, r = 0.12 * (i ? 1 : 0); l.translate(x + Math.cos(a) * r, 0.75 + rnd2() * 0.35 + (i ? 0 : 0.2), z + Math.sin(a) * r); addGeo(rnd2() < 0.5 ? 'd2_leaf' : 'd2_leaf2', l); }
+}
+function cone(x, z) {
+  const b = new THREE.BoxGeometry(0.38, 0.04, 0.38); b.translate(x, 0.17, z); addGeo('d2_black', b);
+  const c = new THREE.ConeGeometry(0.15, 0.62, 14, 1, true); c.translate(x, 0.5, z); addGeo('d2_cone', c);
+  const s = new THREE.CylinderGeometry(0.086, 0.106, 0.12, 14, 1, true); s.translate(x, 0.55, z); addGeo('d2_white', s);
+}
+function trashBags(x, z) {
+  for (let k = 0; k < 2 + Math.floor(rnd2() * 3); k++) { const rr = 0.26 + rnd2() * 0.12; const g = new THREE.IcosahedronGeometry(rr, 2); const P = g.attributes.position; for (let q = 0; q < P.count; q++) { const y = P.getY(q); const s = 0.85 + 0.22 * Math.abs(Math.sin(P.getX(q) * 13 + P.getZ(q) * 9 + q * 0.7)); P.setXYZ(q, P.getX(q) * s, y * (y < 0 ? 0.6 : 0.85) * s, P.getZ(q) * s); } g.computeVertexNormals();
+    const bx0 = x + (rnd2() - 0.5) * 0.6, bz0 = z + (rnd2() - 0.5) * 0.8, mat = rnd2() < 0.85 ? 'd2_bag' : 'd2_bag2'; g.translate(bx0, 0.15 + rr * 0.6, bz0); addGeo(mat, g);
+    const kn = new THREE.ConeGeometry(0.06, 0.14, 6); kn.translate(bx0, 0.15 + rr * 1.45, bz0); addGeo(mat, kn); }
 }
 function dressStreet() {
   const ROAD = 6, WALK = 9;
   // 避開：敵人出現點、掩體、巷口、玩家站的位置（只放在不會擋到遊戲的地方）
   const keep = []; const grab = (o) => { if (!o) return; if (Array.isArray(o) && o.length === 2 && typeof o[0] === 'number') { keep.push(o); return; } if (Array.isArray(o)) { o.forEach(grab); return; } if (typeof o === 'object') { if (typeof o.x === 'number' && typeof o.z === 'number') keep.push([o.x, o.z]); for (const k in o) if (typeof o[k] === 'object') grab(o[k]); } };
-  grab(ZONES); grab(COVERS); grab(WORLD.covers); grab(WORLD.spawns); if (typeof REINF !== 'undefined') grab(REINF);
+  grab(ZONES); grab(COVERS); grab(WORLD.covers); grab(WORLD.spawns); grab(REINF);
   const free = (x, z, r = 2.4) => keep.every(([kx, kz]) => Math.hypot(kx - x, kz - z) > r);
+  // 直立招牌：擋到玩家看敵人的視線就換位置，都不行就不放
+  for (const S of SIGNS_V) { for (const zz of [S.szz, ...S.alt]) { const sx = S.fx + S.n * (0.35 + S.out / 2); const B = [Math.min(S.fx, sx + S.n * S.out / 2) - 0.1, Math.max(S.fx, sx + S.n * S.out / 2) + 0.1, S.sy - 0.2, S.sy + S.sh + 0.2, zz - 0.25, zz + 0.25]; if (!blocksSight([B])) { signV(S, zz); break; } } }
   const cols = ['d2_plastR', 'd2_plastW', 'd2_plastK', 'd2_plastB', 'd2_plastS', 'd2_plastW', 'd2_plastK', 'd2_plastS', 'd2_plastG', 'd2_plastY'];
-  // 人行道邊的機車（一排一排斜停）
-  for (const s of [-1, 1]) for (let z = 8; z > -136;) { const run = 3 + Math.floor(rnd2() * 6); const plaza = s > 0 && z < -66 && z > -100; let placed = 0;
-    for (let i = 0; i < run; i++, z -= 0.9) { const x = s * (ROAD + 0.95); if (plaza || !free(x, z)) continue; scooter(x + (rnd2() - 0.5) * 0.1, z, (s > 0 ? -1 : 1) * (Math.PI / 2 - 0.35 + (rnd2() - 0.5) * 0.15) + (rnd2() < 0.5 ? 0 : Math.PI), pick2(cols)); placed++; }
-    z -= 4 + rnd2() * 10; }
-  // 電線桿（右側人行道邊），之間拉三條電線；有的桿子掛變壓器、路燈；從桿子拉線到樓上
-  // 電線桿放在兩棟樓的交界附近：避開每棟樓屋頂的正中間（老師和屋頂槍手站的地方），不擋屋頂往下看的視線
+  // 人行道邊的機車（一排一排斜停）；擋到視線（例如敵人蹲在後面）就不放
+  for (const s of [-1, 1]) for (let z = 8; z > -136;) { const run = 2 + Math.floor(rnd2() * 5); const plaza = s > 0 && z < -66 && z > -100;
+    for (let i = 0; i < run; i++, z -= 0.95) { const x = s * (ROAD + 0.95); if (plaza || (MOBILE && rnd2() < 0.35) || !free(x, z) || blocksSight([[x - 0.9, x + 0.9, 0, 1.4, z - 0.6, z + 0.6]])) continue; DRESS.scooters.push([x, z]); scooter(x + (rnd2() - 0.5) * 0.1, z, (s > 0 ? -1 : 1) * (Math.PI / 2 - 0.35 + (rnd2() - 0.5) * 0.15) + (rnd2() < 0.5 ? 0 : Math.PI), pick2(cols)); }
+    z -= 5 + rnd2() * 11; }
+  // 電線桿：放在兩棟樓的交界附近（避開屋頂正中間），而且整支（含變壓器、路燈）都不能擋到玩家看敵人的視線
   const mids = WORLD.buildings.filter((b) => b.side > 0 && !b.plaza).map((b) => b.zc);
-  const poles = []; for (let z = 6; z > -140; z -= 22 + rnd2() * 6) { const x = 6.35; let zz = z; for (let k = 0; k < 12 && (!free(x, zz, 1.6) || mids.some((m) => Math.abs(m - zz) < 5)); k++) zz -= 1; if (!free(x, zz, 1.6) || mids.some((m) => Math.abs(m - zz) < 5)) continue; poles.push([x, zz]); z = zz; }
-  for (const [x, z] of poles) {
-    { const g = new THREE.CylinderGeometry(0.11, 0.16, 9.5, 8); g.translate(x, 4.75, z); addGeo('d2_pole', g); }
-    { const g = new THREE.BoxGeometry(0.12, 0.12, 2.2); g.translate(x, 8.6, z); addGeo('d2_pole', g); g; } { const g = new THREE.BoxGeometry(0.1, 0.1, 1.4); g.translate(x, 7.9, z); addGeo('d2_pole', g); }
-    if (rnd2() < 0.4) { const g = new THREE.CylinderGeometry(0.28, 0.28, 0.9, 10); g.translate(x + 0.38, 7.1, z); addGeo('d2_steel', g); }
-    // 路燈：伸向馬路
-    { const g = new THREE.CylinderGeometry(0.04, 0.04, 2.0, 6); g.rotateZ(Math.PI / 2 - 0.15); g.translate(x - 1.0, 7.0, z); addGeo('d2_pole', g); const h = new THREE.BoxGeometry(0.5, 0.12, 0.25); h.translate(x - 1.95, 6.85, z); addGeo('d2_black', h); const l = new THREE.PlaneGeometry(0.45, 0.2); l.rotateX(Math.PI / 2); l.translate(x - 1.95, 6.78, z); addGeo('d2_lamp', l); }
-  }
-  for (let i = 0; i + 1 < poles.length; i++) { const [x1, z1] = poles[i], [x2, z2] = poles[i + 1]; for (const [dz, y] of [[-1.0, 8.65], [0, 8.65], [1.0, 8.65], [-0.6, 7.95]]) wire(new THREE.Vector3(x1, y, z1 + dz * 0.3), new THREE.Vector3(x2, y, z2 + dz * 0.3), 0.55 + rnd2() * 0.3); }
-  for (const [x, z] of poles) { // 拉到對面和旁邊的樓
-    if (rnd2() < 0.7) wire(new THREE.Vector3(x, 7.95, z), new THREE.Vector3(-8.9, 6.2 + rnd2() * 1.5, z + (rnd2() - 0.5) * 6), 0.9, 'd2_wire', 0.01);
-    if (rnd2() < 0.7) wire(new THREE.Vector3(x, 7.95, z), new THREE.Vector3(8.9, 5.5 + rnd2() * 2, z + (rnd2() - 0.5) * 8), 0.3, 'd2_wire', 0.01); }
+  const poles = []; for (let z = 6; z > -140; z -= 22 + rnd2() * 6) { const x = 6.35, tr = rnd2() < 0.45; let ok = null;
+    for (const dz of [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -8, 8]) { const zz = z + dz; if (!free(x, zz, 1.6) || mids.some((m) => Math.abs(m - zz) < 4.5)) continue; const boxes = [[x - 0.35, x + 0.35, 0, 11, zz - 1.3, zz + 1.3], [x - 2.8, x + 0.1, 7.6, 8.8, zz - 0.35, zz + 0.35]]; if (tr) boxes.push([x - 0.1, x + 0.85, 6.8, 8.2, zz - 0.45, zz + 0.45]); if (!blocksSight(boxes)) { ok = zz; break; } }
+    if (ok === null) continue; pole(x, ok, tr, 1); poles.push([x, ok]); DRESS.poles.push([x, ok, tr]); z = ok; }
+  const H = 10.6;
+  for (let i = 0; i + 1 < poles.length; i++) { const [x1, z1] = poles[i], [x2, z2] = poles[i + 1]; for (const dz of [-1.05, 0, 1.05]) wire(new THREE.Vector3(x1, H - 0.5 + 0.3, z1 + dz), new THREE.Vector3(x2, H - 0.5 + 0.3, z2 + dz), 0.5 + rnd2() * 0.25); for (const dz of [-0.7, 0.7]) wire(new THREE.Vector3(x1, H - 1.25 + 0.3, z1 + dz), new THREE.Vector3(x2, H - 1.25 + 0.3, z2 + dz), 0.6 + rnd2() * 0.3, 'd2_wire', 0.015); }
+  for (const [x, z] of poles) { // 拉到對面和旁邊的樓（細線）
+    if (rnd2() < 0.7) wire(new THREE.Vector3(x, H - 1.0, z), new THREE.Vector3(-8.9, 6.0 + rnd2() * 1.5, z + (rnd2() - 0.5) * 6), 0.9, 'd2_wire', 0.009);
+    if (rnd2() < 0.7) wire(new THREE.Vector3(x, H - 1.0, z), new THREE.Vector3(8.9, 5.5 + rnd2() * 2, z + (rnd2() - 0.5) * 8), 0.3, 'd2_wire', 0.009); }
   // 紅線、黃線（路緣）
   for (const s of [-1, 1]) { let z = 10; while (z > -140) { const L = 6 + rnd2() * 14; const m = rnd2() < 0.5 ? 'd2_curbR' : 'd2_curbY'; const g = new THREE.PlaneGeometry(0.12, L); g.rotateX(-Math.PI / 2); g.translate(s * (ROAD - 0.1), 0.012, z - L / 2); addGeo(m, g); const g2 = new THREE.PlaneGeometry(0.15, L); g2.rotateX(-Math.PI / 2); g2.translate(s * (ROAD + 0.07), 0.152, z - L / 2); addGeo(m, g2); z -= L + 3 + rnd2() * 8; } }
-  // 路面：人孔蓋、補丁、油漬
-  for (let z = 6; z > -140; z -= 9 + rnd2() * 9) { const x = (rnd2() - 0.5) * 9; const g = new THREE.CircleGeometry(0.42, 18); g.rotateX(-Math.PI / 2); g.translate(x, 0.01, z); addGeo('cv_manhole', g); }
+  // 路面：人孔蓋（有外框）、補丁、油漬
+  for (let z = 6; z > -140; z -= 9 + rnd2() * 9) { const x = (rnd2() - 0.5) * 9; const g = new THREE.CircleGeometry(0.42, 24); g.rotateX(-Math.PI / 2); g.translate(x, 0.012, z); addGeo('cv_manhole', g); const r = new THREE.RingGeometry(0.42, 0.5, 24); r.rotateX(-Math.PI / 2); r.translate(x, 0.011, z); addGeo('d2_patch', r); }
   for (let i = 0; i < 30; i++) { const g = new THREE.PlaneGeometry(1.2 + rnd2() * 2.5, 1 + rnd2() * 3); g.rotateX(-Math.PI / 2); g.rotateY(rnd2() * 0.4); g.translate((rnd2() - 0.5) * 10, 0.006, 8 - rnd2() * 146); addGeo('cv_patch', g); }
   for (let i = 0; i < 40; i++) { const s = 0.8 + rnd2() * 2; const g = new THREE.PlaneGeometry(s, s); g.rotateX(-Math.PI / 2); g.translate((rnd2() - 0.5) * 11, 0.008, 8 - rnd2() * 146); addGeo('cv_stain', g); }
-  // 垃圾袋、紙箱、花盆、三角錐（只放在人行道靠牆那側）
+  // 垃圾袋（有綁口）、紙箱（有封箱膠帶）、盆栽、三角錐（有反光條和底座），只放在人行道靠牆那側
   for (let i = 0; i < 60; i++) { const s = rnd2() < 0.5 ? -1 : 1, x = s * (WALK - 0.45 - rnd2() * 0.5), z = 8 - rnd2() * 145; if (!free(x, z, 2) || (s > 0 && z < -66 && z > -100)) continue; const t = rnd2();
-    if (t < 0.4) { for (let k = 0; k < 2 + Math.floor(rnd2() * 3); k++) { const g = new THREE.IcosahedronGeometry(0.28 + rnd2() * 0.12, 1); { const P = g.attributes.position; for (let q = 0; q < P.count; q++) { const k = 0.82 + 0.3 * Math.abs(Math.sin(P.getX(q) * 17 + P.getZ(q) * 11 + q)); P.setXYZ(q, P.getX(q) * k, P.getY(q) * k * 0.75, P.getZ(q) * k); } g.computeVertexNormals(); } g.translate(x + (rnd2() - 0.5) * 0.6, 0.38, z + (rnd2() - 0.5) * 0.8); addGeo(rnd2() < 0.9 ? 'd2_bag' : 'd2_bag2', g); } }
-    else if (t < 0.6) { const g = new THREE.BoxGeometry(0.5, 0.4, 0.4); g.rotateY(rnd2()); g.translate(x, 0.35, z); addGeo('d2_card', g); }
-    else if (t < 0.85) { const p = new THREE.CylinderGeometry(0.25, 0.2, 0.4, 10); p.translate(x, 0.35, z); addGeo('d2_pot', p); const l = new THREE.IcosahedronGeometry(0.42, 1); l.scale(1, 1.2, 1); l.translate(x, 0.9, z); addGeo('d2_leaf', l); }
-    else { const g = new THREE.ConeGeometry(0.17, 0.6, 10); g.translate(x, 0.45, z); addGeo('d2_cone', g); } }
+    if (t < 0.4) trashBags(x, z);
+    else if (t < 0.6) { const ry = rnd2(); const g = new THREE.BoxGeometry(0.5, 0.4, 0.4); g.rotateY(ry); g.translate(x, 0.35, z); addGeo('d2_card', g); const tp = new THREE.BoxGeometry(0.51, 0.005, 0.07); tp.rotateY(ry); tp.translate(x, 0.553, z); addGeo('d2_tape', tp); }
+    else if (t < 0.85) pot(x, z);
+    else cone(x, z); }
 }
 
 /* =========================================================
@@ -6186,7 +6319,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { STATIC, LOOK2, snFront, nestOK, renderPanel, nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { sightLines, DRESS, STATIC, LOOK2, snFront, nestOK, renderPanel, nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
