@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.19（新外觀樣品第二版：零件不會擋住玩家看敵人；機車、電線桿、變壓器、路燈、水塔、冷氣、招牌、沙包、護欄全部重做）';
+const VERSION = '2.4.20（新外觀樣品第三版：屋內陳設、油漆牆、磁磚地板、天花板與日光燈；街道兩端用樓房收起來）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2883,15 +2883,18 @@ function buildWorld() {
   WORLD.bomb = buildBomb(0.9, -133.2);
   // 平民逃跑的終點：巷口與街尾後方
   for (const s of WORLD.spawns) WORLD.fleePts.push([s.x + s.side * 4, s.z]);
-  buildInterior(); buildShop(); if (LOOK2) dressStreet();
+  buildInterior(); buildShop(); if (LOOK2) { dressStreet(); dressInteriors(); }
   // 合併靜態幾何
   // 室內材質（in_ 開頭）不接收陰影：屋頂的影子會讓室內一片黑，當作室內有開燈
-  for (const m in GEOS) { const L = GEOS[m], mixed = L.some((x) => !x.index) && L.some((x) => x.index); const g = mergeGeometries(mixed ? L.map((x) => (x.index ? x.toNonIndexed() : x)) : L, false); /* 有的零件沒有索引，要先統一才能合併 */ if (!g) { DBG('合併失敗 ' + m); continue; } const mesh = new THREE.Mesh(g, matFor(m)); mesh.userData.m = m; const inside = m.startsWith('in_'); const flat = /^(cv_|d2_(alu|glass|glass2|curtain|curtain2|reveal|wire|curbR|curbY|patch|lamp|copper|tape|lens|redlens|porcelain|tag))/.test(m) && !/^cv_(tile|shutter|signH|signV|ac|stripe)/.test(m); mesh.castShadow = !inside && !flat; /* 貼花、玻璃、細電線不投影（省手機效能） */ mesh.receiveShadow = !inside; STATIC.add(mesh); }
+  for (const m in GEOS) { const L = GEOS[m], mixed = L.some((x) => !x.index) && L.some((x) => x.index); const g = mergeGeometries(mixed ? L.map((x) => (x.index ? x.toNonIndexed() : x)) : L, false); /* 有的零件沒有索引，要先統一才能合併 */ if (!g) { DBG('合併失敗 ' + m); continue; } const mesh = new THREE.Mesh(g, matFor(m)); mesh.userData.m = m; const inside = m.startsWith('in_') || m.startsWith('i2_'); const flat = /^(cv_|d2_(alu|glass|glass2|curtain|curtain2|reveal|wire|curbR|curbY|patch|lamp|copper|tape|lens|redlens|porcelain|tag))/.test(m) && !/^cv_(tile|shutter|signH|signV|ac|stripe)/.test(m); mesh.castShadow = !inside && !flat; /* 貼花、玻璃、細電線不投影（省手機效能） */ mesh.receiveShadow = !inside; STATIC.add(mesh); }
 }
 function matFor(m) {
   if (m.startsWith('cv_') || m.startsWith('d2_')) { const mt = matFor2(m); if (mt) return mt; }
+  if (m.startsWith('i2_')) { const mt = matForI(m); if (mt) return mt; }
+  if (LOOK2 && (m === 'in_plaster2' || m === 'in_plaster3')) return matForI(m === 'in_plaster2' ? 'i2_paint' : 'i2_paint2'); /* 新外觀：室內牆改成乾淨的油漆牆 */
   if (LOOK2 && m === 'road') return pbr('road', 1, 1, { color: '#8f8f8b' }); /* 新外觀：路面暗一點、人行道偏紅磚色 */
   if (LOOK2 && m === 'paving') return pbr('paving', 1, 1, { color: '#cfa597' });
+  if (LOOK2 && m === 'mud') return pbr('mud', 1, 1, { color: '#8a8478' }); /* 城外空地：灰褐色，不像沙漠 */
   if (LOOK2 && m === 'hessian') return pbr('hessian', 1, 1, { color: '#b3a07c' });
   if (LOOK2 && (m === 'concrete2' || m === 'concrete' || m === 'roof')) return pbr(m, 1, 1, { color: '#bdb8ae' }); /* 屋頂與水泥面不要那麼白（俯瞰時刺眼） */
   const opt = {}; if (m.startsWith('in_')) { const base = m.slice(3); const mt = pbr(base, 1, 1, { env: 0.9, color: base === 'planks' ? '#c9b49a' : '#e8e2d8' }); return mt; }
@@ -3049,7 +3052,7 @@ function buildInterior() {
   table(15.2, -77.4, 0.25); table(13.4, -91.3, 0); table(21.5, -82.6, 0);
   block(1.1, 1.05, 1.1, 'planks', 19.8, 0, -78.8, { rotY: 0.15 }); block(0.9, 0.85, 0.9, 'planks', 20.9, 0, -78.4, { rotY: -0.3 });
   block(1.1, 1.05, 1.1, 'planks', 12.4, 0, -87.1, { rotY: 0.1 });
-  block(0.5, 1.9, 1.6, 'in_metal', 22.4, 0, -76.5); block(0.5, 1.9, 1.6, 'in_metal', 11.6, 0, -84);
+  metalBox(0.5, 1.9, 1.6, 22.4, -76.5, 'closet'); metalBox(0.5, 1.9, 1.6, 11.6, -84, 'closet'); /* 新外觀時換成木頭衣櫃 */
   block(1.0, 0.25, 2.0, 'hessian', 22, 0, -93.2, { collide: false });
   block(0.8, 0.45, 0.8, 'in_planks', 18.2, 0, -73.0);
 }
@@ -3092,11 +3095,12 @@ function buildShop() {
   // 狙擊點：屋頂前緣的沙包
   block(1.6, 1.0, 0.6, 'hessian', -10.4, H, -65.3, { top: 'hessian' });
   // 家具：櫃台、貨架、紙箱、樓梯
-  block(0.7, 1.0, 4.2, 'in_planks', -12.6, 0, -54.6); block(2.6, 0.9, 0.7, 'in_planks', -13.6, 0, -60.3, { rotY: 0.1 }); // 櫃台
-  block(0.5, 1.9, 2.6, 'in_metal', -15.0, 0, -63.6); block(2.2, 1.9, 0.5, 'in_metal', -12.8, 0, -65.4);   // 貨架
+  GEO_MUTE = LOOK2; block(0.7, 1.0, 4.2, 'in_planks', -12.6, 0, -54.6); block(2.6, 0.9, 0.7, 'in_planks', -13.6, 0, -60.3, { rotY: 0.1 }); GEO_MUTE = false; // 櫃台
+  if (LOOK2) { counter(0.7, 1.0, 4.2, -12.6, -54.6, 0); counter(2.6, 0.9, 0.7, -13.6, -60.3, 0.1); }
+  metalBox(0.5, 1.9, 2.6, -15.0, -63.6, 'shelf'); metalBox(2.2, 1.9, 0.5, -12.8, -65.4, 'shelf');   // 貨架
   block(1.0, 1.0, 1.0, 'planks', -11.0, 0, -64.0, { rotY: 0.2 }); block(0.8, 0.8, 0.8, 'planks', -10.8, 0, -51.2, { rotY: -0.3 });
   block(1.1, 1.05, 1.1, 'planks', -19.6, 0, -51.6, { rotY: 0.15 }); block(0.9, 0.85, 0.9, 'planks', -20.6, 0, -52.6, { rotY: -0.2 }); block(1.1, 1.05, 1.1, 'planks', -17.8, 0, -56.6, { rotY: 0.3 });
-  block(0.5, 1.9, 2.4, 'in_metal', -21.0, 0, -54.6);
+  metalBox(0.5, 1.9, 2.4, -21.0, -54.6, 'rack');
   for (let i = 0; i < 7; i++) block(1.3, 0.42 * (i + 1), 0.6, 'in_concrete', -20.6, 0, -60.0 - i * 0.6, { collide: i < 3 }); // 往屋頂的樓梯
   block(1.0, 0.8, 0.6, 'in_planks', -16.8, 0, -64.8);
 }
@@ -3588,6 +3592,9 @@ function dressStreet() {
   for (const [x, z] of poles) { // 拉到對面和旁邊的樓（細線）
     if (rnd2() < 0.7) wire(new THREE.Vector3(x, H - 1.0, z), new THREE.Vector3(-8.9, 6.0 + rnd2() * 1.5, z + (rnd2() - 0.5) * 6), 0.9, 'd2_wire', 0.009);
     if (rnd2() < 0.7) wire(new THREE.Vector3(x, H - 1.0, z), new THREE.Vector3(8.9, 5.5 + rnd2() * 2, z + (rnd2() - 0.5) * 8), 0.3, 'd2_wire', 0.009); }
+  // 街道兩端：橫向一排樓把街道收起來（不再看到空地），遠處再加一圈高樓
+  for (const [zc, face] of [[-162, 1], [26, -1]]) for (let x = -44; x < 44;) { const w = 7 + rnd2() * 7, h = 7 + rnd2() * 9; block(w - 0.4, h, 10, rnd2() < 0.5 ? 'facade' : pick2(['cv_tileW', 'cv_tileBeige', 'brick2', 'plaster3']), x + w / 2, 0, zc, { collide: false, top: 'concrete' }); if (Math.abs(x + w / 2) < 14) { const g = new THREE.PlaneGeometry(w - 1.2, 0.8); g.rotateY(face > 0 ? 0 : Math.PI); g.translate(x + w / 2, 3.0, zc + face * 5.02); const c = Math.floor(rnd2() * 8); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i), 1 - (c + 1) / 8 + uv.getY(i) / 8); addGeo('cv_signH', g); const sh = new THREE.PlaneGeometry(w - 1.2, 2.4); sh.rotateY(face > 0 ? 0 : Math.PI); sh.translate(x + w / 2, 1.3, zc + face * 5.02); addGeo('cv_shutter', sh); } x += w; }
+  for (const side of [-1, 1]) for (let z = 20; z > -170;) { const w = 14 + rnd2() * 16, h = 18 + rnd2() * 26; block(14, h, w - 3, 'facade', side * (62 + rnd2() * 10), 0, z - w / 2, { collide: false, top: 'concrete' }); z -= w; }
   // 紅線、黃線（路緣）
   for (const s of [-1, 1]) { let z = 10; while (z > -140) { const L = 6 + rnd2() * 14; const m = rnd2() < 0.5 ? 'd2_curbR' : 'd2_curbY'; const g = new THREE.PlaneGeometry(0.12, L); g.rotateX(-Math.PI / 2); g.translate(s * (ROAD - 0.1), 0.012, z - L / 2); addGeo(m, g); const g2 = new THREE.PlaneGeometry(0.15, L); g2.rotateX(-Math.PI / 2); g2.translate(s * (ROAD + 0.07), 0.152, z - L / 2); addGeo(m, g2); z -= L + 3 + rnd2() * 8; } }
   // 路面：人孔蓋（有外框）、補丁、油漬
@@ -3600,6 +3607,167 @@ function dressStreet() {
     else if (t < 0.6) { const ry = rnd2(); const g = new THREE.BoxGeometry(0.5, 0.4, 0.4); g.rotateY(ry); g.translate(x, 0.35, z); addGeo('d2_card', g); const tp = new THREE.BoxGeometry(0.51, 0.005, 0.07); tp.rotateY(ry); tp.translate(x, 0.553, z); addGeo('d2_tape', tp); }
     else if (t < 0.85) pot(x, z);
     else cone(x, z); }
+}
+
+/* =========================================================
+   新外觀（樣品）：屋內陳設——港灣商行（店面、倉庫）與民宅（前廳、後房、人質房）
+   - 只有外觀，不加碰撞；原本的櫃台、貨架、木箱位置與碰撞盒都不變（貨架只是換外觀）
+   - 每件東西放下前都檢查：不和原本的家具重疊、不擋門口、不擋同學看敵人（含老師屋內埋伏點）的視線
+   ========================================================= */
+const INT_TEX = {};
+function intTex() {
+  if (INT_TEX.ready) return INT_TEX; INT_TEX.ready = true;
+  INT_TEX.floor = cvTex(256, 256, (g) => { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { const v = 214 + Math.random() * 14; g.fillStyle = `rgb(${v},${v - 4},${v - 12})`; g.fillRect(x * 64 + 1, y * 64 + 1, 62, 62); } g.fillStyle = 'rgba(120,110,95,.5)'; for (let i = 0; i <= 4; i++) { g.fillRect(i * 64 - 1, 0, 2, 256); g.fillRect(0, i * 64 - 1, 256, 2); } for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(90,80,70,${Math.random() * 0.08})`; g.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } });
+  INT_TEX.ceil = cvTex(256, 256, (g) => { g.fillStyle = '#e9e7e1'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#b9b6ae'; for (let i = 0; i <= 2; i++) { g.fillRect(i * 128 - 2, 0, 4, 256); g.fillRect(0, i * 128 - 2, 256, 4); } for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.06})`; g.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); } });
+  INT_TEX.paint = cvTex(256, 256, (g) => { g.fillStyle = '#ece6da'; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 2500; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${Math.random() * 0.035})`; g.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(120,105,85,0.05)'; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 256, 20 + Math.random() * 40, 0, 7); g.fill(); } });
+  INT_TEX.goods = cvTex(512, 128, (g) => { const cs = ['#c4161c', '#1d4f91', '#f2c21b', '#1a7a3c', '#f07f1a', '#ffffff', '#8a1d6b', '#3a8fd1', '#e8e2d0', '#5b3a1a']; for (let i = 0; i < 16; i++) { g.fillStyle = cs[i % cs.length]; g.fillRect(i * 32, 0, 32, 128); g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(i * 32 + 6, 40, 20, 30); g.fillStyle = cs[(i * 3 + 1) % cs.length]; g.fillRect(i * 32 + 9, 48, 14, 6); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(i * 32 + 30, 0, 2, 128); } }, true);
+  INT_TEX.poster = cvTex(512, 256, (g) => {
+    // 四張虛構海報：月曆、防火宣導、飲料、尋人啟事
+    g.fillStyle = '#fbf7ec'; g.fillRect(0, 0, 128, 256); g.fillStyle = '#c4161c'; g.fillRect(0, 0, 128, 60); g.fillStyle = '#fff'; g.font = `900 30px ${FONT}`; g.textAlign = 'center'; g.fillText('11 月', 64, 42); g.fillStyle = '#333'; g.font = `700 13px ${FONT}`; for (let r = 0; r < 5; r++) for (let c = 0; c < 7; c++) g.fillText(String(r * 7 + c + 1).slice(0, 2), 12 + c * 17, 90 + r * 30);
+    g.fillStyle = '#f5d33a'; g.fillRect(128, 0, 128, 256); g.fillStyle = '#c4161c'; g.font = `900 26px ${FONT}`; g.fillText('防火', 192, 60); g.fillText('宣導', 192, 92); g.font = `700 14px ${FONT}`; g.fillStyle = '#222'; g.fillText('港灣市消防隊', 192, 230); g.beginPath(); g.fillStyle = '#e3501c'; g.moveTo(192, 120); g.quadraticCurveTo(220, 160, 192, 200); g.quadraticCurveTo(164, 160, 192, 120); g.fill();
+    g.fillStyle = '#1d4f91'; g.fillRect(256, 0, 128, 256); g.fillStyle = '#fff'; g.font = `900 24px ${FONT}`; g.fillText('冰涼', 320, 50); g.fillText('汽水', 320, 80); g.fillStyle = '#e8e2d0'; g.fillRect(304, 110, 32, 110); g.fillStyle = '#c4161c'; g.fillRect(304, 140, 32, 30);
+    g.fillStyle = '#fff'; g.fillRect(384, 0, 128, 256); g.fillStyle = '#222'; g.font = `900 22px ${FONT}`; g.fillText('房屋出租', 448, 44); g.font = `700 13px ${FONT}`; for (let i = 0; i < 6; i++) g.fillRect(400, 70 + i * 18, 96, 3); for (let i = 0; i < 8; i++) { g.save(); g.translate(392 + i * 15, 210); g.rotate(-Math.PI / 2); g.fillText('0912', 0, 0); g.restore(); }
+  }, false);
+  INT_TEX.altar = cvTex(256, 128, (g) => { g.fillStyle = '#8a1410'; g.fillRect(0, 0, 256, 128); g.strokeStyle = '#d9a62a'; g.lineWidth = 6; g.strokeRect(8, 8, 240, 112); g.fillStyle = '#d9a62a'; g.font = `900 40px ${FONT}`; g.textAlign = 'center'; g.fillText('福', 128, 80); }, false);
+  return INT_TEX;
+}
+function matForI(m) {
+  const T = intTex(); const std = (o) => new THREE.MeshStandardMaterial(o);
+  switch (m) {
+    case 'i2_paint': return std({ map: T.paint, roughness: 0.85, color: '#f4efe4', envMapIntensity: 0.9 });
+    case 'i2_paint2': return std({ map: T.paint, roughness: 0.85, color: '#e6ece6', envMapIntensity: 0.9 });
+    case 'i2_floor': return std({ map: T.floor, roughness: 0.35, metalness: 0, envMapIntensity: 0.9 });
+    case 'i2_ceil': return std({ map: T.ceil, roughness: 0.9, side: THREE.DoubleSide, emissive: '#ffffff', emissiveMap: T.ceil, emissiveIntensity: 0.55 }); /* 天花板被日光燈照亮 */
+    case 'i2_granite': return std({ color: '#3a3836', roughness: 0.25, metalness: 0.1, envMapIntensity: 1.0 });
+    case 'i2_panel': return std({ color: '#d8cfbe', roughness: 0.6 });
+    case 'i2_goods': return std({ map: T.goods, roughness: 0.6 });
+    case 'i2_poster': return std({ map: T.poster, roughness: 0.8 });
+    case 'i2_altar': return std({ map: T.altar, roughness: 0.5 });
+    case 'i2_red': return std({ color: '#8f1a12', roughness: 0.45 });
+    case 'i2_gold': return std({ color: '#d9a62a', roughness: 0.3, metalness: 0.8 });
+    case 'i2_redlamp': return std({ color: '#ff3a2a', emissive: '#ff2010', emissiveIntensity: 0.9 });
+    case 'i2_tube': return std({ color: '#ffffff', emissive: '#f4f8ff', emissiveIntensity: 1.2 });
+    case 'i2_fixture': return std({ color: '#dcdcd8', roughness: 0.5 });
+    case 'i2_shelf': return std({ color: '#c9ccd0', roughness: 0.45, metalness: 0.6 });
+    case 'i2_wood': return std({ color: '#6a4325', roughness: 0.6 });
+    case 'i2_wood2': return std({ color: '#a77b4f', roughness: 0.6 });
+    case 'i2_sofa': return std({ color: '#5a3b2a', roughness: 0.8 });
+    case 'i2_cush': return std({ color: '#7c5a3e', roughness: 0.85 });
+    case 'i2_black': return std({ color: '#1a1a1c', roughness: 0.5 });
+    case 'i2_screen': return std({ color: '#0d1116', roughness: 0.1, metalness: 0.5 });
+    case 'i2_fridge': return std({ color: '#e8eaec', roughness: 0.35, metalness: 0.3 });
+    case 'i2_fglass': return std({ color: '#9fc7e0', emissive: '#cfe6ff', emissiveIntensity: 0.35, roughness: 0.05, transparent: true, opacity: 0.45 });
+    case 'i2_card': return std({ color: '#b08d5c', roughness: 0.95 });
+    case 'i2_sack': return std({ color: '#e7e1d0', roughness: 0.95 });
+    case 'i2_crateR': return std({ color: '#c0302a', roughness: 0.6 });
+    case 'i2_crateB': return std({ color: '#2e5ea8', roughness: 0.6 });
+    case 'i2_plastic': return std({ color: '#d03a2a', roughness: 0.5 });
+    case 'i2_steel': return std({ color: '#9aa0a5', roughness: 0.4, metalness: 0.7 });
+    case 'i2_curtain': return std({ color: '#c9b991', roughness: 0.95, side: THREE.DoubleSide });
+    case 'i2_rope': return std({ color: '#b59a62', roughness: 0.95 });
+    case 'i2_bulb': return std({ color: '#fff3c4', emissive: '#ffe08a', emissiveIntensity: 1.5 });
+  }
+  return null;
+}
+/* ---------- 放置檢查 ---------- */
+let INT_SIGHT = null;
+function intSight() {
+  if (INT_SIGHT) return INT_SIGHT; INT_SIGHT = []; const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  for (let zi = 0; zi < ZONES.length; zi++) { const Z = ZONES[zi]; if (!Z.indoor) continue; const E = [], T = [];
+    for (const id of Z.covers || []) { const d = DOOR_OF[id]; if (d) { for (let k = -3; k <= 3; k++) { const u = d.um * k / 3; E.push(V3(d.c[0] - d.n[0] * d.s + d.t[0] * u, 1.6, d.c[1] - d.n[1] * d.s + d.t[1] * u)); E.push(V3(d.c[0] - d.n[0] * d.s + d.t[0] * u, 1.2, d.c[1] - d.n[1] * d.s + d.t[1] * u)); } } else if (COVERS[id]) E.push(coverEye(COVERS[id], 1, V3(0, 0, 0))); }
+    const take = (s) => { if (!s) return; if (s.at) { T.push(V3(s.at[0], 1.2, s.at[1])); T.push(V3(s.at[0], 1.6, s.at[1])); } if (s.from) T.push(V3(s.from[0], 1.3, s.from[1])); };
+    (Z.spawns || []).forEach(take); (REINF[zi] || []).forEach(take); for (const p of Z.spots || []) { T.push(V3(p[0], 1.2, p[1])); T.push(V3(p[0], 1.6, p[1])); }
+    if (Z.hostage) { GUARDS.forEach(take); for (const p of HOSTAGE_SPOTS) T.push(V3(p[0], 1.0, p[1])); }
+    for (const n of NEST_IN) { const sameBld = Math.sign(n.x) === Math.sign((Z.spots && Z.spots[0] ? Z.spots[0][0] : (Z.spawns[0] && Z.spawns[0].at ? Z.spawns[0].at[0] : n.x))); if (sameBld) { T.push(V3(n.x, 1.0, n.z)); T.push(V3(n.x, 1.62, n.z)); } }
+    for (const e of E) for (const t of T) INT_SIGHT.push([e, t]); }
+  return INT_SIGHT;
+}
+const blocksInt = (B) => intSight().some(([a, b]) => segHitsBox(a, b, B));
+// 能不能放：不和原本的家具／牆重疊、離門口 1.3 公尺以上、不擋視線
+function canPlace(x0, x1, y0, y1, z0, z1) {
+  const B = [Math.min(x0, x1), Math.max(x0, x1), y0, y1, Math.min(z0, z1), Math.max(z0, z1)];
+  for (const c of WORLD.colliders) { if (c.y1 < 0.05 || c.y0 > B[3]) continue; const wall = c.maxX - c.minX < 0.35 || c.maxZ - c.minZ < 0.35; if (wall && c.y1 - c.y0 > 2) continue; if (B[0] < c.maxX - 0.02 && B[1] > c.minX + 0.02 && B[4] < c.maxZ - 0.02 && B[5] > c.minZ + 0.02) return false; }
+  for (const d of DOORS) if (Math.hypot((B[0] + B[1]) / 2 - d.c[0], (B[4] + B[5]) / 2 - d.c[1]) < 1.4) return false;
+  for (const n of NEST_IN) if (B[0] < n.x + 0.6 && B[1] > n.x - 0.6 && B[4] < n.z + 0.6 && B[5] > n.z - 0.6) return false;
+  return !blocksInt(B);
+}
+const IB = (m, sx, sy, sz, x, y, z, ry = 0) => { const g = new THREE.BoxGeometry(sx, sy, sz); g.rotateY(ry); g.translate(x, y + sy / 2, z); addGeo(m, g); return g; };
+/* ---------- 家具與陳設 ---------- */
+// 金屬貨架（原本的灰色方塊換成這個）：四支柱、五層板、每層擺滿商品
+function shelfUnit(x, z, w, d, h, goods = true) {
+  const alongZ = d > w, L = Math.max(w, d), D = Math.min(w, d);
+  const P = (dx, dz) => alongZ ? [x + dz, z + dx] : [x + dx, z + dz];
+  for (const sx of [-L / 2 + 0.03, L / 2 - 0.03]) for (const sz of [-D / 2 + 0.03, D / 2 - 0.03]) { const [px, pz] = P(sx, sz); IB('i2_shelf', 0.04, h, 0.04, px, 0, pz); }
+  const nS = 5; for (let k = 0; k < nS; k++) { const y = 0.08 + k * (h - 0.15) / (nS - 1); const [px, pz] = P(0, 0); IB('i2_shelf', alongZ ? D : L, 0.025, alongZ ? L : D, px, y, pz);
+    if (goods && k < nS - 1) { const gh = 0.22 + rnd2() * 0.1; const g = new THREE.BoxGeometry(alongZ ? D * 0.85 : L - 0.1, gh, alongZ ? L - 0.1 : D * 0.85); const uv = g.attributes.uv; const u0 = rnd2(); for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + uv.getX(i) * (L / 1.2), uv.getY(i)); g.translate(px, y + 0.025 + gh / 2, pz); addGeo('i2_goods', g); } }
+}
+function cartonStack(x, z, n, ry = 0) { for (let i = 0; i < n; i++) { const s = 0.45 + rnd2() * 0.2, h = 0.35 + rnd2() * 0.15; const y = i * 0.4; const r = ry + (rnd2() - 0.5) * 0.3; IB('i2_card', s, h, s * 0.8, x + (rnd2() - 0.5) * 0.06, y, z + (rnd2() - 0.5) * 0.06, r); const tp = new THREE.BoxGeometry(s + 0.005, 0.005, 0.06); tp.rotateY(r); tp.translate(x, y + h + 0.003, z); addGeo('d2_tape', tp); } }
+function sackPile(x, z) { for (let i = 0; i < 5; i++) { const g = bagGeo(); g.scale(1.0, 1.1, 0.9); const r = i < 3 ? 0 : 1; g.translate(x + (i % 3 - 1) * 0.5 * (r ? 0 : 1) + (r ? (i - 3.5) * 0.5 : 0), 0.21 + r * 0.38, z + (r ? 0.05 : 0)); addGeo('i2_sack', g); } }
+function plasticCrates(x, z) { for (let i = 0; i < 3; i++) { IB(i % 2 ? 'i2_crateB' : 'i2_crateR', 0.55, 0.3, 0.38, x, i * 0.3, z, (rnd2() - 0.5) * 0.15); } }
+function tubeLight(x, y, z, alongZ = true) { IB('i2_fixture', alongZ ? 0.14 : 1.25, 0.05, alongZ ? 1.25 : 0.14, x, y - 0.05, z); IB('i2_tube', alongZ ? 0.05 : 1.2, 0.04, alongZ ? 1.2 : 0.05, x, y - 0.09, z); }
+function poster(x, y, z, faceX, faceZ, k) { const g = new THREE.PlaneGeometry(0.5, 1.0); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (k + uv.getX(i)) / 4, uv.getY(i)); g.rotateY(Math.atan2(faceX, faceZ)); g.translate(x, y, z); addGeo('i2_poster', g); }
+function chair(x, z, ry, mat = 'i2_plastic') { IB(mat, 0.42, 0.04, 0.42, x, 0.44, z, ry); for (const [dx, dz] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) { const g = new THREE.BoxGeometry(0.03, 0.44, 0.03); g.translate(dx, 0.22, dz); g.rotateY(ry); g.translate(x, 0, z); addGeo(mat, g); } const b = new THREE.BoxGeometry(0.42, 0.42, 0.03); b.translate(0, 0.68, -0.2); b.rotateY(ry); b.translate(x, 0, z); addGeo(mat, b); }
+function fridge(x, z, faceX) { IB('i2_fridge', 0.7, 1.95, 0.65, x, 0, z); const fx = x + faceX * 0.33; IB('i2_fglass', 0.02, 1.5, 0.56, fx + faceX * 0.01, 0.3, z); for (let k = 0; k < 4; k++) { const g = new THREE.BoxGeometry(0.4, 0.22, 0.5); const uv = g.attributes.uv; const u0 = rnd2(); for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + uv.getX(i) * 0.4, uv.getY(i)); g.translate(x, 0.42 + k * 0.36, z); addGeo('i2_goods', g); } IB('i2_tube', 0.02, 0.05, 0.5, fx + faceX * 0.012, 1.8, z); }
+function altar(x, z, faceX) { // 神明桌：紅色長桌、上層神龕、紅燈、香爐
+  IB('i2_red', 0.55, 0.9, 1.6, x, 0, z); IB('i2_gold', 0.57, 0.04, 1.62, x, 0.9, z);
+  { const g = new THREE.PlaneGeometry(1.4, 0.6); g.rotateY(faceX > 0 ? Math.PI / 2 : -Math.PI / 2); g.translate(x + faceX * 0.28, 0.48, z); addGeo('i2_altar', g); }
+  IB('i2_red', 0.45, 0.9, 1.0, x - faceX * 0.05, 0.94, z); IB('i2_gold', 0.47, 0.05, 1.02, x - faceX * 0.05, 1.84, z);
+  { const g = new THREE.CylinderGeometry(0.09, 0.07, 0.12, 12); g.translate(x + faceX * 0.15, 0.98, z); addGeo('i2_gold', g); }
+  for (const dz of [-0.6, 0.6]) { const g = new THREE.SphereGeometry(0.05, 8, 6); g.scale(1, 1.4, 1); g.translate(x + faceX * 0.15, 1.05, z + dz); addGeo('i2_redlamp', g); }
+  { const g = new THREE.SphereGeometry(0.1, 8, 6); g.scale(1, 1.6, 1); g.translate(x - faceX * 0.02, 1.15, z); addGeo('i2_gold', g); }
+}
+function sofa(x, z, ry) { const S = (sx, sy, sz, dx, dy, dz, m) => { const g = new THREE.BoxGeometry(sx, sy, sz); g.translate(dx, dy + sy / 2, dz); g.rotateY(ry); g.translate(x, 0, z); addGeo(m, g); };
+  S(1.9, 0.42, 0.8, 0, 0, 0, 'i2_sofa'); S(1.9, 0.5, 0.18, 0, 0.42, -0.31, 'i2_sofa'); for (const s of [-1, 1]) S(0.16, 0.25, 0.8, s * 0.87, 0.42, 0, 'i2_sofa'); for (const s of [-0.45, 0.45]) S(0.85, 0.1, 0.62, s, 0.42, 0.06, 'i2_cush'); }
+function tvCabinet(x, z, ry) { const S = (sx, sy, sz, dx, dy, dz, m) => { const g = new THREE.BoxGeometry(sx, sy, sz); g.translate(dx, dy + sy / 2, dz); g.rotateY(ry); g.translate(x, 0, z); addGeo(m, g); };
+  S(1.6, 0.5, 0.42, 0, 0, 0, 'i2_wood'); S(1.0, 0.6, 0.06, 0, 0.55, 0, 'i2_black'); S(0.95, 0.55, 0.01, 0, 0.575, 0.035, 'i2_screen'); S(0.3, 0.05, 0.2, 0, 0.5, 0, 'i2_black'); }
+function ceilingFan(x, y, z) { const r = new THREE.CylinderGeometry(0.015, 0.015, 0.35, 6); r.translate(x, y - 0.18, z); addGeo('i2_fixture', r); const hub = new THREE.CylinderGeometry(0.1, 0.12, 0.12, 12); hub.translate(x, y - 0.4, z); addGeo('i2_fixture', hub); for (let k = 0; k < 3; k++) { const b = new THREE.BoxGeometry(0.6, 0.012, 0.12); b.translate(0.38, 0, 0); b.rotateY(k * 2.094 + 0.3); b.translate(x, y - 0.42, z); addGeo('i2_wood2', b); } }
+function hangingBulb(x, y, z) { wire(new THREE.Vector3(x, y, z), new THREE.Vector3(x, y - 0.8, z), 0, 'd2_wire', 0.006); const b = new THREE.SphereGeometry(0.06, 10, 8); b.translate(x, y - 0.86, z); addGeo('i2_bulb', b); }
+/* 店裡的櫃台：木櫃身、深色石材檯面、踢腳板、正面飾板（碰撞盒不變） */
+function counter(w, h, d, x, z, ry) { const S = (sx, sy, sz, dx, dy, dz, m) => { const g = new THREE.BoxGeometry(sx, sy, sz); g.translate(dx, dy + sy / 2, dz); g.rotateY(ry); g.translate(x, 0, z); addGeo(m, g); };
+  S(w - 0.04, 0.08, d - 0.04, 0, 0, 0, 'i2_black'); S(w - 0.02, h - 0.12, d - 0.02, 0, 0.08, 0, 'i2_wood2'); S(w + 0.06, 0.04, d + 0.06, 0, h - 0.04, 0, 'i2_granite');
+  const along = d > w; for (let k = -1; k <= 1; k++) S(along ? 0.01 : (w - 0.3) / 3, 0.5, along ? (d - 0.3) / 3 : 0.01, along ? (w / 2 + 0.005) : k * (w - 0.2) / 3, 0.25, along ? k * (d - 0.2) / 3 : (d / 2 + 0.005), 'i2_panel'); }
+/* ---------- 換外觀：原本的灰色金屬方塊 ---------- */
+function metalBox(w, h, d, x, z, kind) {
+  GEO_MUTE = LOOK2; block(w, h, d, 'in_metal', x, 0, z); GEO_MUTE = false; if (!LOOK2) return;
+  if (kind === 'shelf') shelfUnit(x, z, w, d, h);
+  else if (kind === 'rack') { shelfUnit(x, z, w, d, h, false); const alongZ = d > w; for (let k = 0; k < 3; k++) for (let i = 0; i < 3; i++) { const t = (i - 1) * (Math.max(w, d) / 3); IB('i2_card', 0.38, 0.32, 0.38, x + (alongZ ? 0 : t), 0.1 + k * 0.45, z + (alongZ ? t : 0), (rnd2() - 0.5) * 0.3); } }
+  else { IB('i2_wood', w, h, d, x, 0, z); const fx = w < d ? 1 : 0; for (const s of [-0.18, 0.18]) IB('i2_gold', fx ? w + 0.02 : 0.04, 0.12, fx ? 0.04 : d + 0.02, x + (fx ? 0 : s), 1.0, z + (fx ? s : 0)); }  // 衣櫃（木頭、把手）
+}
+/* ---------- 每個房間 ---------- */
+function dressInteriors() {
+  const tryPut = (B, fn) => { if (canPlace(...B)) { fn(); return true; } return false; };
+  // 地板磁磚、天花板（蓋在原本的地板／天花板上面一點點）
+  const floor = (x0, x1, z0, z1, y) => { const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 1.2, uv.getY(i) * (z1 - z0) / 1.2); g.rotateX(-Math.PI / 2); g.translate((x0 + x1) / 2, y, (z0 + z1) / 2); addGeo('i2_floor', g); };
+  const ceil = (x0, x1, z0, z1, y) => { const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 1.2, uv.getY(i) * (z1 - z0) / 1.2); g.rotateX(Math.PI / 2); g.translate((x0 + x1) / 2, y, (z0 + z1) / 2); addGeo('i2_ceil', g); };
+  { const { x0, x1, z0, z1, h1 } = BLDG; floor(x1 + 0.15, x0 - 0.15, z1 + 0.15, z0 - 0.15, 0.036); ceil(x1 + 0.15, x0 - 0.15, z1 + 0.15, z0 - 0.15, h1 - 0.03);
+    // 店面：日光燈、冰箱、牆上海報、櫃台上的收銀機與雜物
+    for (const [x, z] of [[-12.5, -52.5], [-12.5, -56.5], [-12.5, -60.5], [-12.5, -64.0], [-18.5, -52], [-18.5, -55.5]]) tubeLight(x, h1, z);
+    tryPut([-15.35, -14.6, 0, 2, -57.6, -56.8], () => fridge(-14.95, -57.2, 1)) || tryPut([-15.35, -14.6, 0, 2, -61.8, -61.0], () => fridge(-14.95, -61.4, 1));
+    IB('i2_black', 0.35, 0.12, 0.3, -12.6, 1.0, -53.6); IB('i2_screen', 0.02, 0.18, 0.22, -12.75, 1.12, -53.6); IB('i2_goods', 0.3, 0.2, 0.5, -12.6, 1.0, -55.6);
+    poster(-15.33, 1.7, -55.0, 1, 0, 2); poster(-9.68, 1.8, -62.6, -1, 0, 1); poster(-15.33, 1.7, -59.6, 1, 0, 0);
+    // 倉庫：紙箱堆、米袋、塑膠籃
+    tryPut([-21.3, -20.3, 0, 1.3, -57.7, -56.8], () => cartonStack(-20.8, -57.2, 3)); tryPut([-17.0, -16.0, 0, 1.0, -50.6, -50.2], () => sackPile(-16.5, -50.45)) || tryPut([-21.3, -20.3, 0, 0.9, -51.0, -50.2], () => sackPile(-20.8, -50.5));
+    tryPut([-16.2, -15.7, 0, 0.9, -57.7, -57.2], () => plasticCrates(-15.95, -57.45));
+    poster(-21.33, 1.7, -56.8, 1, 0, 3);
+  }
+  { const { x0, x1, z0, z1, h } = HOUSE; floor(x0 + 0.15, x1 - 0.15, z1 + 0.15, z0 - 0.15, 0.036); ceil(x0 + 0.15, x1 - 0.15, z1 + 0.15, z0 - 0.15, h - 0.03);
+    for (const [x, z] of [[14, -75], [19.5, -75], [14, -87], [20, -84.5], [20, -91]]) tubeLight(x, h, z, false);
+    // 隔壁沿街大樓的牆有一段伸進民宅前廳（原本的配置）：在它的面上刷一層油漆，看起來就是前廳的牆
+    for (const b of WORLD.buildings) if (b.side > 0 && !b.plaza && b.z1 < z0 && b.z0 > z0) { const zf = b.z1 - 0.012; const g = new THREE.PlaneGeometry(x1 - x0 - 0.3, h - 0.06); g.rotateY(Math.PI); g.translate((x0 + x1) / 2, (h - 0.06) / 2, zf); addGeo('in_plaster2', g); }
+    // 前廳：神明桌、沙發、電視櫃、吊扇、月曆
+    tryPut([22.2, 22.85, 0, 1.9, -74.0, -72.3], () => altar(22.55, -73.15, -1)) || tryPut([22.2, 22.85, 0, 1.9, -80.6, -78.9], () => altar(22.55, -79.75, -1));
+    tryPut([15.0, 17.0, 0, 1.0, -72.45, -71.7], () => sofa(16.0, -72.08, 0)) || tryPut([19.0, 21.0, 0, 1.0, -72.45, -71.7], () => sofa(20.0, -72.08, 0));
+    tryPut([15.4, 17.0, 0, 1.2, -80.85, -80.4], () => tvCabinet(16.2, -80.65, Math.PI));
+    ceilingFan(17, h, -76); poster(11.17, 1.7, -76.8, 1, 0, 0); poster(22.83, 1.6, -77.8, -1, 0, 1);
+    // 後房：塑膠椅、紙箱
+    tryPut([11.3, 12.2, 0, 1.2, -94.8, -93.9], () => cartonStack(11.75, -94.35, 2)); tryPut([15.9, 16.6, 0, 1, -82.0, -81.3], () => chair(16.25, -81.65, Math.PI));
+    // 人質房：塑膠椅、繩子、吊燈泡
+    tryPut([18.0, 18.7, 0, 1, -94.6, -93.9], () => chair(18.35, -94.25, 0.3)); tryPut([22.2, 22.8, 0, 1, -84.6, -83.9], () => chair(22.5, -84.25, -1.8));
+    { const g = new THREE.TorusGeometry(0.16, 0.025, 6, 16); g.rotateX(Math.PI / 2); g.translate(21.6, 0.06, -90.0); addGeo('i2_rope', g); }
+    hangingBulb(20, h, -88.5);
+    // 屋內也看得到窗戶（窗簾）
+    for (const z of [-78, -86, -92]) { const g = new THREE.PlaneGeometry(1.2, 1.25); g.rotateY(Math.PI / 2); g.translate(x0 + 0.17, 1.68, z); addGeo('d2_glass2', g); const c = new THREE.PlaneGeometry(0.55, 1.3); c.rotateY(Math.PI / 2); c.translate(x0 + 0.19, 1.68, z - 0.3); addGeo('i2_curtain', c); }
+  }
 }
 
 /* =========================================================
