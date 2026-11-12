@@ -37,8 +37,11 @@
 - 人物：[Microsoft Rocketbox Avatar Library](https://github.com/microsoft/Microsoft-Rocketbox)（MIT），由 [mini-cry](https://github.com/vvanghelue/mini-cry) 轉成 glTF（迷彩重新上色、徽章塗掉）。
 - 動作：Quaternius Universal Animation Library（CC0），以 mini-cry 的重定向程式（ISC）離線烘焙到上述人體骨架。
 - 第一人稱手臂：Rocketbox Military_Male_03（MIT）；手臂 IK 程式移植自 mini-cry（ISC）。
-- 狙擊槍：[Bolt Action Rifle 7.62](https://polyhaven.com/a/bolt_action_rifle_7_62) by Mateusz Sadek（Poly Haven，CC0），本專案改成沙色槍托、換上自製的 10 倍瞄準鏡與槍口制退器。
-- 步槍：M4A1 by [TORI106](https://sketchfab.com/3d-models/m4a1-33107f38b23c45cc8103768c0e961cdf)（CC-BY 4.0）；AKM by LonesomeDucky（OpenGameArt，CC0）。
+- 步槍（2.6.0 起）：以下三把皆為 xlisov 的《Contract Wars》模型（Sketchfab，[CC-BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/)，姓名標示－非商業性），本專案只用於非營利課堂教學；轉成遊戲用格式、拿掉重複的配件、壓縮貼圖。
+  - "[FN SCAR-L | Contract Wars](https://sketchfab.com/3d-models/fn-scar-l-contract-wars-63dfb05df61e4e2a8d4f4cea54a4d884)"（換成鳥籠式消焰器）
+  - "[AKMS | Contract Wars](https://sketchfab.com/3d-models/akms-contract-wars-46dd799ae72840ccb4604c2afce386fd)"
+  - "[ORSIS T-5000 | Contract Wars](https://sketchfab.com/3d-models/orsis-t-5000-contract-wars-f2b90e063c5240d69d058402c5c847c9)"
+- 舊版（2.5 以前）步槍：M4A1 by TORI106（CC-BY 4.0）；AKM by LonesomeDucky（CC0）；狙擊槍改自 Poly Haven Bolt Action Rifle 7.62（CC0）。
 - 裝甲車：[BTR 80 by Goga.Danelia](https://sketchfab.com/3d-models/2980ab7cbc4d41b7893e3233e9dcc1ce)（CC-BY 4.0）。休旅車：[Mercedes-Benz G-Class 2021 by ItsDiyor](https://sketchfab.com/3d-models/1768618c049b49fcb0d09a86d6f67c8d)（CC-BY 4.0）。兩者經 [offroad](https://github.com/Arz-Gev/offroad) 壓縮，本專案再縮小貼圖與面數。
 - 槍口火光：真實照片去背（offroad 專案製作）：Muzzle flash VFX 1–5 by ZunterPHOTO（Wikimedia Commons，CC0）、"Light 'Em Up" 美國海軍陸戰隊（公共領域）。
 - 材質：[ambientCG](https://ambientcg.com)（CC0，經 null3d sample-assets 整理）、[Poly Haven](https://polyhaven.com)（CC0）。天空：Poly Haven kloofendal_48d_partly_cloudy_puresky（CC0）。

@@ -257,7 +257,7 @@ body.desk .fire, body.desk .tb, body.desk .look, body.desk .lookhint { display: 
       <div class="cross" id="tSnX"></div>
       <div class="dmg" id="tSnDmg"></div>
       <div class="sninfo" id="tSnInfo"></div>
-      <div class="deskhint" id="tSnHint"><b>點一下畫面開始</b><span>滑鼠移動：轉動視角　右鍵按住：站起來瞄準　左鍵：開火　R：換彈</span><span>1 狙擊槍　2 M4　3 AK　狙擊鏡：滾輪或 Z 調倍率　M：地圖換位置　C：回到指揮官</span></div>
+      <div class="deskhint" id="tSnHint"><b>點一下畫面開始</b><span>滑鼠移動：轉動視角　右鍵按住：站起來瞄準　左鍵：開火　R：換彈</span><span>1 狙擊槍　2 SCAR　3 AK　狙擊鏡：滾輪或 Z 調倍率　M：地圖換位置　C：回到指揮官</span></div>
     </div>
   </div>
 </div>
@@ -2602,7 +2602,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.4.20（新外觀樣品第三版：屋內陳設、油漆牆、磁磚地板、天花板與日光燈；街道兩端用樓房收起來）';
+const VERSION = '2.6.0（換上新槍：SCAR-L、AKMS、T-5000 狙擊槍）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2645,23 +2645,29 @@ const DIFFS = {
 };
 const PTS = { kill: 100, head: 150, hostage: 200, hostageHit: -300, civHit: -300, bomb: 500, death: -100, timeBonus: 3 };
 const WEAPONS = {
-  m4: { name: 'M4 卡賓槍（3 倍瞄準鏡）', model: 'rifle_m4', dmg: 40, head: 2.5, rpm: 700, mag: 30, reload: 2.7, spread: 1.1, spreadAds: 0.15, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.1, -0.53], sight: [0, 0.205, 0.04], scope: { y: 0.205, z0: 0.04, mount: 0.168 }, magazine: [0, -0.03, -0.08],
-    magBox: { zMin: -0.135, zMax: -0.02, yMax: 0.035 }, magAxis: [0, -0.9, -0.44], magGrip: [-0.04, -0.03, -0.075], bolt: { a: [-0.038, 0.072, -0.012], b: [-0.03, 0.066, -0.002], fingers: [0.2, -0.3, -0.93], thumb: [0.1, 0.95, -0.3] }, view: [0.19, -0.21, -0.43], adsDist: 0.13,
-    eject: { port: [0.024, 0.103, -0.064], dir: [1, 0.45, 0.3], len: 0.045, r: 0.0048, neck: 0.012 }, round: { len: 0.057, r: 0.0048, tip: 0.019 },
-    hands: { right: { pos: [0.022, 0.05, 0.123], fingers: [0, -0.412, -0.911], thumb: [0, 0.911, -0.412], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.05, 0.055, -0.19], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
-  ak: { name: 'AK-47 步槍（敵人的槍）', model: 'rifle_ak', dmg: 46, head: 2.5, rpm: 600, mag: 30, reload: 3.0, spread: 1.6, spreadAds: 0.5, recoil: 1.25, adsFov: 50, sound: 'ak',
-    eject: { port: [0.022, 0.113, -0.1], dir: [1, 0.55, -0.1], len: 0.039, r: 0.0057, neck: 0.011 }, round: { len: 0.056, r: 0.0057, tip: 0.02 }, muzzle: [0, 0.102, -0.56], sight: [0, 0.152, -0.15], magazine: [0, -0.01, -0.12],
-    magBox: { zMin: -0.215, zMax: -0.1, yMax: 0.065 }, magAxis: [0, -0.96, -0.28], magGrip: [-0.04, -0.03, -0.155], bolt: { a: [0.062, 0.078, -0.035], b: [0.062, 0.078, 0.065], fingers: [-0.35, 0.92, 0.15], thumb: [0.1, 0.25, -0.96], cant: 0.45, via: [[-0.05, -0.005, -0.075], [0.07, -0.005, -0.07]] }, view: [0.19, -0.2, -0.42], adsDist: 0.16,
-    hands: { right: { pos: [0.022, 0.035, 0.12], fingers: [0, -0.29, -0.96], thumb: [0, 0.96, -0.29], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.035, -0.21], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
-  // 手拉槍機狙擊槍：Poly Haven「Bolt Action Rifle 7.62」（CC0）改成黑色槍托、加上大型 10 倍瞄準鏡、槍口制退器與腳架
-  sniper: { name: '手拉槍機狙擊槍（10 倍瞄準鏡）', model: 'rifle_sniper', dmg: 120, head: 3, rpm: 60, boltAction: true, cycle: 1.25, mag: 5, reload: 3.2, spread: 3.5, spreadAds: 0.02, recoil: 3.4, adsFov: 40, sound: 'sniper',
-    muzzle: [0, 0.1, -1.0], sight: [0, 0.158, 0.075], scope: { y: 0.158, fov: 2 * Math.atan(Math.tan(36 * Math.PI / 180) / 10) * 180 / Math.PI }, magazine: [0, 0.03, -0.09],
-    magBox: { zMin: -0.145, zMax: -0.045, yMax: 0.06, minY: 0.03 }, magAxis: [0, -1, -0.05], magGrip: [-0.035, 0.02, -0.095],
-    bolt: { a: [-0.045, 0.04, -0.24], b: [-0.045, 0.04, -0.27], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92] },
-    knob: [0.034, 0.071, -0.071], boltPivot: [0.0, 0.088], boltBox: { x0: 0.01, x1: 0.04, y0: 0.06, y1: 0.11, z0: -0.12, z1: -0.05 }, boltSlide: 0.09,
-    view: [0.165, -0.185, -0.38], adsDist: 0.08,
-    eject: { port: [0.016, 0.108, -0.092], dir: [1, 0.7, 0.15], len: 0.069, r: 0.0059, neck: 0.016 }, round: { len: 0.071, r: 0.006, tip: 0.024, n: 1 },
-    hands: { right: { pos: [0.022, 0.099, 0.136], fingers: [0, -0.6, -0.8], thumb: [0, 0.8, -0.6], curl: [[10, 30, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.04, -0.28], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
+  // 突擊步槍：FN SCAR-L（模型 xlisov，Sketchfab，CC-BY-NC 4.0），加 HAMR 瞄準鏡、垂直前握把；鍵名沿用 m4（連線與統計都用這個名字）
+  m4: { name: 'SCAR-L 步槍（瞄準鏡）', short: 'SCAR', model: 'rifle_scar', dmg: 40, head: 2.5, rpm: 650, mag: 30, reload: 2.7, spread: 1.1, spreadAds: 0.15, recoil: 0.7, adsFov: 46, sound: 'm4', muzzle: [0, 0.0995, -0.44], sight: [-0.002, 0.169, 0.058], scope: { y: 0.169, z0: 0.058 },
+    magMat: /magazine/i, magAxis: [0, -0.97, -0.22], magGrip: [-0.04, -0.03, -0.072],
+    charge: { test: (c) => c.x < -0.012 && c.z > -0.175 && c.z < -0.145 && c.y > 0.11 && c.y < 0.14, slide: 0.075 },
+    bolt: { a: [-0.07, 0.105, -0.165], b: [-0.07, 0.105, -0.09], fingers: [0.55, 0.1, -0.83], thumb: [0.15, 0.95, -0.25] }, view: [0.19, -0.205, -0.43], adsDist: 0.12,
+    eject: { port: [0.02, 0.103, -0.06], dir: [1, 0.45, 0.3], len: 0.045, r: 0.0048, neck: 0.012 }, round: { len: 0.057, r: 0.0048, tip: 0.019 },
+    hands: { right: { pos: [0.022, 0.055, 0.12], fingers: [0, -0.412, -0.911], thumb: [0, 0.911, -0.412], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.03, 0.045, -0.172], fingers: [0.55, -0.1, -0.83], thumb: [0.1, 0.97, -0.2], curl: [65, 70, 75, 80], thumbCurl: [10, 20, 20], thumbFold: 20 } } },
+  // AKMS（摺疊槍托的 AKM，模型 xlisov，Sketchfab，CC-BY-NC 4.0）
+  ak: { name: 'AKMS 步槍（敵人的槍）', short: 'AK', model: 'rifle_akms', npcModel: 'rifle_akms_lo', dmg: 46, head: 2.5, rpm: 600, mag: 30, reload: 3.0, spread: 1.6, spreadAds: 0.5, recoil: 1.25, adsFov: 50, sound: 'ak',
+    eject: { port: [0.02, 0.112, -0.085], dir: [1, 0.55, -0.1], len: 0.039, r: 0.0057, neck: 0.011 }, round: { len: 0.056, r: 0.0057, tip: 0.02 }, muzzle: [0, 0.1035, -0.53], sight: [-0.002, 0.1505, -0.13],
+    magMat: /magazine/i, magAxis: [0, -0.96, -0.28], magGrip: [-0.04, -0.03, -0.115],
+    charge: { test: (c) => c.max[0] > 0.03 && c.z > -0.15 && c.z < -0.11 && c.y > 0.1 && c.y < 0.13, slide: 0.1, recip: true },
+    bolt: { a: [0.07, 0.085, -0.12], b: [0.07, 0.085, -0.025], fingers: [-0.35, 0.92, 0.15], thumb: [0.1, 0.25, -0.96], cant: 0.45, via: [[-0.05, -0.012, -0.035], [0.07, -0.012, -0.03]] }, view: [0.19, -0.2, -0.42], adsDist: 0.28,
+    hands: { right: { pos: [0.022, 0.045, 0.1], fingers: [0, -0.35, -0.94], thumb: [0, 0.94, -0.35], curl: [[25, 40, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.04, -0.235], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
+  // 手拉槍機狙擊槍：ORSIS T-5000（模型 xlisov，Sketchfab，CC-BY-NC 4.0）
+  sniper: { name: 'T-5000 狙擊槍（10 倍瞄準鏡）', short: 'T-5000', model: 'rifle_t5000', dmg: 120, head: 3, rpm: 60, boltAction: true, cycle: 1.25, mag: 5, reload: 3.2, spread: 3.5, spreadAds: 0.02, recoil: 3.4, adsFov: 40, sound: 'sniper',
+    muzzle: [0, 0.1, -0.775], sight: [0.004, 0.157, -0.014], scope: { y: 0.157, fov: 2 * Math.atan(Math.tan(36 * Math.PI / 180) / 10) * 180 / Math.PI },
+    magBox: { zMin: -0.16, zMax: -0.1, yMax: 0.06, minY: 0.0 }, magAxis: [0, -1, -0.05], magGrip: [-0.035, 0.02, -0.132],
+    bolt: { a: [-0.045, 0.055, -0.27], b: [-0.045, 0.055, -0.3], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92] },
+    knob: [0.042, 0.055, -0.068], knobOff: [0.03, -0.03, 0.04], boltHand: { fingers: [-0.12, 0.15, -0.98], thumb: [0.1, 0.98, 0.1], curl: [[50, 60, 60], 70, 75, 80], thumbCurl: [20, 30, 25], thumbFold: 25 }, boltPivot: [0.004, 0.0995], boltTest: (c) => (c.z > -0.2 && c.z < -0.03 && c.y > 0.085 && c.y < 0.112 && c.x > -0.01 && c.min[1] > 0.085) || (c.max[0] > 0.05 && c.z > -0.09 && c.z < -0.05 && c.y < 0.11), boltSlide: 0.09,
+    view: [0.165, -0.19, -0.38], adsDist: 0.08,
+    eject: { port: [0.014, 0.105, -0.13], dir: [1, 0.7, 0.15], len: 0.069, r: 0.0059, neck: 0.016 }, round: { len: 0.071, r: 0.006, tip: 0.024, n: 1 },
+    hands: { right: { pos: [0.022, 0.045, 0.085], fingers: [0, -0.45, -0.89], thumb: [0, 0.89, -0.45], curl: [[10, 30, 30], 65, 70, 75], thumbCurl: [10, 20, 20], thumbFold: 30 }, left: { pos: [-0.045, 0.045, -0.3], fingers: [0.94, 0.09, -0.33], thumb: [-0.25, 0.3, -0.92], curl: [50, 55, 60, 65], thumbCurl: [5, 10, 10], thumbFold: 0 } } },
 };
 
 /* =========================================================
@@ -4057,8 +4063,8 @@ class Character {
     const z = _rz.copy(this.aimDir).negate(); const x = _rx.crossVectors(_up, z).normalize(); const y = _ry.crossVectors(z, x);
     _rm.makeBasis(x, y, z); _rq.setFromRotationMatrix(_rm);
     _rq2.copy(this.root.quaternion).invert(); m.quaternion.copy(_rq2).multiply(_rq);
-    // 讓槍的握把（槍身座標 0.02, 0.035, 0.12）落在手掌上
-    _rg.set(0.02, 0.035, 0.12).applyQuaternion(_rq); palm.sub(_rg);
+    // 讓槍的握把（槍身座標 0.02, 0.045, 0.1）落在手掌上
+    _rg.set(0.02, 0.045, 0.1).applyQuaternion(_rq); palm.sub(_rg);
     m.position.copy(this.root.worldToLocal(palm));
   }
   update(dt) { this.mixer.update(dt); }
@@ -5097,7 +5103,7 @@ class ViewArms {
    ========================================================= */
 /* 彈匣：把模型裡彈匣那一塊三角形切出來，變成可以單獨移動的零件（拔出、丟掉、插入新的） */
 function splitMagazine(root, w) {
-  if (!w.magBox) return null; root.updateMatrixWorld(true);
+  if (!w.magBox && !w.magMat) return null; root.updateMatrixWorld(true);
   const inv = root.matrixWorld.clone().invert(); const B = w.magBox; const v = new THREE.Vector3();
   const pivot = new THREE.Group(); pivot.name = 'magPivot'; root.add(pivot); let n = 0;
   const meshes = []; root.traverse((o) => { if (o.isMesh) meshes.push(o); });
@@ -5111,7 +5117,8 @@ function splitMagazine(root, w) {
     for (let t = 0; t < idx.length; t += 3) { const a = find(weld[idx[t]]), b = find(weld[idx[t + 1]]), c = find(weld[idx[t + 2]]); par[a] = b; par[find(c)] = find(b); }
     const C = new Map();
     for (let t = 0; t < idx.length; t += 3) { const r = find(weld[idx[t]]); let c = C.get(r); if (!c) C.set(r, (c = { n: 0, z: 0, y: 0, minY: 1e9 })); c.n++; for (let k = 0; k < 3; k++) { const i = idx[t + k]; c.z += pos[i * 3 + 2] / 3; c.y += pos[i * 3 + 1] / 3; c.minY = Math.min(c.minY, pos[i * 3 + 1]); } }
-    const isMag = new Set(); for (const [r, c] of C) { const cz = c.z / c.n, cy = c.y / c.n; if (c.n >= 40 && cz >= B.zMin && cz <= B.zMax && cy <= B.yMax && c.minY < (B.minY ?? 0)) isMag.add(r); }
+    const allMag = w.magMat && w.magMat.test(mesh.material.name || ''); /* 彈匣有自己材質的模型：整個材質都是彈匣 */
+    const isMag = new Set(); for (const [r, c] of C) { const cz = c.z / c.n, cy = c.y / c.n; if (allMag || B && c.n >= 40 && cz >= B.zMin && cz <= B.zMax && cy <= B.yMax && c.minY < (B.minY ?? 0)) isMag.add(r); }
     const keep = [], mag = [];
     for (let t = 0; t < idx.length; t += 3) (isMag.has(find(weld[idx[t]])) ? mag : keep).push(idx[t], idx[t + 1], idx[t + 2]);
     if (!mag.length) continue;
@@ -5265,7 +5272,7 @@ function boltPose(k) {
   const hand = k < 0.18 ? seg(0, 0.18) : k < 0.8 ? 1 : 1 - seg(0.8, 1);
   return { rot, back, hand };
 }
-const BOLT_HAND = { fingers: [-0.35, 0.2, -0.92], thumb: [0.2, 0.95, -0.2], curl: [[50, 60, 60], 70, 75, 80], thumbCurl: [20, 30, 25], thumbFold: 25 };
+const BOLT_HAND0 = { fingers: [-0.35, 0.2, -0.92], thumb: [0.2, 0.95, -0.2], curl: [[50, 60, 60], 70, 75, 80], thumbCurl: [20, 30, 25], thumbFold: 25 };
 const INPUT = { look: { dx: 0, dy: 0 }, fire: false, ads: false, reload: false, defuse: false };
 const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0, tk: 0, akp: 0, akk: 0, hs: 0 });
 /* ---------- 門口切角：跟著準心 ----------
@@ -5320,13 +5327,15 @@ class Player {
     if (MS.moving) { if (!ZONES[MS.zone].covers.includes(this.coverId)) { this.goCover(ZONES[MS.zone].covers[0]); return; } zoneArrive(); } onCover(); }
   setupViewModels(models, list = ['m4', 'ak', 'sniper']) {
     for (const k of list) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
-    if (this.weaponMeshes.sniper) { const m = this.weaponMeshes.sniper, w = WEAPONS.sniper, B = w.boltBox; modernizeSniper(m);
+    if (this.weaponMeshes.sniper) { const m = this.weaponMeshes.sniper, w = WEAPONS.sniper, B = w.boltBox; if (w.model === 'rifle_sniper') modernizeSniper(m);
       const piv = new THREE.Group(); piv.position.set(w.boltPivot[0], w.boltPivot[1], 0); m.add(piv); piv.updateMatrix(); // 槍機：繞槍管軸線轉、沿 z 拉動
-      const n = splitParts(m, (c) => c.x > B.x0 && c.x < B.x1 && c.y > B.y0 && c.y < B.y1 && c.z > B.z0 && c.z < B.z1 && c.max[0] > 0.03 && c.n > 300, { pivot: piv }); this.bolts.sniper = n ? piv : null; if (!n) DBG('狙擊槍：找不到槍機'); }
+      const n = splitParts(m, w.boltTest || ((c) => c.x > B.x0 && c.x < B.x1 && c.y > B.y0 && c.y < B.y1 && c.z > B.z0 && c.z < B.z1 && c.max[0] > 0.03 && c.n > 300), { pivot: piv }); this.bolts.sniper = n ? piv : null; if (!n) DBG('狙擊槍：找不到槍機'); }
+    // 拉柄（SCAR 左側的拉機柄、AK 右側的槍機拉柄）切出來：換彈拉槍機時跟著手往後；AK 開槍時槍機來回
+    this.charges = {}; for (const k in this.weaponMeshes) { const w = WEAPONS[k]; if (!w.charge) continue; const piv = new THREE.Group(); this.weaponMeshes[k].add(piv); piv.updateMatrix(); if (splitParts(this.weaponMeshes[k], w.charge.test, { pivot: piv })) this.charges[k] = piv; else DBG(k + '：找不到拉柄'); }
     this.mags = {}; for (const k in this.weaponMeshes) { this.mags[k] = splitMagazine(this.weaponMeshes[k], WEAPONS[k]); this.rounds[k] = magRounds(WEAPONS[k], this.mags[k]); }
     this.flash = makeFlash(0.55, LAYER_VIEW); this.vm.add(this.flash); { const L = this.flash.userData.light; this.flash.remove(L); L.layers.enableAll(); this.vm.add(L); this.flashLight = L; } // 燈不放在會隱藏的火光裡：隱藏的燈不算數，燈數一變就要重新編譯
     try { if (models.arms_military) this.arms = new ViewArms(models.arms_military, { shoulder: [0, -0.22, -0.03], yaw: 25, stretch: 1.12, reach: 0.1, pole: [0.6, -1, 0.1], envMap: 0.6 }, this.vm); } catch (e) { console.warn('手臂載入失敗', e); }
-    if (this.weaponMeshes.m4) this.weaponMeshes.m4.add(buildScope());
+    if (this.weaponMeshes.m4 && WEAPONS.m4.model === 'rifle_m4') this.weaponMeshes.m4.add(buildScope());
     this.setGear(this.gearId);
   }
   setGear(id) {
@@ -5460,15 +5469,18 @@ class Player {
     this.flash.position.copy(V(...w.muzzle).applyMatrix4(m.matrix)); this.flash.quaternion.copy(m.quaternion); if (this.flashLight) this.flashLight.position.copy(this.flash.position);
     const mg = this.mags && this.mags[this.gearId]; const rnd = this.rounds[this.gearId];
     let hands = w.hands;
-    if (rk > 0 && w.magAxis) { const rp = reloadPose(w, rk); hands = { right: w.hands.right, left: rp.left }; if (mg) { mg.pivot.position.set(...rp.off); mg.pivot.rotation.set(rp.magRot, 0, rp.magRot * 0.4); mg.pivot.visible = rp.magVis; }
+    if (rk > 0 && w.magAxis) { const rp = reloadPose(w, rk); hands = { right: w.hands.right, left: rp.left }; if (mg) { mg.pivot.rotation.set(rp.magRot, 0, rp.magRot * 0.4); const gp = _a.fromArray(w.magGrip); mg.pivot.position.set(...rp.off).add(gp).sub(gp.clone().applyEuler(mg.pivot.rotation)); mg.pivot.visible = rp.magVis; } /* 彈匣繞左手握的位置轉，手和彈匣不會分開 */
       // 彈匣裡看得到的子彈：拔出來的舊彈匣還有子彈才顯示（打光的維持原樣）；從腰間拿出的新彈匣一定有子彈
       if (rnd) rnd.visible = rk > 0.12 && rk < 0.68 && (rk < 0.48 ? this.oldHad : true); }
     else { if (mg) { mg.pivot.position.set(0, 0, 0); mg.pivot.rotation.set(0, 0, 0); mg.pivot.visible = true; } if (rnd) rnd.visible = false; }
+    // 拉柄：換彈最後左手把它往後拉、放開時彈回；AK 的槍機拉柄開槍時也會來回
+    const chg = this.charges && this.charges[this.gearId];
+    if (chg) { const ck2 = rk >= 0.8 && rk < 0.86 ? easeIO((rk - 0.8) / 0.06) : rk >= 0.86 && rk < 0.875 ? 1 - (rk - 0.86) / 0.015 : 0; const sk = w.charge.recip ? this.kick * this.kick : 0; chg.position.z = Math.max(ck2, sk) * w.charge.slide; }
     // 狙擊槍槍機：轉上去、往後拉；右手跟著槍機柄
     const bp = this.bolts[this.gearId];
     if (bp) { const b = bk || { rot: 0, back: 0, hand: 0 }; bp.rotation.z = b.rot * 1.05; bp.position.z = b.back * w.boltSlide;
       if (bk && bk.hand > 0) { const kn = new THREE.Vector3(...w.knob); kn.x -= w.boltPivot[0]; kn.y -= w.boltPivot[1]; kn.applyAxisAngle(new THREE.Vector3(0, 0, 1), bp.rotation.z); kn.x += w.boltPivot[0]; kn.y += w.boltPivot[1]; kn.z += bp.position.z;
-        const R0 = w.hands.right; const tgt = [kn.x + 0.008, kn.y - 0.02, kn.z + 0.045]; /* 手掌在槍機柄後下方，手指勾住球頭 */ const h = bk.hand; const mix = (a, b2) => a.map((v, i) => v + (b2[i] - v) * h);
+        const R0 = w.hands.right; const ko = w.knobOff || [0.008, -0.02, 0.045]; const tgt = [kn.x + ko[0], kn.y + ko[1], kn.z + ko[2]]; const BOLT_HAND = w.boltHand || BOLT_HAND0; /* 手掌在槍機柄後下方，手指勾住球頭 */ const h = bk.hand; const mix = (a, b2) => a.map((v, i) => v + (b2[i] - v) * h);
         hands = { left: hands.left, right: { pos: mix(R0.pos, tgt), fingers: mix(R0.fingers, BOLT_HAND.fingers), thumb: mix(R0.thumb, BOLT_HAND.thumb), curl: h > 0.5 ? BOLT_HAND.curl : R0.curl, thumbCurl: h > 0.5 ? BOLT_HAND.thumbCurl : R0.thumbCurl, thumbFold: h > 0.5 ? BOLT_HAND.thumbFold : R0.thumbFold } }; } }
     if (this.arms) this.arms.update(m, hands, 0);
     this.scoped = !!w.scope && this.adsK > 0.85;
@@ -5567,7 +5579,7 @@ function briefing(d) {
   return `<div class="rules"><p><b>任務簡報（難度：${d.name}）</b></p>
   <p>虛構的武裝組織「黑鴉」占領了港灣市的商店街，把 3 名人質關在廣場旁的民宅裡，還在街尾放了炸彈。</p>
   <p>① 突破路障　② 清除街口　③ 肅清港灣商行（三個房間）　④ 上屋頂用狙擊槍救出街尾的 2 名人質（${d.snipe} 秒）　⑤ 攻入民宅救 3 名人質（${d.hostage} 秒）　⑥ 拆除炸彈（${d.bomb} 秒倒數）</p>
-  <p>靠近倒下的敵人，可以撿起他的 AK-47 來用。</p>
+  <p>靠近倒下的敵人，可以撿起他的 AK 步槍來用。</p>
   <p>敵人頭巾蒙面、拿 AK 步槍。穿便服的是平民和人質，打到會重扣分。你平常蹲在掩體後面，瞄準或開火時才探身。</p>${META.shared ? '<p><b>全班同一條街：</b>街上的敵人全班共用，敵人會一波一波湧來，大家一起推進；救人質時每個人各自攻入民宅，救完到街尾會合拆彈。</p>' : ''}</div>`;
 }
 function controlsText() { return (DESKTOP ? '電腦：滑鼠移動＝轉視角，右鍵按住＝瞄準鏡，左鍵＝開火，R＝換彈，空白鍵＝前往準心對到的掩體，G＝撿起敵人的 AK／換槍，E 按住＝拆彈，Esc＝放開滑鼠。' : '手機橫放：左手在畫面上滑動＝轉視角，右手按開火；「瞄準」開瞄準鏡，「換彈」換彈匣；準心對到別的掩體會出現「前往掩體」；靠近倒下的敵人會出現「撿起 AK」。') + '平常蹲在掩體後面（敵人打不到），瞄準或開火時才探身。一段清完，電腦會帶你跑到下一個掩體。'; }
@@ -5599,7 +5611,7 @@ function resultHTML(title, msg) {
   return `<h1>${title}</h1><p>${msg}</p>
   <div class="stat"><div><b>${s.score}</b><small>分數</small></div><div><b>${grade(s)}</b><small>評等</small></div><div><b>${s.kills}</b><small>擊倒（爆頭 ${s.headshots}）</small></div>
   <div><b>${acc}%</b><small>命中率</small></div><div><b>${s.hr}／5</b><small>救出人質</small></div><div><b>${s.bomb === 1 ? '成功' : s.bomb === -1 ? '引爆' : '未完成'}</b><small>拆彈</small></div>
-  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>${s.akp ? `<p>撿起敵人的 AK-47，用 AK 擊倒 ${s.akk || 0} 人</p>` : ''}${s.tk ? `<p><b style="color:#ffd23a">擊倒老師 ${s.tk} 次</b></p>` : ''}`;
+  <div><b class="${s.hh ? 'bad' : ''}">${s.hh}</b><small>誤傷人質</small></div><div><b class="${s.civ ? 'bad' : ''}">${s.civ}</b><small>誤傷平民</small></div><div><b>${s.deaths}</b><small>被擊倒</small></div></div>${s.akp ? `<p>撿起敵人的 AK，用 AK 擊倒 ${s.akk || 0} 人</p>` : ''}${s.tk ? `<p><b style="color:#ffd23a">擊倒老師 ${s.tk} 次</b></p>` : ''}`;
 }
 function endTake(reason) {
   if (G.mode !== 'take') return; G.mode = 'done'; $('hudS').hidden = true; if (document.pointerLockElement) document.exitPointerLock(); renderDeskHint(); INPUT.fire = false; INPUT.defuse = false; MS.defusing = false;
@@ -5707,11 +5719,11 @@ const WB = { t: 0, near: false };
 function renderWeaponBtn(dt) {
   WB.t -= dt; if (WB.t <= 0) { WB.t = 0.2; WB.near = !P.hasAK && ENEMIES.some((e) => e.state === 'dead' && e.pos.distanceTo(P.pos) < 7 && Math.abs(e.pos.y) < 1); }
   const sn = MS.zone === Z_SNIPE || P.gearId === 'sniper'; const show = P.alive && !sn && !MS.defusing && (P.hasAK || WB.near);
-  setHidden('bWeapon', !show); if (show) setHTML('bWeapon', !P.hasAK ? '撿起<br>AK' : P.gearId === 'ak' ? '換回<br>M4' : '換成<br>AK');
+  setHidden('bWeapon', !show); if (show) setHTML('bWeapon', !P.hasAK ? '撿起<br>AK' : P.gearId === 'ak' ? '換回<br>SCAR' : '換成<br>AK');
 }
 function weaponBtn() {
   if (!P || !P.alive || MS.zone === Z_SNIPE || P.reloading > 0) return;
-  if (!P.hasAK) { if (!WB.near) return; P.pickAK(); banner('撿起敵人的 AK-47', 'info', 2600, '7.62 公釐子彈、30 發彈匣；沒有瞄準鏡，用照門和準星瞄準'); evPush('ak'); onShot(); return; }
+  if (!P.hasAK) { if (!WB.near) return; P.pickAK(); banner('撿起敵人的 AK 步槍', 'info', 2600, '7.62 公釐子彈、30 發彈匣；沒有瞄準鏡，用照門和準星瞄準'); evPush('ak'); onShot(); return; }
   P.switchGear(P.gearId === 'ak' ? 'm4' : 'ak');
 }
 function takeCover() { if (CV.cand) { P.goCover(CV.cand); CV.cand = null; setHidden('bCover', true); SFX.resume(); } }
@@ -5976,12 +5988,12 @@ function premiere(step) {
       <div><h2>美國 2001～2016 年</h2><p>造成死亡的暴力極端主義攻擊 85 起：極右翼 62 起（73%）、激進伊斯蘭主義 23 起（27%）；死亡人數分別是 106 人與 119 人。</p><p class="src">美國政府課責署 GAO-17-300, 2017</p></div></div>
       <p class="en">這些報告依意識形態分類，沒有記錄攻擊者的長相；「恐怖分子長什麼樣子」不是數據能回答的問題。</p></div>`,
     `<div class="slide"><h1 class="gold">為什麼敵人都拿 AK？</h1><div class="rank">
-      <div style="--c:#e0b04a"><span>撿起敵人的 AK-47</span><b>${sum('ak')}／${N}</b><span>人</span></div>
+      <div style="--c:#e0b04a"><span>撿起敵人的 AK</span><b>${sum('ak')}／${N}</b><span>人</span></div>
       <div style="--c:#ff5a4e"><span>用 AK 擊倒敵人</span><b>${sum('akk')}</b><span>人次</span></div></div>
       <p>小型武器調查（Small Arms Survey）估計：全世界約 1.75 億支軍用自動裝填步槍中，AK 系列約 7,600 萬支，是數量最多的一種。構造簡單、耐用、容易保養，冷戰時期大量生產並流向各國軍隊、警察與武裝團體。</p>
       <p class="en">AK 本身沒有立場；是電影和遊戲反覆把它交到「壞人」手上。剛才你撿起 AK 的時候，你變成壞人了嗎？</p></div>`,
     `<div class="slide"><h1 class="gold">想一想：軍事娛樂複合體</h1><p>1. 你腦中「恐怖分子」的樣子，是從新聞、電影還是遊戲來的？</p><p>2. 遊戲反覆讓你射擊同一種長相的人，會不會影響你看新聞、看陌生人的方式？</p><p>3. 美國陸軍的招募遊戲刻意不讓敵人有族裔特徵，商業遊戲卻常常相反。為什麼？誰從這樣的形象中得利？</p><p>4. 如果由你設計敵人，你會怎麼做？</p></div>`,
-    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：M4A1 by TORI106（Sketchfab，CC-BY 4.0）、AKM by LonesomeDucky（OpenGameArt，CC0）、狙擊槍改自 Bolt Action Rifle 7.62 by Mateusz Sadek（Poly Haven，CC0）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd、SuperPhat、lensflare8642，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。<br><br>研究與數據出處：Jack G. Shaheen, "Reel Bad Arabs: How Hollywood Vilifies a People," Annals of the American Academy of Political and Social Science 588 (2003): 171–193。Vít Šisler, "Digital Arabs: Representation in Video Games," European Journal of Cultural Studies 11(2) (2008): 203–220。Johan Höglund, "Electronic Empire: Orientalism Revisited in the Military Shooter," Game Studies 8(1) (2008)。Brian Kennedy, "Uncle Sam Wants You to Play This Game," The New York Times, 2002-07-11。Europol, EU Terrorism Situation and Trend Report (TE-SAT) 2026。U.S. GAO, GAO-17-300 Countering Violent Extremism (2017)。N.R. Jenzen-Jones, Global Development and Production of Self-loading Service Rifles: 1896 to the Present, Small Arms Survey Working Paper 25 (2017)。</div></div>`,
+    `<div class="slide"><h1>素材出處</h1><div class="credit">人物：Microsoft Rocketbox Avatar Library（MIT）。動作：Quaternius Universal Animation Library（CC0）。步槍：FN SCAR-L、AKMS、ORSIS T-5000（皆為《Contract Wars》by xlisov，Sketchfab，CC-BY-NC 4.0 姓名標示－非商業性）。裝甲車：BTR 80 by Goga.Danelia（Sketchfab，CC-BY 4.0）。休旅車：Mercedes-Benz G-Class 2021 by ItsDiyor（Sketchfab，CC-BY 4.0）。槍口火光：ZunterPHOTO（Wikimedia Commons，CC0）與美國海軍陸戰隊照片（公共領域）。材質：ambientCG、Poly Haven（CC0）。槍聲：Freesound（ninebilly、michorvath、hyperix6、jackthemurray、brianhanson2nd、SuperPhat、lensflare8642，CC0）。第一人稱手臂與人物動作重定向程式移植自 mini-cry（ISC）。本遊戲中的國家、城市與組織皆為虛構。<br><br>研究與數據出處：Jack G. Shaheen, "Reel Bad Arabs: How Hollywood Vilifies a People," Annals of the American Academy of Political and Social Science 588 (2003): 171–193。Vít Šisler, "Digital Arabs: Representation in Video Games," European Journal of Cultural Studies 11(2) (2008): 203–220。Johan Höglund, "Electronic Empire: Orientalism Revisited in the Military Shooter," Game Studies 8(1) (2008)。Brian Kennedy, "Uncle Sam Wants You to Play This Game," The New York Times, 2002-07-11。Europol, EU Terrorism Situation and Trend Report (TE-SAT) 2026。U.S. GAO, GAO-17-300 Countering Violent Extremism (2017)。N.R. Jenzen-Jones, Global Development and Production of Self-loading Service Rifles: 1896 to the Present, Small Arms Survey Working Paper 25 (2017)。</div></div>`,
   ];
   const host = $('prem'); host.hidden = false; host.innerHTML = slides[step] + `<div class="step">成績　${step + 1}／${slides.length}</div><div class="nav"><button id="pPrev">← 上一頁</button><button id="pNext">${step < slides.length - 1 ? '下一頁 →' : '結束'}</button></div>`;
   $('pPrev').onclick = () => premiere(Math.max(0, step - 1)); $('pNext').onclick = () => { if (step < slides.length - 1) premiere(step + 1); else { host.hidden = true; TS.phase = 'cut'; NET.update('meta', { phase: 'cut' }); renderPanel(); } };
@@ -6107,7 +6119,7 @@ function dotFor(pid, team) {
   if (!d) { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 10), new THREE.MeshBasicMaterial({ color: TEAMS[team]?.c || '#fff' })); m.position.y = 4.2; g.add(m); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.2, 6), new THREE.MeshBasicMaterial({ color: '#fff' })); pole.position.y = 2.1; g.add(pole); scene.add(g); d = g; g.userData.pid = pid; TS.dots.set(pid, d); }
   return d;
 }
-const EV_TEXT = { ak: '撿起敵人的 AK-47', civ: '誤傷平民', hh: '誤傷人質', hr: '救出人質', taken: '人質被押走', bomb: '拆彈成功', boom: '炸彈引爆' };
+const EV_TEXT = { ak: '撿起敵人的 AK', civ: '誤傷平民', hh: '誤傷人質', hr: '救出人質', taken: '人質被押走', bomb: '拆彈成功', boom: '炸彈引爆' };
 function teacherInit() {
   ROLE = 'teacher'; if (HIDDEN_T) SFX.mute(); hideAll(); $('hudT').hidden = false; $('hudS').hidden = true;
   // 先把面板畫出來；連上資料庫前「開始任務」不能按，連不上就顯示原因
@@ -6157,11 +6169,11 @@ function teacherTick(dt) {
    老師：黑鴉指揮官（下指令）與屋頂狙擊手（第一人稱）
    老師的電腦是裁判：看到全班同學的位置（每秒 5 次），打中誰就通知誰
    ========================================================= */
-/* 老師可以換的槍：狙擊槍（手拉槍機、4 倍鏡）、M4（3 倍鏡、連發）、AK-47（照門準星、連發）；dmg＝[頭, 身體, 手腳] */
+/* 老師可以換的槍：T-5000 狙擊槍（手拉槍機、4～15 倍鏡）、SCAR（瞄準鏡、連發）、AKMS（照門準星、連發）；dmg＝[頭, 身體, 手腳] */
 const TG = {
-  sniper: { name: '狙擊槍', mag: 10, reload: 2.4, gap: 1.3, auto: false, zoom: 4, zooms: [4, 8, 12, 15], scope: true, hip: 2.5, ads: 0.08, dmg: [100, 100, 60], snd: 'sniper', kick: 0.01 },
-  m4: { name: 'M4 步槍', mag: 30, reload: 2.2, gap: 0.085, auto: true, zoom: 3, scope: true, hip: 3, ads: 0.35, dmg: [100, 34, 20], snd: 'm4', kick: 0.004 },
-  ak: { name: 'AK-47', mag: 30, reload: 2.4, gap: 0.1, auto: true, zoom: 1.4, scope: false, hip: 3.5, ads: 0.6, dmg: [100, 40, 24], snd: 'ak', kick: 0.007 },
+  sniper: { name: 'T-5000 狙擊槍', mag: 10, reload: 2.4, gap: 1.3, auto: false, zoom: 4, zooms: [4, 8, 12, 15], scope: true, hip: 2.5, ads: 0.08, dmg: [100, 100, 60], snd: 'sniper', kick: 0.01 },
+  m4: { name: 'SCAR 步槍', mag: 30, reload: 2.2, gap: 0.085, auto: true, zoom: 3, scope: true, hip: 3, ads: 0.35, dmg: [100, 34, 20], snd: 'm4', kick: 0.004 },
+  ak: { name: 'AK 步槍', mag: 30, reload: 2.4, gap: 0.1, auto: true, zoom: 1.4, scope: false, hip: 3.5, ads: 0.6, dmg: [100, 40, 24], snd: 'ak', kick: 0.007 },
 };
 const TG_ORDER = ['sniper', 'm4', 'ak'];
 /* 倍率：狙擊槍可調 4／8／12／15 倍（開鏡時滾輪或 Z 鍵），其他槍固定；視角用正切換算，倍率是真的倍率 */
@@ -6182,7 +6194,7 @@ function cmdPanelHTML() {
   return `<h2>你是黑鴉指揮官</h2><div class="pts">指令點數 <b>${TP.pts}</b>／${PTS_MAX}<span>每 ${PTS_EVERY} 秒 +1</span></div>
   <div class="cmds">${CMDS.map((c) => `<button data-cmd="${c.k}" ${TP.pts >= c.cost && TS.phase === 'take' ? '' : 'disabled'}><b>${c.name}</b><span>${c.cost} 點・${TS.shared && c.sh ? c.sh : c.desc}</span></button>`).join('')}</div>
   <h2>親自上場：點地圖上的任何一棟屋頂，或屋內埋伏點</h2>${nestMapV()}
-  <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來瞄準（同學也打得到你），左鍵開火（M4／AK 按住連發，會自動站起來），R 換彈；1 狙擊槍、2 M4、3 AK；狙擊鏡開鏡時滾輪或 Z 調倍率（4／8／12／15）；M 打開地圖換位置；C 回到指揮官。</div>`;
+  <div class="small">上場後：滑鼠轉視角，右鍵按住＝站起來瞄準（同學也打得到你），左鍵開火（SCAR／AK 按住連發，會自動站起來），R 換彈；1 狙擊槍、2 SCAR、3 AK；狙擊鏡開鏡時滾輪或 Z 調倍率（4／8／12／15）；M 打開地圖換位置；C 回到指揮官。</div>`;
 }
 /* 位置地圖：俯視整條街（左邊是起點路障、右邊是街尾炸彈），兩側每一棟樓都可以點；圓點是同學現在的位置 */
 /* 不能繞到同學後方：屋頂要在全班最前面那位同學的前方 6 公尺以外（同學從 z 大往 z 小推進）；屋內埋伏點不限 */
@@ -6278,7 +6290,7 @@ function setupTeacherInput() {
   addEventListener('mouseup', (e) => { if (e.button === 0) TIN.fire = false; if (e.button === 2) TIN.aim = false; });
   addEventListener('mousemove', (e) => { if (locked() && TP.mode === 'sn') { TIN.dx += e.movementX; TIN.dy += e.movementY; } });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('keydown', (e) => { if (ROLE !== 'teacher' || TP.mode !== 'sn') return; if (e.code === 'KeyC' || e.code === 'Tab') { e.preventDefault(); leaveSniper(); } if (e.code === 'KeyR' && TP.ammo < TG[TP.gear].mag && TP.reload <= 0) { TP.oldHad = TP.ammo > 0; TP.reload = TG[TP.gear].reload; } /* 彈匣裡還有子彈就換：拔下來的舊彈匣看得到子彈 */ const dn = /^Digit([1-3])$/.exec(e.code); if (dn) tpGear(TG_ORDER[+dn[1] - 1]); /* 1 狙擊槍、2 M4、3 AK */ if (e.code === 'KeyM') nestMenu(true); if (e.code === 'KeyZ' && TP.gear === 'sniper') { const n = TG.sniper.zooms.length; TP.zoomI = ((TP.zoomI || 0) + 1) % n; renderSnHUD(); } if (e.code === 'KeyQ' || e.code === 'KeyG') tpGear(TG_ORDER[(TG_ORDER.indexOf(TP.gear) + 1) % TG_ORDER.length]); });
+  addEventListener('keydown', (e) => { if (ROLE !== 'teacher' || TP.mode !== 'sn') return; if (e.code === 'KeyC' || e.code === 'Tab') { e.preventDefault(); leaveSniper(); } if (e.code === 'KeyR' && TP.ammo < TG[TP.gear].mag && TP.reload <= 0) { TP.oldHad = TP.ammo > 0; TP.reload = TG[TP.gear].reload; } /* 彈匣裡還有子彈就換：拔下來的舊彈匣看得到子彈 */ const dn = /^Digit([1-3])$/.exec(e.code); if (dn) tpGear(TG_ORDER[+dn[1] - 1]); /* 1 狙擊槍、2 SCAR、3 AK */ if (e.code === 'KeyM') nestMenu(true); if (e.code === 'KeyZ' && TP.gear === 'sniper') { const n = TG.sniper.zooms.length; TP.zoomI = ((TP.zoomI || 0) + 1) % n; renderSnHUD(); } if (e.code === 'KeyQ' || e.code === 'KeyG') tpGear(TG_ORDER[(TG_ORDER.indexOf(TP.gear) + 1) % TG_ORDER.length]); });
   addEventListener('wheel', (e) => { if (ROLE !== 'teacher' || TP.mode !== 'sn' || document.pointerLockElement !== canvas) return; if (TP.gear === 'sniper') tpZoom(e.deltaY < 0 ? 1 : -1); /* 滾輪只調狙擊鏡倍率（2.4.15 起不再用滾輪換槍） */ }, { passive: true });
   document.addEventListener('pointerlockchange', () => { if (!locked()) { TIN.fire = false; TIN.aim = false; } renderSnHUD(); });
 }
@@ -6289,7 +6301,7 @@ function snToast(txt, big) {
 function tpFire() {
   const g = TG[TP.gear]; if (TP.ammo <= 0) { TP.oldHad = false; TP.reload = g.reload; return; }
   TP.ammo--; TP.fireT = g.gap; SFX.shot(g.snd);
-  if (TV) { TV.kick = 1; flashOn(TV.flash, g.auto ? 0.045 : 0.07); if (!g.auto) { if (TP.ammo > 0) TV.boltQ = 0.25; } else if (TV.mesh) ejectCase(TV, TV.w, TV.mesh); } /* 狙擊槍每發之間拉一次槍機；M4／AK 開槍就拋殼 */
+  if (TV) { TV.kick = 1; flashOn(TV.flash, g.auto ? 0.045 : 0.07); if (!g.auto) { if (TP.ammo > 0) TV.boltQ = 0.25; } else if (TV.mesh) ejectCase(TV, TV.w, TV.mesh); } /* 狙擊槍每發之間拉一次槍機；SCAR／AK 開槍就拋殼 */
   const ro = camera.position.clone(); const spread = lerp(g.hip, g.ads, TP.adsK) * Math.PI / 180;
   const rd = V(0, 0, -1).applyEuler(new THREE.Euler(TP.pitch + (R() - 0.5) * spread, TP.yaw + (R() - 0.5) * spread, 0, 'YXZ')).normalize();
   TP.pitch += g.kick * (0.7 + R() * 0.6); TP.yaw += (R() - 0.5) * g.kick * 0.6; /* 後座力：子彈射出之後槍口才上揚（2.4.12 誤放在射出之前，遠距離全部打偏） */
@@ -6298,7 +6310,7 @@ function tpFire() {
   const hp = ro.clone().addScaledVector(rd, best); PUFFS.burst(hp, 6, { spread: 1, up: 1.2, size: 0.2, c: hit ? [0.5, 0.2, 0.15] : [0.55, 0.48, 0.38] });
   NET.set('tshot', { n: ++TP.shotN, x: Math.round(hp.x * 10) / 10, y: Math.round(hp.y * 10) / 10, z: Math.round(hp.z * 10) / 10, at: NET.now() });
   if (hit) {
-    const pid = hit.pid; const d = part === 'head' ? g.dmg[0] : part === 'limb' ? g.dmg[2] : g.dmg[1]; /* 狙擊槍一發擊倒；M4／AK 身體約 3 發 */ TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
+    const pid = hit.pid; const d = part === 'head' ? g.dmg[0] : part === 'limb' ? g.dmg[2] : g.dmg[1]; /* 狙擊槍一發擊倒；SCAR／AK 身體約 3 發 */ TP.hitN[pid] = (TP.hitN[pid] || 0) + 1; TP.tk++;
     NET.set('thit/' + pid, { d, n: TP.hitN[pid], at: NET.now() }); SFX.hit(); const p = TS.players[pid]; const fd = fakeHitByTeacher(pid, d); snToast((fd || d >= 100 ? '擊倒 ' : '命中 ') + (p ? `${TEAMS[p.team]?.name || ''} ${p.no} 號` : '') + (part === 'head' ? '（爆頭）' : part === 'limb' ? '（手腳，再一發）' : ''), fd || d >= 100);
     if (p) tLog(p.team, `老師命中 ${TEAMS[p.team]?.name} ${p.no} 號${part === 'head' ? '（爆頭）' : ''}`);
     $('tSnX').classList.add('hit'); setTimeout(() => $('tSnX').classList.remove('hit'), 160);
@@ -6311,7 +6323,7 @@ function teacherHit(v) {
 }
 function renderSnHUD() {
   if (TP.mode !== 'sn') return;
-  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・${TG[TP.gear].name}${TG[TP.gear].zooms ? `（${tgZoom()} 倍，開鏡時滾輪或 Z 調整）` : ''}</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／' + TG[TP.gear].mag}　命中同學 ${TP.tk}</span><span style="font-size:14px;opacity:.85">1 狙擊槍　2 M4　3 AK　M 地圖換位置</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>${TP.behind ? '<span style="color:#ff6a5a;font-size:20px;font-weight:900">同學已經推進過這棟樓：不能從背後開槍，按 M 換到前方的屋頂</span>' : ''}${snCrowd()}`;
+  $('tSnInfo').innerHTML = `<b>${NESTS[TP.nest].name}・${TG[TP.gear].name}${TG[TP.gear].zooms ? `（${tgZoom()} 倍，開鏡時滾輪或 Z 調整）` : ''}</b><span>血量 ${Math.max(0, Math.round(TP.hp))}　彈匣 ${TP.reload > 0 ? '換彈中' : TP.ammo + '／' + TG[TP.gear].mag}　命中同學 ${TP.tk}</span><span style="font-size:14px;opacity:.85">1 狙擊槍　2 SCAR　3 AK　M 地圖換位置</span><span>${TP.down > 0 ? `被同學擊倒，${Math.ceil(TP.down)} 秒後回來` : TP.aim ? '站起來瞄準中：同學看得到你' : '蹲著：同學打不到你'}</span>${TP.behind ? '<span style="color:#ff6a5a;font-size:20px;font-weight:900">同學已經推進過這棟樓：不能從背後開槍，按 M 換到前方的屋頂</span>' : ''}${snCrowd()}`;
   $('tSnHint').hidden = document.pointerLockElement === canvas;
   const sc = TG[TP.gear].scope && TP.adsK > 0.85; $('tSnScope').classList.toggle('on', sc); $('tSnX').hidden = sc || TP.adsK > 0.85;
   $('tSnDmg').style.opacity = String(TP.down > 0 ? 0.8 : Math.min(0.8, TP.hurtT * 1.6));
@@ -6331,7 +6343,7 @@ function sniperTick(dt) {
   const sens = 0.0017 * (TP.adsK > 0.5 ? 0.75 / tgZoom() : 1); TP.yaw -= TIN.dx * sens; TP.pitch = clamp(TP.pitch - TIN.dy * sens, -1.1, 0.6); TIN.dx = TIN.dy = 0;
   if (TP.down > 0) { TP.down -= dt; if (TP.down <= 0) { TP.hp = 100; sendTP(); } }
   const g = TG[TP.gear], can = TP.down <= 0 && TP.reload <= 0 && !(TV && (TV.boltT > 0 || TV.boltQ > 0)); /* 拉槍機時離開瞄準鏡 */
-  TP.aim = can && (TIN.aim || (TIN.fire && g.auto)); TP.aimK = lerp(TP.aimK, TP.aim ? 1 : 0, Math.min(1, dt * 9)); /* aim＝站起來（同學打得到）；M4／AK 按開火也會站起來 */
+  TP.aim = can && (TIN.aim || (TIN.fire && g.auto)); TP.aimK = lerp(TP.aimK, TP.aim ? 1 : 0, Math.min(1, dt * 9)); /* aim＝站起來（同學打得到）；SCAR／AK 按開火也會站起來 */
   TP.adsK = lerp(TP.adsK, can && TIN.aim ? 1 : 0, Math.min(1, dt * 9));
   if (TP.reload > 0) { TP.reload -= dt; if (TP.reload <= 0) TP.ammo = g.mag; }
   TP.behind = !nestOK(TP.nest); TP.fireT -= dt; if (TIN.fire && !TP.behind && (g.auto ? TP.aimK > 0.6 : TP.adsK > 0.8) && TP.fireT <= 0 && TP.reload <= 0) tpFire(); /* 同學推進過這棟樓之後就不能開槍（不能從背後打） */
@@ -6382,6 +6394,7 @@ if (LOOK2) {
   const vg = document.createElement('div'); vg.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.32) 100%)'; view.appendChild(vg);
 }
 renderer.shadowMap.autoUpdate = false; let FRAME_N = 0;
+const GM = (k) => WEAPONS[k].model; // 三把槍的模型檔名
 async function loadAll() {
   $('loadMsg').textContent = '載入天空與材質…'; DBG('開始載入（' + (ROLE === 'teacher' ? '老師' : '學生') + '）');
   // 天空：環境光（小張 HDR）與背景（JPG）
@@ -6392,13 +6405,17 @@ async function loadAll() {
   FLASH.side = loadTex(ASSET + 'fx/muzzle-side.jpg', true); FLASH.front = loadTex(ASSET + 'fx/muzzle-front.jpg', true); FLASH.side.wrapS = FLASH.side.wrapT = THREE.ClampToEdgeWrapping; FLASH.front.wrapS = FLASH.front.wrapT = THREE.ClampToEdgeWrapping;
   buildWorld(); buildNests();
   $('loadMsg').textContent = '載入人物與道具…';
-  const names = ['anims', 'gclass', 'btr80', 'rifle_ak', ...CHAR_SETS.soldier, ...(ROLE === 'teacher' ? (HIDDEN_T ? [] : ['rifle_sniper', 'rifle_m4', 'arms_military']) : ['rifle_m4', 'rifle_sniper', 'arms_military', ...CHAR_SETS.civ])];
+  const NPC_AK = WEAPONS.ak.npcModel || GM('ak'); const names = ['anims', 'gclass', 'btr80', NPC_AK, ...(!(ROLE === 'teacher' && HIDDEN_T) && NPC_AK !== GM('ak') ? [GM('ak')] : []), ...CHAR_SETS.soldier, ...(ROLE === 'teacher' ? (HIDDEN_T ? [] : [GM('sniper'), GM('m4'), 'arms_military']) : [GM('m4'), GM('sniper'), 'arms_military', ...CHAR_SETS.civ])];
   const gs = await Promise.all(names.map((n) => loadGLB(n).catch(() => null)));
   names.forEach((n, i) => { if (gs[i]) MODELS[n] = gs[i]; });
   await placeDynamic(MODELS);
   if (MODELS.anims) prepAnims(MODELS.anims);
   for (const k in CHAR_SETS) CHAR_SETS[k] = CHAR_SETS[k].filter((n) => MODELS[n]);
-  if (MODELS.rifle_ak) { const src = skinnedOf(MODELS.rifle_ak.scene) || MODELS.rifle_ak.scene.children[0]; let mesh = null; MODELS.rifle_ak.scene.traverse((o) => { if (!mesh && o.isMesh) mesh = o; }); RIFLE_NPC = new THREE.Mesh(mesh.geometry, mesh.material); RIFLE_NPC.castShadow = true; }
+  if (MODELS[NPC_AK]) { /* NPC 的 AK：模型裡幾塊網格合併成一個（每個材質一組），所有人共用 */
+    const ms = []; MODELS[NPC_AK].scene.updateMatrixWorld(true); MODELS[NPC_AK].scene.traverse((o) => { if (o.isMesh) ms.push(o); });
+    const geos = ms.map((o) => { const g = o.geometry.clone(); g.applyMatrix4(o.matrixWorld); return g; }); const keep = Object.keys(geos[0].attributes).filter((a) => geos.every((g) => g.attributes[a]));
+    for (const g of geos) for (const a of Object.keys(g.attributes)) if (!keep.includes(a)) g.deleteAttribute(a);
+    const mg = mergeGeometries(geos, true); RIFLE_NPC = mg ? new THREE.Mesh(mg, ms.map((o) => o.material)) : new THREE.Mesh(ms[0].geometry, ms[0].material); RIFLE_NPC.castShadow = true; }
   PUFFS = new Puffs(MOBILE ? 220 : 400);
   $('loadMsg').textContent = '整理貼圖…';
   await Promise.race([Promise.all(LOADSTAT.tex.map((p) => p.catch(() => {}))), new Promise((r) => setTimeout(r, 20000))]);
@@ -6445,7 +6462,7 @@ function frame() {
 function renderFrame() {
   renderer.autoClear = true; renderer.render(scene, camera);
   const VP = ROLE === 'teacher' ? (TV && TV.vm.visible ? TV : null) : (G.mode === 'take' && P && !P.scoped ? P : null);
-  if (VP) { const bg = scene.background, fg = scene.fog; scene.background = null; scene.fog = null; renderer.autoClear = false; renderer.clearDepth(); vmCamera.position.copy(camera.position); vmCamera.quaternion.copy(camera.quaternion); vmCamera.fov = lerp(60, 44, VP.adsK); vmCamera.updateProjectionMatrix(); renderer.render(scene, vmCamera); scene.background = bg; scene.fog = fg; }
+  if (VP) { const bg = scene.background, fg = scene.fog; scene.background = null; scene.fog = null; renderer.autoClear = false; renderer.clearDepth(); vmCamera.position.copy(camera.position); vmCamera.quaternion.copy(camera.quaternion); vmCamera.fov = window.__vmFov || lerp(60, 44, VP.adsK); vmCamera.updateProjectionMatrix(); renderer.render(scene, vmCamera); scene.background = bg; scene.fog = fg; }
 }
 // 預熱：在載入畫面後面，把人物、兩把槍、火光、曳光、粒子全部擺到鏡頭前畫一次
 function warmUp() {
@@ -6478,7 +6495,7 @@ async function boot() {
   applyQuality();
   try { await loadAll(); } catch (e) { console.warn(e); DBG('載入失敗：' + (e && e.message || e)); $('loadMsg').textContent = '部分素材載入失敗，仍嘗試開始…'; }
   if (ROLE === 'student') { P = new Player(); P.setupViewModels(MODELS); setupInput(); P.spawnAt(6); }
-  if (ROLE === 'teacher' && !HIDDEN_T && MODELS.rifle_sniper) { try { TV = new Player(); TV.setupViewModels(MODELS, ['sniper', 'm4', 'ak']); TV.setGear('sniper'); TV.swapT = 0; TV.vm.visible = false; } catch (e) { DBG('老師的槍載入失敗 ' + e.message); TV = null; } } /* 老師上屋頂時手上的狙擊槍 */
+  if (ROLE === 'teacher' && !HIDDEN_T && MODELS[GM('sniper')]) { try { TV = new Player(); TV.setupViewModels(MODELS, ['sniper', 'm4', 'ak']); TV.setGear('sniper'); TV.swapT = 0; TV.vm.visible = false; } catch (e) { DBG('老師的槍載入失敗 ' + e.message); TV = null; } } /* 老師上屋頂時手上的狙擊槍 */
   try { $('loadMsg').textContent = '準備畫面…'; if (!HIDDEN_T) warmUp(); } catch (e) { DBG('預熱失敗 ' + e.message); }
   $('load').hidden = true;
   if (ROLE === 'student') { studentInit(); SFX.init(); }
@@ -6487,7 +6504,7 @@ async function boot() {
 }
 main();
 // 測試用（假學生預演、自動測試）
-window.__T = { sightLines, DRESS, STATIC, LOOK2, snFront, nestOK, renderPanel, nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
+window.__T = { WEAPONS, sightLines, DRESS, STATIC, LOOK2, snFront, nestOK, renderPanel, nestMenu, buildNests, TIN, TG, tpGear, setNest, DOORS, roofSpot, rayAABB, renderFrame, tpFire, shPhase, fakeCover, jitOf, NESTS, nestPos, get TV() { return TV; }, DOOR_OF, vmCamera, GUARDS, HOSTAGE_SPOTS, zoneArrive, partsOf, CASES, rayWorld, shSees, SHT, SHS, MATES, REM, ALLY, SHARED, get PLAYERS() { return PLAYERS; }, premiere: (i) => premiere(i), studentTick: (d) => studentTick(d), teacherTick: (d) => teacherTick(d), THREE, STATIC, COVERS, zoneEnter, findPath, CV, coverCandidate, TP, AV, VS, TIN, sendCmd, enterSniper, leaveSniper, tpFire, nestPos, get P() { return P; }, get G() { return G; }, INPUT, ENEMIES, CIVS, HOSTAGES, MS, ZONES, WORLD, get META() { return META; }, get TS() { return TS; }, get NET() { return NET; }, startTake, endTake, DIFFS, camera, scene, renderer, MODELS };
 
 </script>
 </body>
