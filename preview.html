@@ -2619,7 +2619,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.6.1（老師屋頂畫面支援平板與手機觸控）';
+const VERSION = '2.7.0（試玩版：同學自己走路，網址加 ?move）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2634,6 +2634,7 @@ const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/G
 })();
 const Q = new URLSearchParams(location.search);
 const LOCAL = true; // 同一台電腦練習連線
+const MOVE = Q.has('move'); // 試玩版：同學自己走路（左手搖桿／WASD），停在掩體旁邊自動蹲下
 const IS_PLAY = /play(\.html)?$/.test(location.pathname);
 let ROLE = Q.has('teacher') ? 'teacher' : (Q.has('student') || location.hash.startsWith('#student') || IS_PLAY) ? 'student' : (LOCAL ? null : 'teacher');
 const IS_BOT = Q.has('bot') || /bot/.test(location.hash); const CLASS_SIM = Q.has('class'); /* 一人試玩全班：學生畫面裡藏一個老師當裁判 */ const HIDDEN_T = Q.has('headless'); /* 藏起來的老師：不畫圖、不出聲 */ // 電腦自動遊玩的學生（老師測試用）
@@ -5290,7 +5291,39 @@ function boltPose(k) {
   return { rot, back, hand };
 }
 const BOLT_HAND0 = { fingers: [-0.35, 0.2, -0.92], thumb: [0.2, 0.95, -0.2], curl: [[50, 60, 60], 70, 75, 80], thumbCurl: [20, 30, 25], thumbFold: 25 };
-const INPUT = { look: { dx: 0, dy: 0 }, fire: false, ads: false, reload: false, defuse: false };
+const INPUT = { look: { dx: 0, dy: 0 }, mv: { x: 0, y: 0 }, fire: false, ads: false, reload: false, defuse: false };
+/* ---------- 自由移動（?move 試玩版） ----------
+   可以走的地方：找路格子沒有障礙；街上不能衝過這一段的前線；還沒清空的房間，門口過不去（清完才能進）
+   停下來 0.25 秒、身邊 1.6 公尺內有這一段的掩體 → 自動走過去蹲下（之後的探身、切角跟原本一樣） */
+const MOVE_LIM = { 0: -14, 1: -47.5, 2: -62, 3: -62, 4: -62, 5: -62, 6: -80, 7: -80, 8: -80, 9: -99, 10: -136 };
+let DOOR_ZONE = null;
+function canStand(x, z) {
+  if (x < NAV.x0 || x > NAV.x0 + NAV.w * NAV.n || z > NAV.z0 || z < NAV.z0 - NAV.h * NAV.n) return false; const r = 0.25;
+  for (const b of WORLD.colliders) if (b.y1 > 0.3 && b.y0 < 1.0 && x > b.minX - r && x < b.maxX + r && z > b.minZ - r && z < b.maxZ + r) return false;
+  if (x > -9.5 && x < 10.5 && z < (MOVE_LIM[MS.zone] ?? -999)) return false;
+  if (!DOOR_ZONE) DOOR_ZONE = DOORS.map((d) => ZONES.findIndex((Z) => Z.covers.includes(d.ids[0])));
+  for (let k = 0; k < DOORS.length; k++) { if (DOOR_ZONE[k] < MS.zone) continue; const d = DOORS[k]; const dn = (x - d.c[0]) * d.n[0] + (z - d.c[1]) * d.n[1], dt = (x - d.c[0]) * d.t[0] + (z - d.c[1]) * d.t[1]; if (dn > -0.15 && dn < 1.2 && Math.abs(dt) < d.w + 0.35) return false; }
+  return true;
+}
+function moveFree(p, dt) {
+  const mag = Math.min(1, Math.hypot(INPUT.mv.x, INPUT.mv.y)); p.freeMv = false;
+  if (!p.alive || MS.defusing || MS.zone === Z_SNIPE || (p.cover && p.cover.roof) || MS.done) return;
+  if (mag > 0.12) {
+    if (p.target) { p.target = null; p.path = []; }
+    if (p.coverId) { p.coverId = null; p.doorU = p.doorUE = null; p.peekK = 0; p.turnTo = null; }
+    const sp = (p.ads ? 1.7 : 3.6) * mag; const sn = Math.sin(p.yaw), cs = Math.cos(p.yaw); const ix = INPUT.mv.x / Math.max(mag, 1e-3), iy = INPUT.mv.y / Math.max(mag, 1e-3);
+    const tx = (-sn * iy + cs * ix) * sp, tz = (-cs * iy - sn * ix) * sp; const k = Math.min(1, dt * 10);
+    p.vel.x = lerp(p.vel.x, tx, k); p.vel.z = lerp(p.vel.z, tz, k); p.stillT = 0;
+  } else { const k = Math.min(1, dt * 12); p.vel.x = lerp(p.vel.x, 0, k); p.vel.z = lerp(p.vel.z, 0, k); p.stillT = (p.stillT || 0) + dt; }
+  if (!p.cover && !p.target) {
+    p.freeMv = true; const nx = p.pos.x + p.vel.x * dt, nz = p.pos.z + p.vel.z * dt;
+    if (canStand(nx, nz)) { p.pos.x = nx; p.pos.z = nz; } else if (canStand(nx, p.pos.z)) { p.pos.x = nx; p.vel.z *= 0.5; } else if (canStand(p.pos.x, nz)) { p.pos.z = nz; p.vel.x *= 0.5; } else { p.vel.x = p.vel.z = 0; }
+    // 停下來：身邊有這一段的掩體就自動蹲過去；走進下一段（離新掩體 5 公尺內）就算到了
+    let best = null, bd = 9, near = 99; for (const id of ZONES[MS.zone].covers) { const c = cvOf(id); if (c.roof) continue; const d = Math.hypot(c.x - p.pos.x, c.z - p.pos.z); near = Math.min(near, d); if (d < (DOOR_OF[id] ? 2.2 : 1.6) && d < bd) { bd = d; best = id; } } /* 門口兩側的掩體離門中間 1.6 公尺，範圍放大一點 */
+    if (best && p.stillT > 0.25) p.goCover(best);
+    else if (MS.moving && near < 5) zoneArrive();
+  }
+}
 const newStats = () => ({ score: 0, kills: 0, shots: 0, hits: 0, headshots: 0, deaths: 0, civ: 0, hh: 0, hr: 0, bomb: 0, ft: 0, tk: 0, akp: 0, akk: 0, hs: 0 });
 /* ---------- 門口切角：跟著準心 ----------
    1. 先找出準心對著房間裡的哪一點（看得到的敵人、牆，或至少門內 2.5 公尺）
@@ -5340,7 +5373,7 @@ class Player {
   arrive() { const c = cvOf(this.target); this.coverId = this.target; { const d = DOOR_OF[c.id]; if (d) { this.doorSide = Math.sign((c.x - d.c[0]) * d.t[0] + (c.z - d.c[1]) * d.t[1]) || 1; this.doorU = null; this.doorUE = null; } } this.target = null; this.path = []; this.pos.set(c.x, 0, c.z); this.vel.set(0, 0, 0);
     // 自動轉向：面向這一段最近的敵人，沒有就面向掩體的方向
     let best = null, bd = 1e9; for (const e of ENEMIES) if (e.alive && e.zone === MS.zone) { const d = e.pos.distanceTo(this.pos); if (d < bd) { bd = d; best = e; } }
-    this.turnTo = best ? Math.atan2(-(best.pos.x - c.x), -(best.pos.z - c.z)) : c.yaw; this.turnPitch = 0;
+    this.turnTo = MOVE && !MS.moving ? null : best ? Math.atan2(-(best.pos.x - c.x), -(best.pos.z - c.z)) : c.yaw; this.turnPitch = 0; /* 自己走路的版本：蹲到掩體時不自動轉頭 */
     if (MS.moving) { if (!ZONES[MS.zone].covers.includes(this.coverId)) { this.goCover(ZONES[MS.zone].covers[0]); return; } zoneArrive(); } onCover(); }
   setupViewModels(models, list = ['m4', 'ak', 'sniper']) {
     for (const k of list) { const g = models[WEAPONS[k].model]; if (!g) { DBG('缺少武器模型 ' + k); continue; } const m = g.scene.clone(); m.traverse((o) => { o.layers.set(LAYER_VIEW); if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 0.9; o.frustumCulled = false; } }); m.visible = false; this.vm.add(m); this.weaponMeshes[k] = m; }
@@ -5381,7 +5414,8 @@ class Player {
     if (this.turnTo !== undefined && this.turnTo !== null) { let d = this.turnTo - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); this.yaw += d * Math.min(1, dt * 7); this.pitch *= 1 - Math.min(1, dt * 5); if (Math.abs(d) < 0.02 || Math.abs(INPUT.look.dx) + Math.abs(INPUT.look.dy) > 2) this.turnTo = null; }
     this.yaw -= INPUT.look.dx * sens; this.pitch = clamp(this.pitch - INPUT.look.dy * sens, -1.2, 1.2); INPUT.look.dx = INPUT.look.dy = 0;
     // 移動：這一段清空，電腦帶著跑到下一段的掩體；同學也可以自己換掩體（沿著找到的路跑過去）
-    if (MS.moving && !this.target && this.coverId !== ZONES[MS.zone].covers[0]) this.goCover(ZONES[MS.zone].covers[0]);
+    if (MOVE) { moveFree(this, dt); if (MS.moving && !this.target && this.coverId && ZONES[MS.zone].covers.includes(this.coverId)) this.arrive2 = true; }
+    else if (MS.moving && !this.target && this.coverId !== ZONES[MS.zone].covers[0]) this.goCover(ZONES[MS.zone].covers[0]);
     else if (MS.moving && !this.target) this.arrive2 = true;
     let vx = 0, vz = 0; this.hold = !this.target;
     if (this.target) {
@@ -5390,7 +5424,7 @@ class Player {
       else { const sp = Math.min(this.ads ? 2.6 : 5.0, l * 3 + 1.2); vx = dx / l * sp; vz = dz / l * sp; }
     }
     if (this.arrive2) { this.arrive2 = false; if (MS.moving) { this.target = this.coverId; this.arrive(); } }
-    this.vel.x = lerp(this.vel.x, vx, Math.min(1, dt * 8)); this.vel.z = lerp(this.vel.z, vz, Math.min(1, dt * 8));
+    if (!this.freeMv) { this.vel.x = lerp(this.vel.x, vx, Math.min(1, dt * 8)); this.vel.z = lerp(this.vel.z, vz, Math.min(1, dt * 8)); }
     if (this.target) { this.pos.x += this.vel.x * dt; this.pos.z += this.vel.z * dt; }
     // 探身：瞄準、開火（或剛開過槍）時從掩體探出去，否則蹲回掩體後面
     const wantPeek = !!this.cover && (INPUT.ads || INPUT.fire || performance.now() - this.shotAt < (this.door ? 1300 : 650)) && this.reloading <= 0 && !MS.defusing;
@@ -5710,10 +5744,10 @@ function studentTick(dt) {
   setHTML('hAlarm', alarm); setHidden('hAlarm', !alarm);
   // 目前目標
   const Z = ZONES[MS.zone]; const shSt = SHARED.on && STREET(MS.zone); const alive = shSt ? (SHS.w && SHS.w.e || []).filter((a) => a && a[7] > 0).length : ENEMIES.filter((e) => e.zone === MS.zone && e.alive).length + MS.pending.filter((p) => !p.done).length;
-  const obj = MS.moving ? '區域清除，前往下一個掩體…' : Z.snipe ? (MS.snState === 'held' ? `打倒押著人質的看守${MS.snAlert ? '' : '（第一槍之前他們不知道你在這裡）'}　敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
+  const obj = MS.moving ? (MOVE ? '區域清除：走到下一段的掩體（藍色標記），或按「自動前往」' : '區域清除，前往下一個掩體…') : Z.snipe ? (MS.snState === 'held' ? `打倒押著人質的看守${MS.snAlert ? '' : '（第一槍之前他們不知道你在這裡）'}　敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
   setHTML('hObj', obj);
   renderCover(dt); renderWeaponBtn(dt); setClass('hScope', P.scoped ? (P.gearId === 'sniper' ? 'scope on sn' : 'scope on') : 'scope'); $('hCross').classList.toggle('hide', P.scoped);
-  const c = P.cover; setHTML('hCov', !c ? '移動中…' : P.exposure() === 0 ? '隱蔽中：敵人打不到你' : '探身射擊中'); setClass('hCov', 'cov' + (!c ? ' mv' : P.exposure() === 0 ? ' safe' : ' out'));
+  const c = P.cover; setHTML('hCov', !c ? (MOVE && !P.target ? '沒有掩護：敵人打得到你' : '移動中…') : P.exposure() === 0 ? '隱蔽中：敵人打不到你' : '探身射擊中'); setClass('hCov', 'cov' + (!c ? ' mv' : P.exposure() === 0 ? ' safe' : ' out'));
   const canDefuse = Z.defuse && MS.arrived && !MS.done && P.coverId === 'D4' && !P.target; setHidden('bDefuse', !canDefuse); if (canDefuse) setStyle('bDefuse', 'background', `conic-gradient(rgba(63,209,122,0.75) ${Math.round(MS.defuse * 360)}deg, rgba(0,0,0,0.4) 0deg)`);
   renderMarks(dt); renderHurtDir();
   // 傳位置與成績
@@ -5722,6 +5756,7 @@ function studentTick(dt) {
 // 前往掩體：準心對到這一段可用的掩體（不是現在這個）就跳出按鈕
 const CV = { cand: null, t: 0 }; const _cv = new THREE.Vector3(), _cf = new THREE.Vector3();
 function coverCandidate() {
+  if (MOVE && MS.moving && P.alive && !MS.done && MS.zone !== Z_SNIPE) { const id = ZONES[MS.zone].covers[0]; return P.target === id ? null : id; } /* 自己走路的版本：區域清空後可以按「自動前往」 */
   if (!P.alive || MS.moving || MS.defusing || MS.done) return null; const list = ZONES[MS.zone].covers; if (list.length < 2) return null;
   P.eye(_e); _cf.set(0, 0, -1).applyQuaternion(camera.quaternion); let best = null, ba = 0.16;
   for (const id of list) { if (id === P.coverId && !P.target || id === P.target || (DOOR_OF[id] && DOOR_OF[id] === DOOR_OF[P.coverId] && !P.target)) continue; const c = COVERS[id]; const b = c.box;
@@ -5730,7 +5765,7 @@ function coverCandidate() {
     if (a < ba) { ba = a; best = id; } }
   return best;
 }
-function renderCover(dt) { CV.t -= dt; if (CV.t <= 0) { CV.t = 0.1; CV.cand = coverCandidate(); } setHidden('bCover', !CV.cand); }
+function renderCover(dt) { CV.t -= dt; if (CV.t <= 0) { CV.t = 0.1; CV.cand = coverCandidate(); } setHidden('bCover', !CV.cand); if (MOVE) setHTML('bCover', MS.moving ? '自動<br>前往' : '前往<br>掩體'); }
 // 撿起敵人的 AK／換槍：靠近倒下的敵人（7 公尺內）出現「撿起 AK」；撿過之後可以隨時切換
 const WB = { t: 0, near: false };
 function renderWeaponBtn(dt) {
@@ -5763,15 +5798,17 @@ function renderMarks(dt) {
   for (const c of CIVS) if (!c.dead && c.state !== 'gone' && c.pos.distanceTo(P.pos) < 32) items.push([c, 'mark civ', '平民', 2.0]);
   if (SHARED.on) for (const c of ALLY.pool) if (c.slot !== null && c.root.visible) items.push([c, 'mark ally', `${TEAMS[c.team]?.name?.[0] || ''}${c.no}`, 2.05, TEAMS[c.team]?.c]);
   if (VS.boss && bossOn() && !VS.tp.dn && !!VS.tp.in === !!INDIV(MS.zone)) items.push([VS.boss, bossExposed() ? 'mark boss' : 'mark boss dim', '老師', 2.2]);
+  if (MOVE && MS.moving && MS.zone !== Z_SNIPE && !P.scoped) { const id = ZONES[MS.zone].covers[0], c = COVERS[id]; items.push([{ pos: _cvm['go' + id] || (_cvm['go' + id] = V(c.x, 0, c.z)) }, 'mark cov on', '前往這裡', 1.4, null, true]); }
   if (!MS.moving && !P.scoped) for (const id of ZONES[MS.zone].covers) { if (id === P.coverId && !P.target) continue; if (DOOR_OF[id] && DOOR_OF[id] === DOOR_OF[P.coverId] && !P.target) continue; /* 同一道門的另一側不用顯示（切角自動換邊） */ const c = COVERS[id]; const b = c.box; const o = { pos: _cvm[id] || (_cvm[id] = V((b[0] + b[1]) / 2, 0, (b[2] + b[3]) / 2)) }; items.push([o, id === CV.cand ? 'mark cov on' : 'mark cov', id === CV.cand ? '前往掩體' : '掩體', c.kind === 'side' ? 2.1 : 1.3]); }
   while (host.children.length < items.length) { const d = document.createElement('div'); d.innerHTML = '<span></span>'; host.appendChild(d); }
   for (let i = 0; i < host.children.length; i++) {
     const d = host.children[i]; if (i >= items.length) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
-    const [o, cls, label, y, col] = items[i]; _pv.set(o.pos.x, o.pos.y + y, o.pos.z).project(camera);
-    if (_pv.z > 1 || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
+    const [o, cls, label, y, col, edge] = items[i]; _pv.set(o.pos.x, o.pos.y + y, o.pos.z).project(camera);
+    if (edge && (_pv.z > 1 || Math.abs(_pv.x) > 0.92 || Math.abs(_pv.y) > 0.9)) { if (_pv.z > 1) { _pv.x = -_pv.x; _pv.y = -_pv.y; } const m = Math.max(Math.abs(_pv.x) / 0.9, Math.abs(_pv.y) / 0.82, 1e-3); _pv.x /= m; _pv.y /= m; } /* 前往標記在畫面外：貼在畫面邊緣指方向 */
+    if (_pv.z > 1 && !edge || _pv.x < -1.1 || _pv.x > 1.1 || _pv.y < -1.1 || _pv.y > 1.1) { if (d.style.display !== 'none') d.style.display = 'none'; continue; }
     if (d.style.display) d.style.display = ''; if (d.className !== cls) d.className = cls; if (col && d._c !== col) { d._c = col; d.style.setProperty('--c', col); }
     d.style.transform = `translate(${Math.round((_pv.x + 1) / 2 * VW)}px, ${Math.round((1 - _pv.y) / 2 * VH)}px) translate(-50%, -100%)`;
-    const txt = label === '敵' || label === '平民' || label === '掩體' || label === '老師' ? label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm' : label; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
+    const txt = label === '敵' || label === '平民' || label === '掩體' || label === '老師' || label === '前往這裡' ? label + ' ' + Math.round(o.pos.distanceTo(P.pos)) + 'm' : label; if (d.firstElementChild.textContent !== txt) d.firstElementChild.textContent = txt;
   }
 }
 /* ---------- 觸控與鍵盤 ---------- */
@@ -5792,10 +5829,22 @@ function noZoom() {
 function setupInput() {
   noZoom();
   const look = $('look'); let lid = null, lx = 0, ly = 0;
-  look.addEventListener('pointerdown', (e) => { if (lid !== null) return; $('lookHint').hidden = true; lid = e.pointerId; lx = e.clientX; ly = e.clientY; look.setPointerCapture(lid); });
-  look.addEventListener('pointermove', (e) => { if (e.pointerId !== lid) return; INPUT.look.dx += e.clientX - lx; INPUT.look.dy += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
-  const lookEnd = (e) => { if (e.pointerId === lid) lid = null; }; look.addEventListener('pointerup', lookEnd); look.addEventListener('pointercancel', lookEnd);
-  const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); };
+  // 自己走路的版本：畫面左邊按住＝搖桿（手指按到哪裡，搖桿就出現在哪裡），右邊滑動＝轉視角
+  let jid = null, jx = 0, jy = 0; const stk = MOVE ? document.createElement('div') : null; const JR = 56;
+  if (stk) { stk.className = 'stick'; stk.innerHTML = '<i></i>'; stk.style.cssText = 'display:none;left:0;bottom:auto;top:0;pointer-events:none'; $('hudS').appendChild(stk); if ($('lookHint')) $('lookHint').innerHTML = '左手：按住拖曳＝走路<br>右手：滑動＝轉視角'; }
+  const stkSet = (dx, dy) => { const l = Math.hypot(dx, dy), k = l > JR ? JR / l : 1; INPUT.mv.x = dx * k / JR; INPUT.mv.y = -dy * k / JR; stk.firstElementChild.style.transform = `translate(${dx * k}px, ${dy * k}px)`; };
+  look.addEventListener('pointerdown', (e) => {
+    if (MOVE && e.clientX < innerWidth * 0.45 && jid === null) { $('lookHint').hidden = true; jid = e.pointerId; jx = e.clientX; jy = e.clientY; try { look.setPointerCapture(jid); } catch (_) {} const r = stk.offsetWidth || 150; stk.style.display = 'block'; stk.style.transform = `translate(${jx - r / 2}px, ${jy - r / 2}px)`; stkSet(0, 0); SFX.resume(); return; }
+    if (lid !== null) return; $('lookHint').hidden = true; lid = e.pointerId; lx = e.clientX; ly = e.clientY; try { look.setPointerCapture(lid); } catch (_) {} });
+  look.addEventListener('pointermove', (e) => { if (e.pointerId === jid) { stkSet(e.clientX - jx, e.clientY - jy); return; } if (e.pointerId !== lid) return; INPUT.look.dx += e.clientX - lx; INPUT.look.dy += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
+  const lookEnd = (e) => { if (e.pointerId === jid) { jid = null; INPUT.mv.x = INPUT.mv.y = 0; stk.style.display = 'none'; } if (e.pointerId === lid) lid = null; }; look.addEventListener('pointerup', lookEnd); look.addEventListener('pointercancel', lookEnd);
+  // 開火鍵按住時也可以拖曳轉視角（邊打邊轉）
+  if (MOVE) { const fb = $('bFire'); let fx = 0, fy = 0, fid = null; fb.addEventListener('pointerdown', (e) => { fid = e.pointerId; fx = e.clientX; fy = e.clientY; try { fb.setPointerCapture(fid); } catch (_) {} }); fb.addEventListener('pointermove', (e) => { if (e.pointerId !== fid) return; INPUT.look.dx += e.clientX - fx; INPUT.look.dy += e.clientY - fy; fx = e.clientX; fy = e.clientY; }); fb.addEventListener('pointerup', () => { fid = null; }); }
+  // 電腦：WASD 或方向鍵走路
+  const KEYS = new Set(); const kmv = () => { INPUT.mv.x = (KEYS.has('KeyD') || KEYS.has('ArrowRight') ? 1 : 0) - (KEYS.has('KeyA') || KEYS.has('ArrowLeft') ? 1 : 0); INPUT.mv.y = (KEYS.has('KeyW') || KEYS.has('ArrowUp') ? 1 : 0) - (KEYS.has('KeyS') || KEYS.has('ArrowDown') ? 1 : 0); const l = Math.hypot(INPUT.mv.x, INPUT.mv.y); if (l > 1) { INPUT.mv.x /= l; INPUT.mv.y /= l; } };
+  if (MOVE && $('deskHint')) { const sp = document.createElement('span'); sp.textContent = 'W A S D／方向鍵：走路（停在掩體旁邊會自動蹲下）'; $('deskHint').appendChild(sp); }
+  if (MOVE) { addEventListener('keydown', (e) => { if (/^(Key[WASD]|Arrow)/.test(e.code)) { KEYS.add(e.code); kmv(); } }); addEventListener('keyup', (e) => { if (KEYS.delete(e.code)) kmv(); }); addEventListener('blur', () => { KEYS.clear(); kmv(); }); }
+  const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); if (!(MOVE && id === 'bFire')) b.addEventListener('pointerleave', up); };
   hold('bFire', 'fire'); hold('bDefuse', 'defuse');
   $('bCover').addEventListener('pointerdown', (e) => { e.preventDefault(); takeCover(); });
   $('bWeapon').addEventListener('pointerdown', (e) => { e.preventDefault(); weaponBtn(); });
