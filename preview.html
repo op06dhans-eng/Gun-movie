@@ -2619,7 +2619,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.7.0（試玩版：同學自己走路，網址加 ?move）';
+const VERSION = '2.7.1（試玩版 ?move：左手也有開火鍵）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -5831,7 +5831,7 @@ function setupInput() {
   const look = $('look'); let lid = null, lx = 0, ly = 0;
   // 自己走路的版本：畫面左邊按住＝搖桿（手指按到哪裡，搖桿就出現在哪裡），右邊滑動＝轉視角
   let jid = null, jx = 0, jy = 0; const stk = MOVE ? document.createElement('div') : null; const JR = 56;
-  if (stk) { stk.className = 'stick'; stk.innerHTML = '<i></i>'; stk.style.cssText = 'display:none;left:0;bottom:auto;top:0;pointer-events:none'; $('hudS').appendChild(stk); if ($('lookHint')) $('lookHint').innerHTML = '左手：按住拖曳＝走路<br>右手：滑動＝轉視角'; }
+  if (stk) { stk.className = 'stick'; stk.innerHTML = '<i></i>'; stk.style.cssText = 'display:none;left:0;bottom:auto;top:0;pointer-events:none'; $('hudS').appendChild(stk); if ($('lookHint')) $('lookHint').innerHTML = '左手：按住拖曳＝走路；左邊的「開火」也能開槍<br>右手：滑動＝瞄準'; }
   const stkSet = (dx, dy) => { const l = Math.hypot(dx, dy), k = l > JR ? JR / l : 1; INPUT.mv.x = dx * k / JR; INPUT.mv.y = -dy * k / JR; stk.firstElementChild.style.transform = `translate(${dx * k}px, ${dy * k}px)`; };
   look.addEventListener('pointerdown', (e) => {
     if (MOVE && e.clientX < innerWidth * 0.45 && jid === null) { $('lookHint').hidden = true; jid = e.pointerId; jx = e.clientX; jy = e.clientY; try { look.setPointerCapture(jid); } catch (_) {} const r = stk.offsetWidth || 150; stk.style.display = 'block'; stk.style.transform = `translate(${jx - r / 2}px, ${jy - r / 2}px)`; stkSet(0, 0); SFX.resume(); return; }
@@ -5844,7 +5844,9 @@ function setupInput() {
   const KEYS = new Set(); const kmv = () => { INPUT.mv.x = (KEYS.has('KeyD') || KEYS.has('ArrowRight') ? 1 : 0) - (KEYS.has('KeyA') || KEYS.has('ArrowLeft') ? 1 : 0); INPUT.mv.y = (KEYS.has('KeyW') || KEYS.has('ArrowUp') ? 1 : 0) - (KEYS.has('KeyS') || KEYS.has('ArrowDown') ? 1 : 0); const l = Math.hypot(INPUT.mv.x, INPUT.mv.y); if (l > 1) { INPUT.mv.x /= l; INPUT.mv.y /= l; } };
   if (MOVE && $('deskHint')) { const sp = document.createElement('span'); sp.textContent = 'W A S D／方向鍵：走路（停在掩體旁邊會自動蹲下）'; $('deskHint').appendChild(sp); }
   if (MOVE) { addEventListener('keydown', (e) => { if (/^(Key[WASD]|Arrow)/.test(e.code)) { KEYS.add(e.code); kmv(); } }); addEventListener('keyup', (e) => { if (KEYS.delete(e.code)) kmv(); }); addEventListener('blur', () => { KEYS.clear(); kmv(); }); }
-  const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); if (!(MOVE && id === 'bFire')) b.addEventListener('pointerleave', up); };
+  const FIRE = { bFire: false, bFireL: false }; /* 左右兩個開火鍵：任一個按住就開火 */
+  const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (id in FIRE) { FIRE[id] = true; INPUT.fire = true; } else INPUT[k] = true; b.classList.add('on'); SFX.resume(); }); const up = () => { if (id in FIRE) { FIRE[id] = false; INPUT.fire = FIRE.bFire || FIRE.bFireL; } else INPUT[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); if (!(MOVE && id === 'bFire')) b.addEventListener('pointerleave', up); };
+  if (MOVE && !DESKTOP) { const fl = document.createElement('button'); fl.className = 'fire'; fl.id = 'bFireL'; fl.textContent = '開火'; fl.style.cssText = 'left:max(14px, env(safe-area-inset-left));right:auto;bottom:31%;width:min(21vmin,92px);height:min(21vmin,92px);font-size:calc(var(--fs) * 0.8)'; $('hudS').appendChild(fl); fl.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false }); hold('bFireL', 'fire'); } /* 自己走路的版本：左手也有開火鍵（停下腳步按這裡開槍，右手繼續瞄準） */
   hold('bFire', 'fire'); hold('bDefuse', 'defuse');
   $('bCover').addEventListener('pointerdown', (e) => { e.preventDefault(); takeCover(); });
   $('bWeapon').addEventListener('pointerdown', (e) => { e.preventDefault(); weaponBtn(); });
