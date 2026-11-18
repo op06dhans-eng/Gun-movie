@@ -165,15 +165,15 @@ function toast(t, ms = 1500) { const el = $('toast'); el.textContent = t; el.sty
 function title() {
   S.phase = 'title';
   card(`<h1>天亮之前</h1><h2>港灣市被圍的第 37 天</h2>
-    <p>城裡斷水斷電已經一個多月。你和十歲的妹妹小玥躲在家裡。</p>
-    <p>小玥昨晚開始發燒。</p>
+    <p>城裡斷水斷電已經一個多月。你和十歲的妹妹躲在家裡。</p>
+    <p>妹妹昨晚開始發燒。</p>
     <div class="row"><button data-k="go">開始<small>樣品：一個白天＋一個晚上，約 5 分鐘</small></button></div>
     <p class="credit">畫面素材（皆為公開授權）：家具模型取自 Khronos 範例庫（Wayfair、Darmstadt、Microsoft）；牆面材質 ambientCG、Poly Haven；人物 Microsoft Rocketbox；動作 Quaternius；步槍模型 xlisov。</p>`, { go: day });
 }
 function day() {
   S.phase = 'day';
   card(`<h1>白天</h1><h2>白天街上有狙擊手，不能出門</h2>
-    <p>小玥燒到 39 度，額頭燙手。家裡只剩<b>最後一個罐頭</b>。</p>
+    <p>妹妹燒到 39 度，額頭燙手。家裡只剩<b>最後一個罐頭</b>。</p>
     <p class="q">這個罐頭給誰吃？</p>
     <div class="row two"><button data-k="sis">給妹妹<small>她需要體力撐過發燒</small></button><button data-k="me">自己吃<small>今晚翻找東西比較快</small></button></div>`,
     { sis: () => { S.ate = false; plan(); }, me: () => { S.ate = true; plan(); } });
@@ -196,7 +196,7 @@ function coupleDilemma(box) {
     <p>燭光下，床上的老先生在喘氣。你剛拿起桌上的藥盒，老太太就醒了。</p>
     <p class="q">「那是他的心臟藥……只剩這一盒了。拜託。」</p>
     <div class="timer" id="dTimer"></div>
-    <div class="row two"><button data-k="take">拿走<small>小玥需要藥</small></button><button data-k="leave">放回去<small>再去別的地方找</small></button></div>`,
+    <div class="row two"><button data-k="take">拿走<small>妹妹需要藥</small></button><button data-k="leave">放回去<small>再去別的地方找</small></button></div>`,
     { take: () => endDlg(true), leave: () => endDlg(false) }, true);
 }
 function endDlg(take) {
@@ -216,15 +216,16 @@ function morning() {
   const med = S.bag.includes('藥'), food = S.bag.filter((x) => x === '罐頭').length;
   const lines = [];
   if (S.caught) lines.push(`<p>${S.spotBy === 'beam' ? '外面的探照燈掃到你。' : '巡邏兵的手電筒照到你。'}你丟下背包，拚命跑回家，什麼都沒帶回來。</p>`);
-  else if (!S.home) lines.push('<p>天亮了。你只能躲在對面的公寓，等到天黑才敢回家，小玥多等了一整天。</p>');
+  else if (!S.home) lines.push('<p>天亮了。街上有狙擊手，你只能躲在對面的公寓，等到天黑才敢回家。妹妹一個人在家多等了一整天。</p>');
   else lines.push(`<p>天亮前，你回到家。背包裡：${S.bag.length ? S.bag.join('、') : '什麼也沒有'}。</p>`);
-  lines.push(med && !S.caught ? '<p>小玥吃了藥。中午，她的燒退了一點，說想喝水。</p>' : `<p>小玥燒到 40 度，整個早上都在說胡話。${S.ate ? '' : '昨天那個罐頭，她只吃了兩口。'}</p>`);
-  if (S.ate) lines.push('<p>昨天最後一個罐頭是你吃的。小玥已經一整天沒吃東西。</p>');
+  if (med && !S.caught) lines.push(S.home ? '<p>妹妹吃了藥。中午，她的燒退了一點，說想喝水。</p>' : '<p>直到天黑你才把藥帶回家。妹妹燒了一整天，吃了藥之後，半夜才慢慢退下來。</p>');
+  else lines.push(`<p>妹妹燒到 40 度，${S.home || S.caught ? '整個早上' : '你不在的這一整天'}都在胡言亂語。${S.ate ? '' : '昨天那個罐頭，她只吃了兩口。'}</p>`);
+  if (S.ate) lines.push('<p>昨天最後一個罐頭是你吃的。妹妹已經一整天沒吃東西。</p>');
   if (!S.caught && food) lines.push(`<p>多了 ${food} 個罐頭，你們可以再撐幾天。</p>`);
-  if (S.tookCouple === true) lines.push('<p class="q">對面四樓那扇窗，之後再也沒有亮過燭光。</p>');
+  if (S.tookCouple === true) lines.push(S.caught ? '<p class="q">從老夫婦那裡拿走的藥，也跟著背包丟了。對面四樓那扇窗，之後再也沒有亮過燭光。</p>' : '<p class="q">對面四樓那扇窗，之後再也沒有亮過燭光。</p>');
   else if (S.tookCouple === false) lines.push('<p>對面四樓那扇窗，今天晚上還亮著燭光。</p>');
   card(`<h1>早上</h1><h2>被圍的第 38 天</h2>${lines.join('')}
-    <p class="note">樣品到這裡結束。完整版預計三天三夜；最後揭露全班的選擇（例如：全班有幾人拿走了老夫婦的藥）。</p>
+    <p class="note">第一關到這裡結束。第二關、第三關製作中；三關玩完，最後會揭露全班的選擇。</p>
     <div class="row"><button data-k="again">再玩一次</button></div>`, { again: () => location.reload() });
 }
 
