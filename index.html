@@ -2619,7 +2619,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.7.2（取消自己走路試玩版，回到 2.6.1 的操作）';
+const VERSION = '2.7.3（老師電腦沒回應時，學生畫面會提示；等待畫面說明更清楚）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -4844,7 +4844,7 @@ function shListen() {
 }
 function shReset() {
   for (const e of REM.values()) e.dispose(); REM.clear();
-  Object.assign(SHS, { w: null, wAt: 0, lastN: -1, ph: 0, wv: 0, bombOn: false, bombT: 0, bs: -1, defuse: 0, dfo: 0, end: 0, kseq: 0, shotQ: [], hq: [], hseq: 0, hr: Math.random().toString(36).slice(2, 7), hDirty: false, hT: 0, al: [], houseT: 0, bud: 0 });
+  Object.assign(SHS, { w: null, wAt: 0, lastN: -1, ph: 0, wv: 0, bombOn: false, bombT: 0, bs: -1, defuse: 0, dfo: 0, end: 0, kseq: 0, shotQ: [], hq: [], hseq: 0, hr: Math.random().toString(36).slice(2, 7), t0: performance.now(), hDirty: false, hT: 0, al: [], houseT: 0, bud: 0 });
   for (const c of ALLY.pool) { c.slot = null; c.root.visible = false; }
   for (const k in CVJ) delete CVJ[k];
 }
@@ -5602,7 +5602,7 @@ function briefing(d) {
 function controlsText() { return (DESKTOP ? '電腦：滑鼠移動＝轉視角，右鍵按住＝瞄準鏡，左鍵＝開火，R＝換彈，空白鍵＝前往準心對到的掩體，G＝撿起敵人的 AK／換槍，E 按住＝拆彈，Esc＝放開滑鼠。' : '手機橫放：左手在畫面上滑動＝轉視角，右手按開火；「瞄準」開瞄準鏡，「換彈」換彈匣；準心對到別的掩體會出現「前往掩體」；靠近倒下的敵人會出現「撿起 AK」。') + '平常蹲在掩體後面（敵人打不到），瞄準或開火時才探身。一段清完，電腦會帶你跑到下一個掩體。'; }
 function waitScreen() {
   G.mode = 'wait'; hideAll(); show('scrWait'); const t = TEAMS[ME.team]; const d = DIFFS[META.diff || 'N'];
-  $('waitCard').innerHTML = `<h1 style="color:${t.c}">${t.name}　${ME.no} 號隊員</h1><p>等老師按「開始任務」。</p>${briefing(d)}
+  $('waitCard').innerHTML = `<h1 style="color:${t.c}">${t.name}　${ME.no} 號隊員</h1><p style="font-weight:900;font-size:1.15em">✔ 已加入。請停在這個畫面，等老師按「開始任務」——老師開始後，敵人才會出現。</p>${briefing(d)}
   <p class="small">${controlsText()}</p>
   <button class="btn" id="bPractice">單人練習（不計分，老師開始時自動停止）</button>
   <div class="pick" style="grid-template-columns:1fr 1fr"><button id="qBtn" style="--c:#888">畫質：${QUALITY === 'high' ? '高畫質' : '省電'}<span>卡頓就切省電</span></button><button id="sBtn" style="--c:#888">音效：${SFX.on ? '開' : '關'}<span>教室可關</span></button></div>`;
@@ -5711,7 +5711,8 @@ function studentTick(dt) {
   // 目前目標
   const Z = ZONES[MS.zone]; const shSt = SHARED.on && STREET(MS.zone); const alive = shSt ? (SHS.w && SHS.w.e || []).filter((a) => a && a[7] > 0).length : ENEMIES.filter((e) => e.zone === MS.zone && e.alive).length + MS.pending.filter((p) => !p.done).length;
   const obj = MS.moving ? '區域清除，前往下一個掩體…' : Z.snipe ? (MS.snState === 'held' ? `打倒押著人質的看守${MS.snAlert ? '' : '（第一槍之前他們不知道你在這裡）'}　敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : shSt && Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%　全班共用進度` : SHS.dfo ? `同學拆彈中 ${Math.round(MS.defuse * 100)}%：掩護他們，或一起${DESKTOP ? '按住 E' : '按住「拆彈」'}` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」') + `　全班進度 ${Math.round(MS.defuse * 100)}%`) + (alive ? `　敵人 ${alive}` : '') : shSt ? (SHS.wv > 0 ? `擋住敵人攻勢　還有 ${SHS.wv} 秒　場上敵人 ${alive}` : `清除剩下的敵人　剩餘 ${alive}`) : Z.defuse ? (MS.defusing ? `拆彈中 ${Math.round(MS.defuse * 100)}%` : (DESKTOP ? '按住 E 拆彈' : '按住「拆彈」')) + (alive ? `　屋頂敵人 ${alive}` : '') : Z.hostage && MS.hostState === 'held' ? `打倒人質旁的看守　剩餘 ${alive}` : (Z.indoor ? `清除房間　剩餘 ${alive}` : `清除敵人　剩餘 ${alive}`);
-  setHTML('hObj', obj);
+  const tLost = shSt && !MS.done && !SHS.end && !MS.moving && performance.now() - Math.max(SHS.wAt, SHS.t0 || 0) > 5000; /* 2.7.3：老師的電腦超過 5 秒沒有送來街上的狀況 */
+  setHTML('hObj', tLost ? '老師的電腦沒有回應，街上的敵人暫停中…（請老師確認遊戲分頁還開著）' : obj);
   renderCover(dt); renderWeaponBtn(dt); setClass('hScope', P.scoped ? (P.gearId === 'sniper' ? 'scope on sn' : 'scope on') : 'scope'); $('hCross').classList.toggle('hide', P.scoped);
   const c = P.cover; setHTML('hCov', !c ? '移動中…' : P.exposure() === 0 ? '隱蔽中：敵人打不到你' : '探身射擊中'); setClass('hCov', 'cov' + (!c ? ' mv' : P.exposure() === 0 ? ' safe' : ' out'));
   const canDefuse = Z.defuse && MS.arrived && !MS.done && P.coverId === 'D4' && !P.target; setHidden('bDefuse', !canDefuse); if (canDefuse) setStyle('bDefuse', 'background', `conic-gradient(rgba(63,209,122,0.75) ${Math.round(MS.defuse * 360)}deg, rgba(0,0,0,0.4) 0deg)`);
