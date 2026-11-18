@@ -56,6 +56,7 @@
 <div id="ctl" hidden><button class="b" id="bL">◀</button><button class="b" id="bR">▶</button><button class="b off" id="bAct">　</button></div>
 <div id="toast"></div>
 <div id="card"></div>
+<script src="story.js"></script>
 <script>
 'use strict';
 /* =========================================================
@@ -221,12 +222,11 @@ function morning() {
   if (med && !S.caught) lines.push(S.home ? '<p>妹妹吃了藥。中午，她的燒退了一點，說想喝水。</p>' : '<p>直到天黑你才把藥帶回家。妹妹燒了一整天，吃了藥之後，半夜才慢慢退下來。</p>');
   else lines.push(`<p>妹妹燒到 40 度，${S.home || S.caught ? '整個早上' : '你不在的這一整天'}都在胡言亂語。${S.ate ? '' : '昨天那個罐頭，她只吃了兩口。'}</p>`);
   if (S.ate) lines.push('<p>昨天最後一個罐頭是你吃的。妹妹已經一整天沒吃東西。</p>');
-  if (!S.caught && food) lines.push(`<p>多了 ${food} 個罐頭，你們可以再撐幾天。</p>`);
+  if (!S.caught && food) lines.push(`<p>多了 ${food} 個罐頭。</p>`);
   if (S.tookCouple === true) lines.push(S.caught ? '<p class="q">從老夫婦那裡拿走的藥，也跟著背包丟了。對面四樓那扇窗，之後再也沒有亮過燭光。</p>' : '<p class="q">對面四樓那扇窗，之後再也沒有亮過燭光。</p>');
   else if (S.tookCouple === false) lines.push('<p>對面四樓那扇窗，今天晚上還亮著燭光。</p>');
   card(`<h1>早上</h1><h2>被圍的第 38 天</h2>${lines.join('')}
-    <p class="note">第一關到這裡結束。第二關、第三關製作中；三關玩完，最後會揭露全班的選擇。</p>
-    <div class="row"><button data-k="again">再玩一次</button></div>`, { again: () => location.reload() });
+    <div class="row"><button data-k="next">下一關：第 38 天<small>妹妹的病，還沒結束</small></button><button data-k="again">重玩第一關</button></div>`, { next: () => { const st = STORY.save(STORY.fromLevel1(S)); location.href = STORY.link('2/', st); }, again: () => location.reload() });
 }
 
 /* ---------- 遊戲邏輯 ---------- */

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>天亮之前・第二關</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  /* 第二關：炭筆手繪（紙張、鉛筆、石墨） */
+  :root { --font: "Noto Serif TC", "Songti TC", serif; --paper: #ebe6da; --ink: #1f1d1a; --mid: #6e6a62; --acc: #8e2a1e; --btn: #f1ece0; }
+  html, body { margin: 0; height: 100%; background: #1c1b19; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body { font-family: var(--font); color: var(--ink); }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; }
+  #ctl[hidden] { display: none !important; }
+  #ctl { position: fixed; left: 0; right: 0; bottom: 0; height: 128px; padding: 0 14px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; pointer-events: none; }
+  .b { pointer-events: auto; border: 2.5px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 22px var(--font); border-radius: 3px; height: 86px; display: grid; place-items: center; box-shadow: 3px 4px 0 rgba(31,29,26,0.85); -webkit-tap-highlight-color: transparent; }
+  .b:active, .b.on { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  #bL, #bR { width: 92px; font-size: 40px; }
+  #bAct { flex: 1; font-size: 26px; line-height: 1.15; }
+  #bAct.off { opacity: 0.3; }
+  #bAct small { display: block; font-size: 15px; font-weight: 500; }
+  #card { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.0); }
+  #card[hidden] { display: none; }
+  #card.low { align-items: end; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .sheet { width: min(88vw, 420px); max-height: 86dvh; overflow: auto; background: var(--paper); border: 2.5px solid var(--ink); box-shadow: 6px 7px 0 rgba(31,29,26,0.9); padding: 22px 22px 18px; background-image: radial-gradient(rgba(0,0,0,0.035) 1px, transparent 1px); background-size: 5px 5px; }
+  .sheet h1 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 2px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; display: inline-block; }
+  .sheet h2 { margin: 6px 0 12px; font-size: 17px; font-weight: 700; color: var(--mid); }
+  .sheet p { margin: 0 0 12px; font-size: 19px; line-height: 1.65; font-weight: 500; }
+  .sheet .q { color: var(--acc); font-weight: 900; }
+  .sheet .row { display: grid; gap: 10px; margin-top: 14px; }
+  .sheet .row.two { grid-template-columns: 1fr 1fr; }
+  .sheet button { pointer-events: auto; border: 2.5px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 20px var(--font); padding: 12px 6px; box-shadow: 3px 4px 0 rgba(31,29,26,0.85); border-radius: 3px; line-height: 1.3; }
+  .sheet button small { display: block; font-size: 14px; font-weight: 500; color: var(--mid); }
+  .sheet button:disabled { opacity: 0.4; }
+  .sheet button:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .sheet .timer { height: 6px; background: var(--ink); margin: 6px 0 4px; transform-origin: left; }
+  .sheet .note { font-size: 14px; color: var(--mid); font-weight: 500; margin-top: 12px; }
+  #toast { position: fixed; left: 50%; bottom: 146px; transform: translateX(-50%) rotate(-0.6deg); font: 700 18px var(--font); padding: 8px 16px; background: var(--paper); border: 2px solid var(--ink); box-shadow: 3px 4px 0 rgba(31,29,26,0.85); white-space: nowrap; transition: opacity .3s; opacity: 0; pointer-events: none; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  #cut { position: fixed; inset: 0; background: #0d0c0b; color: #d8d2c4; display: grid; place-items: center; font: 700 20px var(--font); text-align: center; line-height: 1.9; padding: 30px; opacity: 0; pointer-events: none; transition: opacity .6s; }
+  #cut.on { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ctl" hidden><button class="b" id="bL">◀</button><button class="b" id="bR">▶</button><button class="b off" id="bAct">　</button></div>
+<div id="toast"></div>
+<div id="cut"></div>
+<div id="card" hidden></div>
+<script src="../story.js"></script>
+<script src="../engine.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   天亮之前・第二關（第 38 天夜，炭筆手繪）：藥局地下室
+   妹妹的感染轉成肺炎，要抗生素。穿過有狙擊手的路口，到被炸毀的藥局；
+   地下室住著一個女人和她的孩子，她有兩盒抗生素（一盒自己要用、一盒備用）。
+   交換／哀求／趁她睡著偷／推開她搶／空手離開。天亮前回家。
+   ========================================================= */
+const { S, X, WY, BASE, FY, HF } = ENG;
+const g = ENG.g;
+// ---------- 紀錄（第一關傳過來的；沒有的話用預設） ----------
+let ST = STORY.load(); let NOREC = false;
+if (!ST || !ST.L1) { NOREC = true; ST = { v: 1, L1: { med: false, ateSelf: false, late: false, caught: false, couple: 'left' }, home: { 罐頭: 1, 繃帶: 1, 木柴: 0 } }; }
+ST = JSON.parse(JSON.stringify(ST)); delete ST.L2; delete ST.L3; ST.abx = 0; // 從這一關重新算
+// 出門前：把家裡能換的東西（罐頭、木柴）裝進背包，繃帶留在家
+const CARRY = []; for (const k of ['木柴', '罐頭']) for (let i = 0; i < (ST.home[k] || 0); i++) if (CARRY.length < 4) CARRY.push(k);
+const HOME0 = { ...ST.home }; for (const k of CARRY) HOME0[k]--; // 留在家裡的
+
+// ---------- 場景 ----------
+const SPR = {"cw":300,"ch":340,"pxm":150,"foot":0.12,"ox":0.74,"anims":{"p_walk":{"row":0,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_climb":{"row":1,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_idle":{"row":2,"n":1,"lens":[null]},"p_crouch":{"row":3,"n":1,"lens":[null]},"s_walk":{"row":4,"n":10,"lens":[[279,125],[279,125],[279,121],[279,119],[279,122],[279,126],[279,126],[279,122],[279,119],[279,121]]},"s_idle":{"row":5,"n":1,"lens":[[268,114]]},"s_smoke":{"row":6,"n":4,"lens":[[130,79],[147,102],[162,136],[147,102]]}}};
+const NPC = {"cw":330,"ch":340,"pxm":150,"foot":0.12,"ox":1.1,"anims":{"w_sit":{"row":0,"n":1},"w_talk":{"row":1,"n":6},"w_lie":{"row":2,"n":1},"c_sit":{"row":3,"n":1},"c_lie":{"row":4,"n":1},"c_stand":{"row":5,"n":1},"c_walk":{"row":6,"n":8},"o_stand":{"row":7,"n":1},"o_walk":{"row":8,"n":8},"n_lie":{"row":9,"n":1}}};
+const CFG = {
+  visW: 11, view: { x0: -1.0, x1: 23.0, y0: -0.9, y1: 13.6 }, bgv: { x0: -1.4, y1: 13.6, pxm: 110 }, night: 240, speed: 1.7, dayLabel: '被圍第 38 天',
+  camY: () => 4.6, titleFocus: 0.85, // 街面和地下室一起看（畫面中心約在 4.6 公尺高）
+  imgs: { bg: 'bg.jpg', bgl: 'bgl.jpg', fg: 'fg.webp', fgl: 'fgl.webp', spr: 'sprites.webp', npc: 'npc.webp' },
+  spr: SPR, start: { f: 1, x: 0.9 }, exit: { f: 1, x: 0.65 },
+  floors: { 0: [13.4, 22.3], 1: [0.35, 22.3] },
+  stairs: [{ f: 0, x: 20.6, dir: -1, xb: 21.6, xt: 19.6 }],
+  hides: [{ f: 1, x: 5.4, n: '燒毀的車子後', k: 'car' }, { f: 1, x: 10.75, n: '水泥護欄後', k: 'barrier' }],
+  hideBox: { car: [-1.2, 1.2, 1.45], barrier: [-0.85, 0.85, 1.0] },
+  boxes: [
+    { f: 1, x: 3.2, n: '翻倒的推車', loot: ['罐頭'] },
+    { f: 1, x: 15.2, n: '藥局櫃台', loot: [] },
+    { f: 1, x: 18.9, n: '後面的儲藏間', loot: ['木柴'] },
+    { f: 0, x: 17.7, n: '架上的藥', loot: ['抗生素'], need: 3.0, shelf: true },
+  ],
+  theme: { font: '"Noto Serif TC", serif', ink: '#1f1d1a', hudBg: '#ebe6da', mk: '#ebe6da', bubble: '#f1ece0', bg0: '#1c1b19', vignette: 0.32, glow: 'rgba(240,232,210,0.85)', pdark: 0, fxFill: '#ebe6da', fxStroke: '#1f1d1a', warnInk: '#ebe6da' },
+  spotText: () => '狙擊手看到你了',
+  hooks: {},
+};
+function L_vhmHalf() { return ENG.L.vhm / 2; }
+// ---------- 狙擊手：盯著路口一陣子（遠處有反光），再轉開 ----------
+const SNIPE = { T: 9, on: 5, zone: [8.7, 12.4], glint: { x: 10.9, y: 11.6 } };
+const sniperWatching = () => (S.t + 3) % SNIPE.T < SNIPE.on;
+// ---------- 藥局的女人與孩子 ----------
+const WOM = { mode: 'awake', x: 16.3, talked: false, begged: false, away: 0, sleepT: 0, seen: false, route: 'none', fled: false, cry: 0 };
+const KID = { x: 14.5 };
+const MATTRESS = 14.9;
+
+// ---------- 卡片 ----------
+function itemsList(o) { const a = []; for (const k of ['罐頭', '木柴', '繃帶']) if (o[k]) a.push(`${k} ${o[k]}`); return a.length ? a.join('、') : '什麼也沒有'; }
+function title() {
+  S.phase = 'title';
+  const a = ST.L1; const lines = [];
+  lines.push(a.med ? '<p>昨晚吃了退燒藥，妹妹的燒退了一些。</p>' : '<p>沒有退燒藥，妹妹的燒一直沒退。</p>');
+  if (a.late) lines.push('<p>你前一天天亮才回到家，她一個人在家燒了一整天。</p>');
+  lines.push('<p>可是今天早上，她開始咳嗽，喘不過氣。你把耳朵貼在她背上，聽得到咕嚕咕嚕的聲音。</p>');
+  lines.push('<p class="q">樓下的老醫生說：是肺炎。退燒藥只能壓住燒，治不了感染。要抗生素。</p>');
+  ENG.card(`<h1>第 38 天</h1><h2>天亮之前・第二關</h2>${lines.join('')}${NOREC ? '<p class="note">沒有讀到第一關的紀錄，這一關用預設的情況開始。</p>' : ''}
+    <div class="row"><button data-k="go">繼續</button></div>`, { go: plan });
+}
+function plan() {
+  S.phase = 'day';
+  ENG.card(`<h1>入夜</h1><h2>城西，被炸毀的藥局</h2>
+    <p>聽說藥局的地下室還住著人，也許還有藥。</p>
+    <p>出門前，你把家裡能拿去換的東西都裝進背包：<b>${CARRY.length ? CARRY.join('、') : '什麼也沒有'}</b>。${HOME0['繃帶'] ? '繃帶留在家裡。' : ''}</p>
+    <p style="font-size:16px">路口有狙擊手。遠處那棟高樓上<b>有反光的時候，就是他在看</b>；等反光消失再過去，或躲在護欄後面。</p>
+    <div class="row"><button data-k="go">出門</button></div>`, { go: () => { S.bag = CARRY.slice(); ENG.startNight(); ENG.toast('天亮前要回到家門口', 2200); } });
+}
+// 跟女人說話
+function talk() {
+  S.phase = 'dlg'; WOM.talked = true; WOM.mode = 'awake';
+  const can = S.bag.filter((x) => x === '木柴' || x === '罐頭');
+  const give = []; for (const k of ['木柴', '罐頭']) for (const it of can) if (it === k && give.length < 2) give.push(it);
+  const tradeOk = give.length >= 2;
+  ENG.card(`<h1>地下室</h1>
+    <p>一個女人坐在木箱上，手上纏著發黑的布條。床墊上睡著一個孩子。牆上釘著兩張照片，還有一張寫給孩子的字條。</p>
+    <p>架上有兩盒抗生素。</p>
+    <p class="q">「一盒是我的，我的手爛了。另一盒，是留給孩子的。」</p>
+    <div class="row">
+      <button data-k="trade" ${tradeOk ? '' : 'disabled'}>拿東西跟她換<small>${tradeOk ? `給她：${give.join('、')}，換備用的那一盒` : '你沒有足夠的東西可以換（要兩樣：罐頭或木柴）'}</small></button>
+      <button data-k="beg">求她<small>${WOM.begged ? '她已經拒絕過你了' : '妹妹快不行了'}</small></button>
+      <button data-k="rob">推開她，搶過來</button>
+      <button data-k="leave">離開<small>先回樓上</small></button>
+    </div>`, {
+    trade: () => { for (const it of give) S.bag.splice(S.bag.indexOf(it), 1); S.bag.push('抗生素'); WOM.mode = 'done'; WOM.route = 'trade'; shelf().loot = []; shelf().done = true; ENG.hideCard(); S.phase = 'night'; ENG.toast('她把那盒藥塞給你：「快走，別讓人看見。」', 2600); },
+    beg: () => { WOM.begged = true; ENG.card(`<h1>地下室</h1><p class="q">她搖頭。「我的孩子也要活。」</p><p>她把手護在床墊前面，眼睛一直沒有離開你。</p><div class="row"><button data-k="back">回去</button></div>`, { back: talk }); },
+    rob: () => rob(),
+    leave: () => { ENG.hideCard(); S.phase = 'night'; ENG.say('走吧。', WOM.x, 0, 2); },
+  });
+}
+// 偷到一半她醒了
+let DLG = null;
+function woke() {
+  S.phase = 'dlg'; S.p.search = null; WOM.mode = 'awake'; DLG = { t: 6 };
+  ENG.card(`<h1>她醒了</h1><p class="q">她抓住你的手腕：「你在做什麼！」</p><p>床墊上的孩子也醒了，縮在牆角看著你們。</p><div class="timer" id="dTimer"></div>
+    <div class="row two"><button data-k="rob">推開她，搶過來</button><button data-k="run">甩開她，空手跑</button></div>`, { rob: () => { DLG = null; rob(); }, run: () => { DLG = null; flee(); } }, true);
+}
+function flee() { ENG.hideCard(); S.phase = 'night'; WOM.mode = 'alert'; WOM.route = 'fled'; shelf().done = true; shelf().hidden = true; const p = S.p; p.f = 1; p.x = 19.3; p.climb = 0; ENG.toast('你甩開她，空手跑上樓梯。', 2200); }
+// 搶：畫面轉黑，只有聲音
+function rob() {
+  ENG.hideCard(); S.phase = 'cut'; const cut = document.getElementById('cut'); cut.innerHTML = ''; cut.classList.add('on');
+  const T = (ms, f) => setTimeout(f, ms);
+  T(300, () => { ENG.tick(300, 0.3, 0.4); ENG.tick(1400, 0.2, 0.25); }); T(700, () => { ENG.tick(260, 0.35, 0.45); });
+  T(1300, () => { ENG.thump(0.9); ENG.tick(180, 0.5, 0.35, 'lowpass'); }); T(1500, () => ENG.thump(0.5));
+  T(2200, () => { cut.innerHTML = '你抓起兩盒藥，跑上樓梯。<br>身後傳來一聲悶響。<br>然後，是孩子的哭聲。'; });
+  T(5200, () => {
+    S.bag.push('抗生素', '抗生素'); // 藥盒很小，塞進口袋（不佔背包格）
+    WOM.mode = 'dead'; WOM.route = 'rob'; shelf().done = true; shelf().hidden = true; KID.x = 20.15; S.say = null; ENG.FX.length = 0;
+    const p = S.p; p.f = 1; p.x = 19.3; p.climb = 0; p.search = null; p.hide = false;
+    cut.classList.remove('on'); S.phase = 'night';
+  });
+}
+const shelf = () => S.boxes.find((b) => b.shelf);
+
+// ---------- 這一關的規則（接到引擎） ----------
+CFG.hooks.pre = (dt) => { if (S.phase === 'dlg' && DLG) { DLG.t -= dt; const el = document.getElementById('dTimer'); if (el) el.style.transform = `scaleX(${Math.max(0, DLG.t / 6)})`; if (DLG.t <= 0) { DLG = null; flee(); } } return false; };
+CFG.hooks.context = (p) => {
+  if (p.f === 0 && Math.abs(p.x - WOM.x) < 1.1 && WOM.mode === 'awake') return { k: 'talk', t: '說話', s: '藥局的女人' };
+  return null;
+};
+CFG.hooks.boxLock = (b) => {
+  if (!b.shelf) return null;
+  if (WOM.mode === 'awake') return { t: '她醒著', s: '一直盯著你' };
+  if (WOM.mode === 'alert') return { t: '她守著藥架', s: '不會再睡了' };
+  return null;
+};
+CFG.hooks.act = (c) => { if (c.k === 'talk') { talk(); return true; } return false; };
+CFG.hooks.searching = (sr) => { if (sr.b.shelf && WOM.mode === 'sleep' && sleepStir()) woke(); };
+CFG.hooks.found = (b) => { if (!b.shelf) return false; S.bag.push('抗生素'); b.loot = []; WOM.route = 'steal'; ENG.toast('你拿到備用的那一盒。她翻了個身，沒有醒。', 2400); return true; };
+const sleepStir = () => (WOM.sleepT % 8) >= 5.5; // 每 8 秒裡有 2.5 秒睡得淺、會翻身
+CFG.hooks.update = (dt) => {
+  const p = S.p, inBase = p.f === 0 || (p.climb > 0 && p.climbTo === 0);
+  if (inBase && !WOM.seen && WOM.mode === 'awake') { WOM.seen = true; ENG.say('誰？！別過來！', WOM.x, 0, 2.2); }
+  // 她什麼時候睡著：夜裡過了 70 秒，或跟你說過話之後；你不在地下室滿 12 秒
+  if (WOM.mode === 'awake') { WOM.away = inBase ? 0 : WOM.away + dt; if ((S.t > 70 || WOM.talked) && WOM.away >= 12) { WOM.mode = 'sleep'; WOM.sleepT = 0; } }
+  if (WOM.mode === 'sleep') { const a = WOM.sleepT % 8; WOM.sleepT += dt; const b = WOM.sleepT % 8; if (a < 5.5 && b >= 5.5) ENG.FX.push({ x: MATTRESS + 0.2, y: 0.9, text: '嗯……', t: 0, life: 1.4, size: 0.3 }); if (Math.floor(WOM.sleepT * 0.8) !== Math.floor((WOM.sleepT - dt) * 0.8) && b < 5.5) ENG.FX.push({ x: MATTRESS + 0.5, y: 0.8, text: 'z', t: 0, life: 1.4, size: 0.28, a: 0.8 }); }
+  if (WOM.mode === 'dead') { WOM.cry -= dt; if (WOM.cry <= 0) { WOM.cry = 2.6; ENG.FX.push({ x: KID.x + 0.1, y: 1.2, text: '媽媽……', t: 0, life: 2.0, size: 0.3 }); } }
+  // 路口的狙擊手：反光閃爍
+  if (sniperWatching()) { SNIPE.blink = (SNIPE.blink || 0) - dt; }
+};
+CFG.hooks.seen = () => { const p = S.p; if (p.f === 1 && !p.hide && p.climb <= 0 && p.x > SNIPE.zone[0] && p.x < SNIPE.zone[1] && sniperWatching()) return { v: 1.5, by: 'sniper' }; return null; };
+CFG.hooks.lightMask = (m) => {
+  // 地下室的燭光一直都在（只有搶了之後，蠟燭被撞倒）
+  if (WOM.mode !== 'dead') { const fl = 0.85 + Math.sin(S.t * 9) * 0.05; ENG.glowMask(m, X(15.7), WY(0.75), ENG.L.u * 2.0 * fl, 0.5); }
+  return null;
+};
+CFG.hooks.drawNPC = () => {
+  const u = ENG.L.u; g.save(); g.shadowColor = 'rgba(235,228,210,0.75)'; g.shadowBlur = 6; // 人物周圍一圈淡淡的紙色，暗處也看得出輪廓
+  // 孩子
+  if (WOM.mode === 'dead') ENG.sprite(ENG.IMG.npc, NPC, 'c_sit', 0, X(KID.x), BASE(0), 1, 0);
+  else ENG.sprite(ENG.IMG.npc, NPC, 'c_lie', 0, X(KID.x), BASE(0) - 0.2 * u, 1, 0);
+  // 女人
+  if (WOM.mode === 'awake' || WOM.mode === 'done' || WOM.mode === 'alert') { const talking = S.phase === 'dlg' && !DLG; ENG.sprite(ENG.IMG.npc, NPC, talking ? 'w_talk' : 'w_sit', talking ? S.t * 4 : 0, X(WOM.x), BASE(0), S.p.x > WOM.x ? 1 : -1, 0); }
+  else if (WOM.mode === 'sleep') ENG.sprite(ENG.IMG.npc, NPC, 'w_lie', 0, X(MATTRESS + 0.5), BASE(0) - 0.16 * u, sleepStir() ? 1 : -1, 0);
+  else if (WOM.mode === 'dead') ENG.sprite(ENG.IMG.npc, NPC, 'w_lie', 0, X(21.0), BASE(0), -1, 0.1);
+  g.restore();
+  // 架上的藥盒（看得到還剩幾盒）
+  const n = WOM.route === 'rob' ? 0 : WOM.route === 'trade' || WOM.route === 'steal' ? 1 : 2;
+  for (let i = 0; i < n; i++) { const x = X(17.45 + i * 0.3), y = WY(0.93); g.fillStyle = '#e8e2d2'; g.fillRect(x - 0.1 * u, y - 0.16 * u, 0.2 * u, 0.16 * u); g.fillStyle = '#8e2a1e'; g.fillRect(x - 0.03 * u, y - 0.13 * u, 0.06 * u, 0.1 * u); g.fillRect(x - 0.07 * u, y - 0.1 * u, 0.14 * u, 0.04 * u); }
+  // 燭火
+  if (WOM.mode !== 'dead') { const cx = X(15.7), cy = WY(0.7); g.fillStyle = '#f2d39a'; g.beginPath(); g.ellipse(cx, cy, 0.022 * u, (0.05 + Math.sin(S.t * 13) * 0.008) * u, 0, 0, 7); g.fill(); }
+};
+CFG.hooks.drawFront = () => {
+  // 遠方高樓上的反光（狙擊手在看）
+  if (sniperWatching()) { const x = X(SNIPE.glint.x), y = WY(SNIPE.glint.y), u = ENG.L.u; const k = 0.6 + 0.4 * Math.abs(Math.sin(S.t * 7)); g.save(); g.globalCompositeOperation = 'lighter'; const gr = g.createRadialGradient(x, y, 0, x, y, u * 0.7 * k); gr.addColorStop(0, 'rgba(255,250,230,0.95)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - u, y - u, u * 2, u * 2); g.strokeStyle = 'rgba(255,250,230,0.8)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - u * 0.6 * k, y); g.lineTo(x + u * 0.6 * k, y); g.moveTo(x, y - u * 0.4 * k); g.lineTo(x, y + u * 0.4 * k); g.stroke(); g.restore(); }
+};
+CFG.hooks.labels = (LB) => { const p = S.p; if (p.f === 1 && p.x > 6.5 && p.x < 13.5) LB.push([X(10.55), BASE(1) - ENG.L.fh * 1.05, sniperWatching() ? '狙擊手在看' : '現在沒在看']); };
+CFG.hooks.end = (why) => {
+  const p = S.p; p.search = null;
+  if (why === 'caught') { ENG.thump(0.6); ENG.tick(3000, 0.12, 0.35, 'highpass'); ENG.toast('啪！子彈打在你腳邊。', 1600); setTimeout(() => morning('caught'), 1500); }
+  else morning(why);
+};
+function finalRoute() { if (WOM.route !== 'none') return WOM.route; return WOM.seen ? 'leave' : 'none'; }
+function morning(why) {
+  const shot = why === 'caught', late = why === 'dawn';
+  const bag = shot ? [] : S.bag.slice();
+  const abx = bag.filter((x) => x === '抗生素').length;
+  const home = { ...HOME0 }; for (const it of bag) if (it in home) home[it]++;
+  const route = finalRoute(); const cans0 = home['罐頭'] || 0; if (cans0) home['罐頭'] -= 1; // 早上打開一個，跟妹妹分著吃
+  ST.L2 = { route, abx, late, shot, cansHome: cans0 }; ST.home = home; ST.abx = abx; STORY.save(ST);
+  const lines = [];
+  if (shot) lines.push(`<p>子彈打在你腳邊。你丟下背包，拚命跑回家。${CARRY.length || S.bag.length ? '背包裡的東西，全都丟在路口了。' : ''}</p>`);
+  else if (late) lines.push('<p>天亮了。路口的狙擊手看得到整條街，你只能躲到天黑才回家。妹妹一個人又多等了一整天。</p>');
+  else lines.push(`<p>天亮前，你回到家。背包裡：${bag.length ? bag.join('、') : '什麼也沒有'}。</p>`);
+  lines.push(abx ? `<p>妹妹吃了第一顆抗生素${late ? '——晚了一整天' : ''}。她咳得很厲害，但還醒著。</p>` : '<p>沒有藥。妹妹咳了一整夜，你一直扶著她坐起來，讓她好喘氣。</p>');
+  lines.push(cans0 ? `<p>家裡還有 ${cans0} 個罐頭。你打開一個，跟妹妹分著吃了${home['罐頭'] ? `，還剩 ${home['罐頭']} 個` : '，那是最後一個'}。</p>` : '<p>家裡已經沒有吃的了。妹妹今天什麼也沒吃。</p>');
+  if (route === 'rob') lines.push('<p class="q">你一直想著那聲悶響，還有地下室傳來的哭聲。</p>');
+  else if (route === 'trade') lines.push('<p>她最後那句「快走，別讓人看見」，你一直記得。</p>');
+  else if (route === 'steal') lines.push('<p>她醒來的時候，會發現架上少了一盒。你沒有回頭。</p>');
+  else if (route === 'fled') lines.push('<p>她抓住你手腕的力氣，到現在還留在你手上。</p>');
+  ENG.card(`<h1>早上</h1><h2>被圍的第 39 天</h2>${lines.join('')}
+    <div class="row"><button data-k="next">下一關：第 39 天<small>今晚，會有人來敲門</small></button><button data-k="again">重玩第二關</button></div>`, {
+    next: () => { location.href = STORY.link('../3/', ST); }, again: () => { location.href = STORY.link('./', (() => { const s0 = JSON.parse(JSON.stringify(ST)); delete s0.L2; s0.home = { ...HOME0 }; for (const k of CARRY) s0.home[k]++; return s0; })()); } });
+}
+
+ENG.start(CFG); title();
+window.__N = { S, ENG, WOM, ST: () => ST, talk, rob, woke, flee, morning, sniperWatching, CARRY, HOME0 };
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>天亮之前・第三關</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  /* 第三關：剪影光霧（冷藍色塊、全黑剪影、只剩光） */
+  :root { --font: "Noto Sans TC", "PingFang TC", sans-serif; --paper: #dfe4ea; --ink: #0d1219; --mid: #5b6574; --acc: #b0402c; --btn: #eef1f4; }
+  html, body { margin: 0; height: 100%; background: #0b1018; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body { font-family: var(--font); color: var(--ink); }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; }
+  #ctl[hidden] { display: none !important; }
+  #ctl { position: fixed; left: 0; right: 0; bottom: 0; height: 128px; padding: 0 14px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; pointer-events: none; }
+  .b { pointer-events: auto; border: 2px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 22px var(--font); border-radius: 0; height: 86px; display: grid; place-items: center; box-shadow: 4px 4px 0 rgba(13,18,25,0.9); -webkit-tap-highlight-color: transparent; }
+  .b:active, .b.on { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  #bL, #bR { width: 92px; font-size: 40px; }
+  #bAct { flex: 1; font-size: 26px; line-height: 1.15; }
+  #bAct.off { opacity: 0.3; }
+  #bAct small { display: block; font-size: 15px; font-weight: 500; }
+  #card { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.0); }
+  #card[hidden] { display: none; }
+  #card.low { align-items: end; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .sheet { width: min(88vw, 420px); max-height: 86dvh; overflow: auto; background: var(--paper); border: 2px solid var(--ink); box-shadow: 7px 7px 0 rgba(13,18,25,0.9); padding: 22px 22px 18px; }
+  .sheet h1 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 3px; }
+  .sheet h2 { margin: 0 0 12px; font-size: 16px; font-weight: 500; color: var(--mid); letter-spacing: 1px; }
+  .sheet p { margin: 0 0 12px; font-size: 18px; line-height: 1.7; font-weight: 500; }
+  .sheet .q { color: var(--acc); font-weight: 700; }
+  .sheet .big { font-size: 21px; font-weight: 900; line-height: 1.6; }
+  .sheet .row { display: grid; gap: 10px; margin-top: 14px; }
+  .sheet .row.two { grid-template-columns: 1fr 1fr; }
+  .sheet button { pointer-events: auto; border: 2px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 19px var(--font); padding: 12px 6px; box-shadow: 4px 4px 0 rgba(13,18,25,0.9); border-radius: 0; line-height: 1.3; }
+  .sheet button small { display: block; font-size: 14px; font-weight: 500; color: var(--mid); }
+  .sheet button:disabled { opacity: 0.4; }
+  .sheet button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .sheet .note { font-size: 14px; color: var(--mid); font-weight: 500; margin-top: 10px; line-height: 1.6; }
+  .sheet ul { margin: 0 0 12px; padding-left: 1.2em; font-size: 16px; line-height: 1.7; }
+  .sheet details { margin-top: 8px; font-size: 14px; color: var(--mid); }
+  .sheet .inv { font-size: 15px; color: var(--mid); border-top: 1px solid rgba(13,18,25,0.25); padding-top: 8px; margin-top: 4px; }
+  #toast { position: fixed; left: 50%; top: 76px; transform: translateX(-50%); font: 700 17px var(--font); padding: 8px 16px; background: var(--paper); border: 2px solid var(--ink); box-shadow: 4px 4px 0 rgba(13,18,25,0.9); white-space: nowrap; transition: opacity .3s; opacity: 0; pointer-events: none; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  #cut { position: fixed; inset: 0; background: #070a10; color: #cfd8e6; display: grid; place-items: center; font: 500 20px var(--font); text-align: center; line-height: 1.9; padding: 30px; opacity: 0; pointer-events: none; transition: opacity .8s; }
+  #cut.on { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ctl" hidden><button class="b" id="bL">◀</button><button class="b" id="bR">▶</button><button class="b off" id="bAct">　</button></div>
+<div id="toast"></div>
+<div id="cut"></div>
+<div id="card" hidden></div>
+<script src="../story.js"></script>
+<script src="../engine.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   天亮之前・第三關（第 39 天夜，剪影光霧）：有人來求救
+   誰來求救，照前兩關的選擇決定（STORY.knocker）：
+   第二關搶了藥 → 藥局女人的孩子；否則第一關拿了老夫婦的藥 → 老太太；其他 → 中彈的鄰居。
+   幫他要付出的東西、會不會害到妹妹，全部照 STORY 的規則算。倒數結束還沒決定，就是「沒有開門」。
+   ========================================================= */
+const { S, X, WY, BASE, HF } = ENG;
+const g = ENG.g;
+let ST = STORY.load(); let NOREC = false;
+if (!ST || !ST.L1 || !ST.L2) { NOREC = true; ST = { v: 1, L1: { med: true, ateSelf: false, late: false, caught: false, couple: 'left' }, L2: { route: 'trade', abx: 1, late: false, shot: false, cansHome: 1 }, home: { 罐頭: 1, 繃帶: 1, 木柴: 1 }, abx: 1 }; }
+ST = JSON.parse(JSON.stringify(ST)); delete ST.L3;
+const WHO = STORY.knocker(ST);
+const NAME = { child: '藥局那個女人的孩子', oldwoman: '對面四樓的老太太', neighbor: '中彈的鄰居' }[WHO];
+
+const SPR = {"cw":300,"ch":340,"pxm":150,"foot":0.12,"ox":0.74,"anims":{"p_walk":{"row":0,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_climb":{"row":1,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_idle":{"row":2,"n":1,"lens":[null]},"p_crouch":{"row":3,"n":1,"lens":[null]},"s_walk":{"row":4,"n":10,"lens":[[279,125],[279,125],[279,121],[279,119],[279,122],[279,126],[279,126],[279,122],[279,119],[279,121]]},"s_idle":{"row":5,"n":1,"lens":[[268,114]]},"s_smoke":{"row":6,"n":4,"lens":[[130,79],[147,102],[162,136],[147,102]]}}};
+const NPC = {"cw":330,"ch":340,"pxm":150,"foot":0.12,"ox":1.1,"anims":{"w_sit":{"row":0,"n":1},"w_talk":{"row":1,"n":6},"w_lie":{"row":2,"n":1},"c_sit":{"row":3,"n":1},"c_lie":{"row":4,"n":1},"c_stand":{"row":5,"n":1},"c_walk":{"row":6,"n":8},"o_stand":{"row":7,"n":1},"o_walk":{"row":8,"n":8},"n_lie":{"row":9,"n":1}}};
+const DOOR = 4.2; // 大門的位置
+const CFG = {
+  visW: 11, view: { x0: -2.4, x1: 15.4, y0: -0.9, y1: 11.2 }, bgv: { x0: -2.4, y1: 11.2, pxm: 110 }, night: 240, speed: 1.6, dayLabel: '被圍第 39 天',
+  camY: () => 3.6, titleFocus: 0.7,
+  imgs: { bg: 'bg.jpg', bgl: 'bgl.jpg', spr: 'sprites.webp', npc: 'npc.webp' },
+  spr: SPR, start: { f: 1, x: 11.4 },
+  floors: { 0: [DOOR + 0.3, 14.0], 1: [DOOR + 0.35, 14.0] },
+  stairs: [{ f: 0, x: 11.8, dir: -1, xb: 12.8, xt: 10.8 }],
+  hides: [], hideBox: {}, boxes: [],
+  theme: { font: '"Noto Sans TC", sans-serif', ink: '#0d1219', hudBg: '#dfe4ea', mk: '#dfe4ea', bubble: '#eef1f4', bg0: '#0b1018', vignette: 0.4, glow: 'rgba(200,215,240,0.9)', glowA: 0.35, pdark: 0, fxFill: '#dfe4ea', fxStroke: '#0d1219', warnInk: '#dfe4ea' },
+  spotText: () => '狙擊手看到你了',
+  hooks: {},
+};
+// 狙擊手（只有出門救人時才有危險）
+const SNIPE = { T: 9, on: 5, glint: { x: -0.6, y: 9.2 } };
+const sniperWatching = () => (S.t + 2) % SNIPE.T < SNIPE.on;
+// 事件：敲門／喊救命
+const EV = { started: false, decided: false, helped: false, open: false, drag: false, vx: 1.6, fx: 0, epi: '' };
+if (WHO === 'neighbor') EV.vx = 1.6; else EV.vx = DOOR - 0.7;
+function inv(st) { const h = st.home; return `家裡：罐頭 ${h['罐頭'] || 0}、木柴 ${h['木柴'] || 0}、繃帶 ${h['繃帶'] || 0}、抗生素 ${st.abx} 盒`; }
+
+// ---------- 開場 ----------
+function title() {
+  S.phase = 'title';
+  const str = STORY.strength(ST).value; const lines = [];
+  if (ST.abx >= 1) lines.push('<p>妹妹吃了抗生素。燒還沒退，咳得很厲害，但她醒著的時候認得你。</p>');
+  else lines.push('<p>沒有抗生素。妹妹的嘴唇發紫，呼吸又淺又快。</p>');
+  if (str <= 1) lines.push('<p>這幾天下來，她已經很虛弱了。</p>');
+  lines.push(`<p class="inv">${inv(ST)}</p>`);
+  ENG.card(`<h1>第 39 天</h1><h2>天亮之前・第三關</h2>${lines.join('')}${NOREC ? '<p class="note">沒有讀到前兩關的紀錄，這一關用預設的情況開始。</p>' : ''}
+    <div class="row"><button data-k="go">入夜</button></div>`, { go: () => { ENG.startNight(); ENG.toast('今晚，你守在妹妹身邊', 2200); } });
+}
+// ---------- 求救的卡片 ----------
+function plea() {
+  S.phase = 'dlg'; const ch = STORY.canHelp(WHO, ST); const h = ST.home, lines = [];
+  let helpBtn = '', title = '', why = '';
+  if (WHO === 'child') {
+    title = '門外的孩子';
+    lines.push('<p>門外是一個孩子。手上纏著布條，布條滲著血。</p>');
+    lines.push('<p class="q">「媽媽那天晚上跌下樓梯，就沒有再醒過來……她說那盒藥，是要分給我的。」</p>');
+    lines.push('<p>他沒有認出你。那天晚上太暗了。</p>');
+    helpBtn = '開門，給他一盒抗生素，讓他進來'; why = ch.ok ? (ST.abx === 1 ? '你只剩一盒——那是妹妹的' : `你有 ${ST.abx} 盒，給他一盒，妹妹還有 ${ST.abx - 1} 盒`) : '你沒有抗生素可以給他';
+  } else if (WHO === 'oldwoman') {
+    title = '門外的老太太';
+    lines.push('<p>門外是對面四樓的老太太，披著那條深色的頭巾。</p>');
+    lines.push('<p class="q">「老伴前天夜裡走了。心臟藥不知道被誰拿走了……我一個人，好冷。能不能給我一點吃的，一根柴？」</p>');
+    helpBtn = '開門，給她一個罐頭和一根木柴'; why = ch.ok ? ((h['罐頭'] || 0) === 1 ? '那是家裡最後一個罐頭' : `家裡有 ${h['罐頭']} 個罐頭`) : `你給不起（${ch.lack.join('、')}不夠）`;
+  } else {
+    title = '路中間的鄰居';
+    lines.push('<p>是住隔壁棟的鄰居。他倒在路中間，腿上中了一槍，一直在喊救命。</p>');
+    lines.push('<p>要救他：得冒著狙擊手的危險，出去把他拖進門；還要用掉<b>繃帶</b>和<b>一盒抗生素</b>（傷口一定會感染）。</p>');
+    helpBtn = '出去救他'; why = ch.ok ? (ST.abx === 1 ? '你只有一盒抗生素——那是妹妹的' : `你有 ${ST.abx} 盒抗生素`) : `你救不了他（${ch.lack.join('、')}不夠）`;
+  }
+  ENG.card(`<h1>${title}</h1>${lines.join('')}<p class="inv">${inv(ST)}</p>
+    <div class="row"><button data-k="help" ${ch.ok ? '' : 'disabled'}>${helpBtn}<small>${why}</small></button><button data-k="no">${WHO === 'neighbor' ? '關上門，不出去' : '不開門'}</button></div>`, {
+    help: () => { ENG.hideCard(); S.phase = 'night'; if (WHO === 'neighbor') goOut(); else help(); },
+    no: () => { ENG.hideCard(); S.phase = 'night'; refuse(); },
+  });
+}
+function help() { EV.decided = true; EV.helped = true; EV.open = true; ST = STORY.applyHelp(WHO, ST); ENG.tick(400, 0.3, 0.3); EV.walkIn = 0; setTimeout(() => ENG.end('done'), 3200); }
+function refuse() { EV.decided = true; EV.helped = false; ST.L3 = { who: WHO, helped: false, gaveLastCan: false };
+  EV.epi = WHO === 'neighbor' ? '你關上門。喊聲一直持續到天快亮。' : '敲門聲又響了幾次，然後停了。';
+  ENG.toast(EV.epi, 2600); setTimeout(() => ENG.end('done'), 2800); }
+// 出去救鄰居：開門、走到他身邊、拖回來（狙擊手在看的時候會被打）
+function goOut() { EV.open = true; CFG.floors[0][0] = -1.8; ENG.toast('門開了。他在路中間。看遠處那棟樓的反光。', 2600); }
+function rescued() { EV.decided = true; EV.helped = true; EV.drag = false; S.p.anim = null; ST = STORY.applyHelp(WHO, ST); ENG.toast('你把他拖進門，替他包紮，給了他一盒藥。', 2600); setTimeout(() => ENG.end('done'), 2800); }
+
+// ---------- 這一關的規則 ----------
+CFG.hooks.context = (p) => {
+  if (EV.started && !EV.decided && !EV.open && p.f === 0 && p.x < DOOR + 1.0) return { k: 'door', t: WHO === 'neighbor' ? '開門看' : '到門邊', s: WHO === 'neighbor' ? '外面有人在喊' : '有人在敲門' };
+  if (EV.open && WHO === 'neighbor' && !EV.decided && !EV.drag && p.f === 0 && Math.abs(p.x - EV.vx) < 0.6) return { k: 'drag', t: '拖他', s: '抓住他的肩膀' };
+  if (EV.drag) return { k: 'none', t: '往門口拖', s: '按住 ▶', off: true };
+  if (p.f === 1 && Math.abs(p.x - 12.6) < 1.0) return { k: 'sis', t: '看妹妹' };
+  if (p.f === 1 && p.x < DOOR + 1.2) return { k: 'win', t: '看窗外' };
+  return null;
+};
+CFG.hooks.act = (c) => {
+  if (c.k === 'door') { plea(); return true; }
+  if (c.k === 'drag') { EV.drag = true; S.p.face = -1; ENG.toast('拖著他，慢慢往門口退', 1800); return true; }
+  if (c.k === 'sis') { ENG.toast(ST.abx >= 1 ? '她在睡。呼吸很淺，但很規律。' : '她在睡。每吸一口氣，胸口都在抖。', 2400); return true; }
+  if (c.k === 'win') { ENG.toast(!EV.started ? '街上很安靜。遠處有零星的槍聲。' : WHO === 'neighbor' ? '有人倒在路中間，在喊救命。' : '樓下門口站著一個人影。', 2400); return true; }
+  return false;
+};
+CFG.hooks.update = (dt) => {
+  const p = S.p;
+  if (!EV.started && S.t >= 10) { EV.started = true; if (WHO === 'neighbor') { ENG.thump(0.5); ENG.tick(3000, 0.1, 0.3, 'highpass'); ENG.toast('外面一聲槍響。有人在喊救命。', 2600); } else ENG.toast('樓下有人在敲門。', 2400); }
+  if (EV.started && !EV.decided) { EV.fx -= dt; if (EV.fx <= 0) { EV.fx = 3; if (WHO === 'neighbor') ENG.FX.push({ x: EV.vx, y: 1.0, text: '救命……', t: 0, life: 2.2, size: 0.32 }); else { ENG.FX.push({ x: DOOR - 0.15, y: 1.5, text: '咚、咚', t: 0, life: 1.4, size: 0.34 }); ENG.tick(160, 0.12, 0.35, 'lowpass'); setTimeout(() => ENG.tick(160, 0.12, 0.35, 'lowpass'), 260); } } }
+  // 拖人：只能往門口慢慢退
+  if (EV.drag) { p.anim = 'p_walk'; const want = ENG.IN.r ? 1 : 0; p.vx = 0; p.x = Math.min(DOOR + 0.9, p.x + want * 0.55 * dt); p.face = -1; if (want) p.walk += dt * 5; EV.vx = p.x - 0.95; if (p.x >= DOOR + 0.8) rescued(); }
+  // 幫了之後：孩子／老太太走進門
+  if (EV.helped && WHO !== 'neighbor') { EV.walkIn += dt; EV.vx = Math.min(DOOR + 1.6, DOOR - 0.7 + EV.walkIn * 0.9); }
+};
+CFG.hooks.seen = () => { const p = S.p; if (p.f === 0 && p.x < DOOR - 0.1 && sniperWatching()) return { v: 1.4, by: 'sniper' }; return null; };
+CFG.hooks.spotted = () => { // 被狙擊手看到：子彈打在身邊，鬆手退回門內，可以再試
+  ENG.thump(0.5); ENG.tick(3000, 0.1, 0.3, 'highpass'); const p = S.p; EV.drag = false; p.anim = null; p.x = DOOR + 0.6; ENG.toast('啪！子彈打在你身邊——你鬆開手，退回門內。', 2400); return true; };
+CFG.hooks.drawNPC = () => {
+  if (!EV.started) return; const u = ENG.L.u;
+  if (WHO === 'neighbor') { if (!EV.helped || EV.drag) ENG.sprite(ENG.IMG.npc, NPC, 'n_lie', 0, X(EV.vx), BASE(0) + 0.02 * u, 1, 0); }
+  else if (!EV.decided || EV.helped) { const k = WHO === 'child' ? 'c' : 'o'; const walking = EV.helped && EV.vx < DOOR + 1.6; if (!EV.decided || EV.vx < DOOR + 1.55) ENG.sprite(ENG.IMG.npc, NPC, walking ? k + '_walk' : k + '_stand', walking ? EV.walkIn * 8 : 0, X(EV.vx), BASE(0), 1, 0); }
+  // 門：開著的時候畫一個黑洞
+  if (EV.open) { g.fillStyle = 'rgba(7,10,16,0.85)'; g.fillRect(X(DOOR - 0.15), WY(2.2), 0.3 * u, 2.2 * u); }
+};
+CFG.hooks.lightMask = (m) => { ENG.glowMask(m, X(8.2), WY(HF + 1.0), ENG.L.u * 2.4, 0.4); return null; };
+CFG.hooks.drawFront = () => { if (WHO !== 'neighbor' || !EV.open || EV.decided) return; if (sniperWatching()) { const x = X(SNIPE.glint.x), y = WY(SNIPE.glint.y), u = ENG.L.u; const k = 0.6 + 0.4 * Math.abs(Math.sin(S.t * 7)); g.save(); g.globalCompositeOperation = 'lighter'; const gr = g.createRadialGradient(x, y, 0, x, y, u * 0.7 * k); gr.addColorStop(0, 'rgba(255,250,230,0.95)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - u, y - u, u * 2, u * 2); g.restore(); } };
+CFG.hooks.labels = (LB) => { const p = S.p; if (WHO === 'neighbor' && EV.open && !EV.decided && p.f === 0) LB.push([X(1.2), BASE(0) - ENG.L.fh * 1.0, sniperWatching() ? '狙擊手在看' : '現在沒在看']); if (EV.started && !EV.decided && !EV.open) LB.push([X(DOOR + 0.5), BASE(0) - ENG.L.fh * 0.78, WHO === 'neighbor' ? '大門（外面有人）' : '大門（有人敲門）']); };
+CFG.hooks.end = (why) => {
+  if (!ST.L3) ST.L3 = { who: WHO, helped: false, gaveLastCan: false }; // 天亮了還沒決定＝沒有開門
+  STORY.save(ST);
+  const cut = document.getElementById('cut'); cut.innerHTML = why === 'dawn' ? '天亮了。' : '……'; cut.classList.add('on');
+  setTimeout(() => { cut.classList.remove('on'); after(why); }, 1800);
+};
+function after(why) {
+  const helped = ST.L3.helped; const lines = [];
+  if (why === 'dawn' && !EV.decided) lines.push(WHO === 'neighbor' ? '<p>你一直沒有出去。</p>' : '<p>你一直沒有下樓開門。</p>');
+  if (WHO === 'child') lines.push(helped ? '<p>他在你家的爐邊睡了一晚。隔天一早，你帶他去教堂的收容處。</p>' : '<p>隔天早上，門口沒有人了。之後再也沒有人看過那個孩子。</p>');
+  else if (WHO === 'oldwoman') lines.push(helped ? '<p>她在爐邊坐到天亮，一直握著你的手說謝謝。</p>' : '<p>她一個人走回對面。之後，對面那棟樓再也沒有亮過燭光。</p>');
+  else lines.push(helped ? '<p>他活下來了。他說，等他能走了，會把欠你的還給你。</p>' : '<p>喊聲在天亮前停了。</p>');
+  ENG.card(`<h1>那一夜之後</h1>${lines.join('')}<div class="row"><button data-k="go">繼續</button></div>`, { go: ending });
+}
+function ending() {
+  const e = STORY.ending(ST), t = STORY.testimony(ST);
+  const why = [...e.str.why, `抗生素：${ST.abx} 盒`].map((x) => `<li>${x}</li>`).join('');
+  ENG.card(`<h1>${e.alive ? '活下來了' : '對不起'}</h1>
+    <p class="big">${e.line}</p>
+    <h2 style="margin-top:14px">戰後證詞</h2><ul>${t.map((x) => `<li>${x}</li>`).join('')}</ul>
+    <details><summary>妹妹的狀況是怎麼算出來的</summary><ul>${why}</ul><p class="note">體力至少 1、家裡至少有 1 盒抗生素，妹妹才撐得過去。</p></details>
+    <p class="note">三關結束。上課時，老師會公布全班的選擇。</p>
+    <div class="row"><button data-k="again">從第一關重新開始</button></div>`, { again: () => { try { localStorage.removeItem(STORY.KEY); } catch (e) {} location.href = '../'; } });
+}
+
+ENG.start(CFG); title();
+window.__N = { S, ENG, EV, ST: () => ST, WHO, plea, help, refuse, goOut, rescued, ending, sniperWatching };
+</script>
+</body>
+</html>
