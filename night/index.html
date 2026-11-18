@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>天亮之前</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root { --paper: #ebe6da; --ink: #26231f; --mid: #8a837a; --acc: #9b2b1f; --btn: #f4f0e6; --btnInk: #26231f; }
+  :root { --font: "Noto Serif TC", "Songti TC", serif; --cap: #ebe6da; --paper: #ebe6da; --ink: #26231f; --mid: #8a837a; --acc: #9b2b1f; --btn: #f4f0e6; --btnInk: #26231f; }
   html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-  body { font-family: "Noto Serif TC", "Songti TC", serif; color: var(--ink); }
+  body { font-family: var(--font); color: var(--ink); }
   canvas { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; }
   #ctl[hidden] { display: none !important; }
   #ctl { position: fixed; left: 0; right: 0; bottom: 0; height: 128px; padding: 0 14px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; pointer-events: none; }
-  .b { pointer-events: auto; border: 3px solid var(--btnInk); background: var(--btn); color: var(--btnInk); font: 900 22px "Noto Serif TC", serif; border-radius: 2px; height: 86px; display: grid; place-items: center; box-shadow: 4px 4px 0 var(--btnInk); -webkit-tap-highlight-color: transparent; padding: 0; }
+  .b { pointer-events: auto; border: 3px solid var(--btnInk); background: var(--btn); color: var(--btnInk); font: 900 22px var(--font); border-radius: 2px; height: 86px; display: grid; place-items: center; box-shadow: 4px 4px 0 var(--btnInk); -webkit-tap-highlight-color: transparent; padding: 0; }
   .b:active, .b.on { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--btnInk); }
   #bL, #bR { width: 92px; font-size: 40px; }
   #bAct { flex: 1; font-size: 26px; line-height: 1.15; }
@@ -29,17 +29,26 @@
   .sheet .q { color: var(--acc); font-weight: 900; }
   .sheet .row { display: grid; gap: 12px; margin-top: 14px; }
   .sheet .row.two { grid-template-columns: 1fr 1fr; }
-  .sheet button { pointer-events: auto; border: 3px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 21px "Noto Serif TC", serif; padding: 14px 6px; box-shadow: 4px 4px 0 var(--ink); border-radius: 2px; line-height: 1.3; }
+  .sheet button { pointer-events: auto; border: 3px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 21px var(--font); padding: 14px 6px; box-shadow: 4px 4px 0 var(--ink); border-radius: 2px; line-height: 1.3; }
   .sheet button small { display: block; font-size: 14px; font-weight: 600; color: var(--mid); }
   .sheet button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
   .sheet .timer { height: 8px; background: var(--ink); margin: 6px 0 4px; transform-origin: left; }
   .sheet .note { font-size: 15px; color: var(--mid); font-weight: 600; margin-top: 14px; }
   #card .credit { font-size: 11px; line-height: 1.5; opacity: .55; margin: 10px 0 0; font-weight: 400; }
-  #toast { position: fixed; left: 50%; bottom: 146px; transform: translateX(-50%); font: 900 19px "Noto Serif TC", serif; padding: 8px 16px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); white-space: nowrap; transition: opacity .3s; opacity: 0; pointer-events: none; }
+  #toast { position: fixed; left: 50%; bottom: 146px; transform: translateX(-50%); font: 900 19px var(--font); padding: 8px 16px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); white-space: nowrap; transition: opacity .3s; opacity: 0; pointer-events: none; }
   /* 樣式二：褪色照片 */
   body.s2 { --paper: #d9d1c2; --ink: #16181b; --mid: #6d6a63; --acc: #a33a2a; --btn: #e3dccd; background: #101215; }
   /* 樣式三：版畫 */
   body.s3 { --paper: #efe6d0; --ink: #141210; --mid: #5a524a; --acc: #b3261e; --btn: #efe6d0; }
+  /* 第一關：美式漫畫 */
+  body.comic { --font: "Noto Sans TC", "PingFang TC", sans-serif; --paper: #fffaf0; --ink: #0d0d0f; --mid: #4a4744; --acc: #d8261c; --btn: #fffaf0; --btnInk: #0d0d0f; --cap: #f7d23c; background: #0d0d0f; }
+  body.comic .b, body.comic .sheet, body.comic .sheet button, body.comic #toast { border-width: 4px; }
+  body.comic .sheet { box-shadow: 9px 9px 0 var(--ink); }
+  body.comic .sheet h1 { display: inline-block; background: var(--cap); border: 4px solid var(--ink); padding: 2px 12px; transform: rotate(-1.5deg); margin-bottom: 10px; }
+  body.comic .sheet h2 { font-weight: 700; }
+  body.comic .sheet p { font-weight: 500; }
+  body.comic #toast { background: var(--cap); font-weight: 900; letter-spacing: 1px; }
+  body.comic .sheet button { background: #fff; }
 </style>
 </head>
 <body>
@@ -56,7 +65,7 @@
    避開巡邏兵的手電筒與外面的探照燈；四樓老夫婦的桌上有藥。天亮前回家。
    ========================================================= */
 const Q = new URLSearchParams(location.search);
-const STYLE = 2; document.body.classList.add('s2'); // 擬真夜景（3D 算繪的公寓剖面＋人物動作圖）
+const STYLE = 2; document.body.classList.add('s2', 'comic'); const COMIC = true, FONT = COMIC ? '"Noto Sans TC", "PingFang TC", sans-serif' : '"Noto Serif TC", serif'; // 擬真夜景（3D 算繪的公寓剖面＋人物動作圖）
 const cv = document.getElementById('cv'), g = cv.getContext('2d');
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
@@ -178,7 +187,9 @@ function plan() {
 }
 function startNight() { hideCard(); S.phase = 'night'; S.t = 0; $('ctl').hidden = false; toast('天亮前要回到一樓的門口', 2200); }
 
-let DLG = null; // 四樓老夫婦的兩難：限時 8 秒
+let DLG = null; const FX = []; // 狀聲字
+function say(text, dur = 1.8) { S.say = { text, t: dur }; }
+// 上面：四樓老夫婦的兩難（限時 8 秒）、漫畫的狀聲字與對話泡泡
 function coupleDilemma(box) {
   S.phase = 'dlg'; DLG = { t: 8, box };
   card(`<h1 style="font-size:26px">四樓・老夫婦的房間</h1>
@@ -198,7 +209,7 @@ function addLoot(it) { if (S.bag.length >= S.cap) { toast('背包滿了'); retur
 
 function caught(by) {
   S.caught = true; S.phase = 'end'; S.lost = S.bag.length; S.bag = []; $('ctl').hidden = true; S.spotBy = by;
-  setTimeout(morning, 1400); toast(by === 'beam' ? '探照燈照到你了！' : '巡邏兵：「站住！」', 1400);
+  setTimeout(morning, 1400); if (by === 'beam') toast('探照燈照到你了！', 1400); else say('站住！', 2);
 }
 function goHome() { S.home = true; S.phase = 'end'; $('ctl').hidden = true; morning(); }
 function morning() {
@@ -258,6 +269,10 @@ function update(dt) {
     if (p.search.t >= p.search.need) { const b = p.search.b; b.done = true; p.search = null; if (!b.loot.length) toast(`${b.n}：空的`); else { const got = []; for (const it of b.loot) if (addLoot(it)) got.push(it); if (got.length) toast(`找到：${got.join('、')}`); } } }
   // 巡邏兵（三樓）：來回走、在兩端停下來張望；聽到聲音就走過來看
   const sol = S.sol; sol.look += dt;
+  if (sol.mode !== sol.prevMode) { if (sol.mode === 'listen') say(sol.prevMode === 'rest' ? '……嗯？' : '嗯？'); else if (sol.mode === 'look') say('誰在那裡？'); sol.prevMode = sol.mode; }
+  if (S.say) { S.say.t -= dt; if (S.say.t <= 0) S.say = null; }
+  for (let i = FX.length - 1; i >= 0; i--) { FX[i].t += dt; if (FX[i].t > 0.9) FX.splice(i, 1); }
+  if (p.search) { p.search.fx = (p.search.fx || 0) - dt; if (p.search.fx <= 0) { p.search.fx = 0.65; FX.push({ x: p.x + (Math.random() - 0.3) * 0.6, y: p.f * HF + 0.9 + Math.random() * 0.4, text: ['喀啦', '沙沙', '咔'][Math.floor(Math.random() * 3)], t: 0 }); } }
   if (sol.mode === 'patrol') { if (sol.wait > 0) { sol.wait -= dt; if (sol.wait < 1.0 && sol.wait + dt >= 1.0) sol.dir = -sol.dir; } else { sol.x += sol.dir * 0.85 * dt; if (sol.x < 1.0 || sol.x > 9.2) { const left = sol.x < 1.0; sol.x = clamp(sol.x, 1.0, 9.2); sol.wait = 2.2; if (left) { sol.legs = (sol.legs || 0) + 1; if (sol.legs % 2 === 0) { sol.mode = 'rest'; sol.dir = -1; sol.wait = 12; } } } } }
   else if (sol.mode === 'listen') { const d = sol.tx - sol.x; if (Math.abs(d) > 0.6) { sol.dir = Math.sign(d); sol.x += sol.dir * 1.15 * dt; } else { sol.mode = 'look'; sol.wait = 3; } }
   else if (sol.mode === 'rest') { sol.wait -= dt; if (sol.wait <= 0) { sol.mode = 'patrol'; sol.dir = 1; sol.wait = 0.6; } } // 在窗邊抽菸：面向窗外、手電筒關掉
@@ -267,7 +282,7 @@ function update(dt) {
   if (!p.hide && sol.mode !== 'rest' && (p.climb <= 0 || climbK(p) > 0.75) && sol.f === p.f) { const dx = (p.x - sol.x) * sol.dir; if (dx > 0.15 && dx < 3.2) { seen = 1.6 - dx * 0.25; by = 'sol'; } }
   S.beam.t += dt; const bx = beamX();
   if (!p.hide && p.f === 4 && bx !== null && Math.abs(p.x - bx) < 0.7 && WINDOWS.some((w) => w.f === 4 && Math.abs(w.x - p.x) < 0.8)) { seen = Math.max(seen, 1.5); by = by || 'beam'; }
-  if (seen) { S.spot += seen * dt; S.spotBy = by; } else S.spot = Math.max(0, S.spot - dt * 0.7);
+  if (seen) { if (S.spot < 0.45 && S.spot + seen * dt >= 0.45 && by === 'sol') say('那是什麼……'); S.spot += seen * dt; S.spotBy = by; } else S.spot = Math.max(0, S.spot - dt * 0.7);
   if (S.spot > 0.05) { AU.hbT -= dt; if (AU.hbT <= 0) { AU.hbT = 0.55 - S.spot * 0.3; thump(0.18 + S.spot * 0.4); } }
   if (S.spot >= 1 && S.phase === 'night') caught(S.spotBy);
   if (AU.wind && AU.ctx) AU.wind.gain.value = 0.05;
@@ -308,7 +323,7 @@ function player() { const p = S.p; let y = BASE(p.f), x = X(p.x), nm = 'p_idle',
   if (p.climb > 0) { y = WY(climbY(p)); nm = climbK(p) < 0.15 ? 'p_walk' : 'p_climb'; fr = p.walk * 1.1; }
   else if (p.hide || p.search) nm = 'p_crouch'; else if (Math.abs(p.vx) > 0.3) { nm = 'p_walk'; fr = p.walk * 1.1; }
   if (p.hide && p.hide.k === 'curtain') nm = 'p_idle'; // 站在窗簾後面，只露出腳
-  sprite(nm, fr, x, y, p.face, p.hide ? 0.55 : 0.12); }
+  if (COMIC && !p.hide) { g.save(); g.shadowColor = 'rgba(255,236,170,0.95)'; g.shadowBlur = 7; } sprite(nm, fr, x, y, p.face, p.hide ? 0.55 : COMIC ? 0 : 0.12); if (COMIC && !p.hide) g.restore(); }
 // 背景圖的一塊（世界座標的長方形）畫到畫面上
 function bgPart(img, x0, y0, x1, y1, ctx = g) { const k = BGV.pxm; ctx.drawImage(img, (x0 - BGV.x0) * k, (BGV.y1 - y1) * k, (x1 - x0) * k, (y1 - y0) * k, X(x0), WY(y1), (x1 - x0) * L.u, (y1 - y0) * L.u); }
 const HIDE_BOX = { door: [-0.62, 0.62, 2.3], curtain: [-0.62, 0.62, 2.8], wardrobe: [-0.62, 0.62, 2.2], tipped: [-0.75, 0.75, 1.1] };
@@ -358,7 +373,15 @@ function draw() {
   if (sh.beam) { g.globalAlpha = 0.2; g.fillStyle = '#dfe8ff'; g.beginPath(); sh.beam.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
   g.restore();
   dust();
-  if (S.spot > 0.05 && S.spotBy === 'sol') { g.fillStyle = '#ff5a48'; g.font = `900 ${Math.round(L.fh * 0.3)}px serif`; g.textAlign = 'center'; g.fillText('！', X(S.sol.x), BASE(S.sol.f) - L.fh * 0.7); }
+  if (COMIC) { // 漫畫：狀聲字、對話泡泡
+    for (const fx of FX) { const k = fx.t / 0.9; g.save(); g.globalAlpha = 1 - k * k; g.translate(X(fx.x), WY(fx.y + k * 0.35)); g.rotate(-0.12); g.font = `900 ${Math.round(L.u * 0.42)}px ` + FONT; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = '#0d0d0f'; g.strokeText(fx.text, 0, 0); g.fillStyle = '#f7d23c'; g.fillText(fx.text, 0, 0); g.restore(); }
+    if (S.say && S.sol.f >= 0) { const sx = X(S.sol.x), sy = BASE(S.sol.f) - L.u * 2.05; g.font = `900 ${Math.round(Math.max(15, L.u * 0.46))}px ` + FONT; const tw = g.measureText(S.say.text).width, bw = tw + 26, bh = Math.max(34, L.u * 0.95); const bx = clamp(sx - bw * 0.35, 8, W - bw - 8), by = sy - bh;
+      const pop = Math.min(1, (1.8 - Math.min(1.8, S.say.t)) * 8 + 0.6); g.save(); g.translate(bx + bw / 2, by + bh / 2); g.scale(pop, pop); g.translate(-(bx + bw / 2), -(by + bh / 2));
+      g.fillStyle = '#fff'; g.strokeStyle = '#0d0d0f'; g.lineWidth = 3.5; g.beginPath(); g.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, 7); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(sx - 6, by + bh - 4); g.lineTo(sx + 2, sy + L.u * 0.25); g.lineTo(sx + 10, by + bh - 6); g.closePath(); g.fill(); g.beginPath(); g.moveTo(sx - 6, by + bh - 2); g.lineTo(sx + 2, sy + L.u * 0.25); g.lineTo(sx + 10, by + bh - 4); g.stroke();
+      g.fillStyle = '#0d0d0f'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.say.text, bx + bw / 2, by + bh / 2 + 1); g.textBaseline = 'alphabetic'; g.restore(); }
+  }
+  if (S.spot > 0.05 && S.spotBy === 'sol') { g.fillStyle = '#ff5a48'; g.font = `900 ${Math.round(L.fh * 0.3)}px ` + FONT; g.textAlign = 'center'; g.fillText('！', X(S.sol.x), BASE(S.sol.f) - L.fh * 0.7); }
   if (CLEAN) return;
   for (const b of S.boxes) if (S.p.f === b.f && Math.abs(S.p.x - b.x) < 2.2) { g.globalAlpha = b.done ? 0.45 : 1; marker(X(b.x), BASE(b.f) - L.fh * 0.78, b.done ? '✕' : '?'); g.globalAlpha = 1; if (!b.done && b.prog > 0 && !(S.p.search && S.p.search.b === b)) { const need = S.ate ? 1.7 : 2.6, x0 = X(b.x) - 16, y0 = BASE(b.f) - L.fh * 0.78 + 16; g.fillStyle = 'rgba(22,24,27,0.85)'; g.fillRect(x0, y0, 32, 6); g.fillStyle = '#e8e1d0'; g.fillRect(x0, y0, 32 * Math.min(1, b.prog / need), 6); g.strokeStyle = '#e8e1d0'; g.lineWidth = 1.5; g.strokeRect(x0, y0, 32, 6); } }
   const LB = [];
@@ -375,18 +398,18 @@ function dust() { g.save(); g.globalCompositeOperation = 'lighter'; const ws = W
   for (const d of DUST) { const w = ws[d.w % ws.length]; const t = (S.t * 0.04 * d.s + d.a) % 1; const x = X(w.x - 0.55 + d.b * 1.1 - t * 0.6 + Math.sin(S.t * 0.7 + d.a * 9) * 0.05), y = WY(w.f * HF + 2.1 - t * 2.0); const al = Math.sin(t * Math.PI) * 0.35; g.fillStyle = `rgba(200,215,245,${al})`; g.fillRect(x, y, 1.4 * d.s + 0.4, 1.4 * d.s + 0.4); }
   g.restore(); }
 function marker(x, y, t) { const r = 12; g.fillStyle = '#e8e1d0'; g.strokeStyle = '#16181b'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#16181b'; g.font = '900 16px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x, y + 1); g.textBaseline = 'alphabetic'; }
-function label(x, y, t) { g.font = '900 14px "Noto Serif TC", serif'; g.textAlign = 'center'; const w = g.measureText(t).width + 12; g.fillStyle = '#e8e1d0'; g.fillRect(x - w / 2, y - 15, w, 21); g.strokeStyle = '#16181b'; g.lineWidth = 2; g.strokeRect(x - w / 2, y - 15, w, 21); g.fillStyle = '#16181b'; g.fillText(t, x, y + 1); }
+function label(x, y, t) { g.font = '900 14px ' + FONT; g.textAlign = 'center'; const w = g.measureText(t).width + 12; g.fillStyle = '#e8e1d0'; g.fillRect(x - w / 2, y - 15, w, 21); g.strokeStyle = '#16181b'; g.lineWidth = 2; g.strokeRect(x - w / 2, y - 15, w, 21); g.fillStyle = '#16181b'; g.fillText(t, x, y + 1); }
 function hud() {
-  const y = 12, bg = '#e3dccd', ink = '#16181b';
+  const y = 12, bg = COMIC ? '#f7d23c' : '#e3dccd', ink = COMIC ? '#0d0d0f' : '#16181b';
   if (!hud.grain) { const c = document.createElement('canvas'); c.width = c.height = 96; const h = c.getContext('2d'); const d = h.createImageData(96, 96); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 18; } h.putImageData(d, 0, 0); hud.grain = g.createPattern(c, 'repeat'); }
-  g.save(); g.fillStyle = hud.grain; g.translate((Math.random() * 96) | 0, (Math.random() * 96) | 0); g.fillRect(-96, -96, W + 192, H + 192); g.restore();
+  if (!COMIC) { g.save(); g.fillStyle = hud.grain; g.translate((Math.random() * 96) | 0, (Math.random() * 96) | 0); g.fillRect(-96, -96, W + 192, H + 192); g.restore(); }
   const vg = g.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.32, W / 2, H * 0.45, Math.max(W, H) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.35)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
-  g.fillStyle = bg; g.fillRect(10, y, W - 20, 50); g.strokeStyle = ink; g.lineWidth = 3; g.strokeRect(10, y, W - 20, 50);
-  g.fillStyle = ink; g.textAlign = 'left'; g.font = '900 20px "Noto Serif TC", serif'; g.textBaseline = 'middle';
+  g.fillStyle = bg; g.fillRect(10, y, W - 20, 50); g.strokeStyle = ink; g.lineWidth = COMIC ? 4 : 3; g.strokeRect(10, y, W - 20, 50);
+  g.fillStyle = ink; g.textAlign = 'left'; g.font = '900 20px ' + FONT; g.textBaseline = 'middle';
   const s = Math.ceil(S.dawn); g.fillText(S.phase === 'title' || S.phase === 'day' ? '被圍第 37 天' : `天亮前 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, 22, y + 25);
-  g.textAlign = 'right'; g.font = '900 18px "Noto Serif TC", serif';
+  g.textAlign = 'right'; g.font = '900 18px ' + FONT;
   g.fillText(`${S.bag.length ? S.bag.join(' ') : '背包空的'}（${S.bag.length}/${S.cap}）`, W - 22, y + 25);
-  if (S.spot > 0.02) { g.fillStyle = '#c0483a'; g.fillRect(10, y + 50, (W - 20) * Math.min(1, S.spot), 8); g.font = '900 15px "Noto Serif TC", serif'; g.textAlign = 'left'; g.fillText('快被發現了', 14, y + 72); }
+  if (S.spot > 0.02) { g.fillStyle = '#c0483a'; g.fillRect(10, y + 50, (W - 20) * Math.min(1, S.spot), 8); g.font = '900 15px ' + FONT; g.textAlign = 'left'; g.fillText('快被發現了', 14, y + 72); }
   const p = S.p; if (p.search) { const k = p.search.t / p.search.need; const x0 = X(p.x) - 28, y0 = BASE(p.f) - L.fh * 0.86; g.fillStyle = bg; g.fillRect(x0, y0, 56, 10); g.fillStyle = ink; g.fillRect(x0, y0, 56 * k, 10); g.strokeStyle = ink; g.lineWidth = 2; g.strokeRect(x0, y0, 56, 10); }
   g.textBaseline = 'alphabetic';
 }
