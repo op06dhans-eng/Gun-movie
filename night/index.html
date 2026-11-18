@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>天亮之前</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #ebe6da; --ink: #26231f; --mid: #8a837a; --acc: #9b2b1f; --btn: #f4f0e6; --btnInk: #26231f; }
+  html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body { font-family: "Noto Serif TC", "Songti TC", serif; color: var(--ink); }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; }
+  #ctl[hidden] { display: none !important; }
+  #ctl { position: fixed; left: 0; right: 0; bottom: 0; height: 150px; padding: 0 14px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; pointer-events: none; }
+  .b { pointer-events: auto; border: 3px solid var(--btnInk); background: var(--btn); color: var(--btnInk); font: 900 22px "Noto Serif TC", serif; border-radius: 2px; height: 96px; display: grid; place-items: center; box-shadow: 4px 4px 0 var(--btnInk); -webkit-tap-highlight-color: transparent; padding: 0; }
+  .b:active, .b.on { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--btnInk); }
+  #bL, #bR { width: 92px; font-size: 40px; }
+  #bAct { flex: 1; font-size: 26px; line-height: 1.15; }
+  #bAct.off { opacity: 0.25; }
+  #bAct small { display: block; font-size: 15px; font-weight: 600; }
+  #card { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.0); }
+  #card[hidden] { display: none; }
+  #card.low { align-items: end; padding-bottom: calc(14px + env(safe-area-inset-bottom)); } /* 兩難時卡片放下面，看得到三樓的房間 */
+  .sheet { width: min(88vw, 420px); background: var(--paper); border: 3px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); padding: 22px 22px 18px; }
+  .sheet h1 { margin: 0 0 6px; font-size: 32px; font-weight: 900; letter-spacing: 2px; }
+  .sheet h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; color: var(--mid); }
+  .sheet p { margin: 0 0 12px; font-size: 20px; line-height: 1.6; font-weight: 600; }
+  .sheet .q { color: var(--acc); font-weight: 900; }
+  .sheet .row { display: grid; gap: 12px; margin-top: 14px; }
+  .sheet .row.two { grid-template-columns: 1fr 1fr; }
+  .sheet button { pointer-events: auto; border: 3px solid var(--ink); background: var(--btn); color: var(--ink); font: 900 21px "Noto Serif TC", serif; padding: 14px 6px; box-shadow: 4px 4px 0 var(--ink); border-radius: 2px; line-height: 1.3; }
+  .sheet button small { display: block; font-size: 14px; font-weight: 600; color: var(--mid); }
+  .sheet button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .sheet .timer { height: 8px; background: var(--ink); margin: 6px 0 4px; transform-origin: left; }
+  .sheet .note { font-size: 15px; color: var(--mid); font-weight: 600; margin-top: 14px; }
+  #toast { position: fixed; left: 50%; top: 92px; transform: translateX(-50%); font: 900 22px "Noto Serif TC", serif; padding: 8px 16px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); white-space: nowrap; transition: opacity .3s; opacity: 0; pointer-events: none; }
+  /* 樣式二：褪色照片 */
+  body.s2 { --paper: #d9d1c2; --ink: #16181b; --mid: #6d6a63; --acc: #a33a2a; --btn: #e3dccd; background: #101215; }
+  /* 樣式三：版畫 */
+  body.s3 { --paper: #efe6d0; --ink: #141210; --mid: #5a524a; --acc: #b3261e; --btn: #efe6d0; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ctl" hidden><button class="b" id="bL">◀</button><button class="b" id="bR">▶</button><button class="b off" id="bAct">　</button></div>
+<div id="toast"></div>
+<div id="card"></div>
+<script>
+'use strict';
+/* =========================================================
+   天亮之前（樣品：一個晚上）
+   港灣市被圍第 37 天。你和發燒的妹妹躲在家裡；今晚要摸黑到對面的公寓找藥。
+   白天：決定最後一個罐頭給誰。夜晚：在公寓剖面裡左右走、上下樓、搜櫃子，
+   避開巡邏兵的手電筒與外面的探照燈；四樓老夫婦的桌上有藥。天亮前回家。
+   ========================================================= */
+const Q = new URLSearchParams(location.search);
+const STYLE = +(Q.get('s') || 2); document.body.classList.add('s' + STYLE);
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
+let W = 0, H = 0, DPR = 1;
+const L = { top: 70, bot: 158, bx: 0, by: 0, bw: 0, bh: 0, fh: 0, u: 0 };
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const side = 10; L.bw = Math.min(W - side * 2, 520); L.bx = (W - L.bw) / 2; L.by = L.top + 8; L.bh = H - L.top - L.bot - 14; L.fh = L.bh / 5; L.u = L.bw / 10;
+  makeHatch(); ST = null;
+}
+addEventListener('resize', resize);
+
+/* ---------- 樣式（三種：炭筆素描、褪色照片、版畫） ---------- */
+const PAL = {
+  1: { sky: '#cfc9bc', wall: '#ddd6c8', wallD: '#bdb5a6', floor: '#5a544c', ink: '#26231f', mid: '#8a837a', furn: '#a59c8c', dark: 'rgba(30,27,24,0.80)', lite: '#fff7dc', acc: '#9b2b1f', moon: '#f4f1e8' },
+  2: { sky: '#1b2230', wall: '#4a4c50', wallD: '#36383c', floor: '#202224', ink: '#0c0d0f', mid: '#6d6a63', furn: '#5b554c', dark: 'rgba(4,6,10,0.86)', lite: '#ffd89a', acc: '#c0483a', moon: '#a9bcd8' },
+  3: { sky: '#efe6d0', wall: '#efe6d0', wallD: '#d8ccb0', floor: '#141210', ink: '#141210', mid: '#5a524a', furn: '#141210', dark: 'rgba(20,18,16,1)', lite: '#efe6d0', acc: '#b3261e', moon: '#efe6d0' },
+}[STYLE] || null;
+let HATCH = null;
+function makeHatch() { // 炭筆的交叉排線（暗處用）
+  const c = document.createElement('canvas'); c.width = c.height = 48; const h = c.getContext('2d');
+  if (STYLE === 1) { h.strokeStyle = 'rgba(38,35,31,0.9)'; h.lineWidth = 1.3; for (let i = -48; i < 96; i += 5) { h.beginPath(); h.moveTo(i, 0); h.lineTo(i + 48, 48); h.stroke(); } h.lineWidth = 0.9; for (let i = -48; i < 96; i += 7) { h.beginPath(); h.moveTo(i + 48, 0); h.lineTo(i, 48); h.stroke(); } }
+  else if (STYLE === 2) { const d = h.createImageData(48, 48); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 40; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 225; } h.putImageData(d, 0, 0); }
+  else { h.fillStyle = '#141210'; h.fillRect(0, 0, 48, 48); }
+  HATCH = g.createPattern(c, 'repeat');
+}
+// 手繪感：線條稍微抖動（素描樣式）
+function rough(x1, y1, x2, y2, col, w = 2) {
+  g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+  if (STYLE === 1) { const n = Math.max(2, Math.round(Math.hypot(x2 - x1, y2 - y1) / 18)); g.moveTo(x1 + jit(), y1 + jit()); for (let i = 1; i <= n; i++) { const t = i / n; g.lineTo(lerp(x1, x2, t) + jit(), lerp(y1, y2, t) + jit()); } }
+  else { g.moveTo(x1, y1); g.lineTo(x2, y2); }
+  g.stroke();
+}
+let SEED = 1; const srnd = () => { SEED = (SEED * 16807) % 2147483647; return SEED / 2147483647; };
+const jit = () => (srnd() - 0.5) * 1.6;
+
+/* ---------- 世界（單位：寬 0～10，樓層 0＝一樓 … 4＝五樓） ---------- */
+const STAIRS = [{ f: 0, x: 8.6 }, { f: 1, x: 1.4 }, { f: 2, x: 8.6 }, { f: 3, x: 1.4 }]; // 每一段樓梯連接 f 與 f+1
+const EXIT = { f: 0, x: 0.55 };
+const HIDES = [{ f: 2, x: 3.3, n: '門後', k: 'door' }, { f: 2, x: 6.9, n: '窗簾後', k: 'curtain' }, { f: 4, x: 2.6, n: '衣櫃旁', k: 'none' }, { f: 4, x: 6.1, n: '倒下的櫃子後', k: 'tipped' }, { f: 1, x: 5.0, n: '門後', k: 'door' }];
+const BOXES = [
+  { f: 0, x: 3.9, n: '翻倒的櫃子', loot: ['繃帶'], k: 'cabinetDown' },
+  { f: 0, x: 6.4, n: '紙箱', loot: [], k: 'carton' },
+  { f: 1, x: 3.2, n: '廚房櫃', loot: ['罐頭'], k: 'kitchen' },
+  { f: 1, x: 6.6, n: '衣櫃', loot: ['木柴'], k: 'wardrobe' },
+  { f: 2, x: 5.2, n: '士兵的背包', loot: ['藥', '罐頭'], k: 'pack' },
+  { f: 2, x: 2.0, n: '五斗櫃', loot: [], k: 'drawers' },
+  { f: 3, x: 3.0, n: '書櫃', loot: ['木柴'], k: 'books' },
+  { f: 3, x: 6.5, n: '桌上的藥盒', loot: ['藥'], couple: true, k: 'table' },
+  { f: 4, x: 4.3, n: '冰箱', loot: ['罐頭', '罐頭'], k: 'fridge' },
+  { f: 4, x: 7.6, n: '床底', loot: ['繃帶'], k: 'bed' },
+];
+const ROOM_WALLS = [ // 房間隔間（裝飾用，不擋路）
+  { f: 0, x: 2.6 }, { f: 0, x: 7.4 }, { f: 1, x: 4.8 }, { f: 2, x: 4.0 }, { f: 3, x: 4.6 }, { f: 4, x: 5.5 },
+];
+const HOLES = [ // 牆上的破洞（月光照進來）
+  { f: 4, x0: 8.2, x1: 10, top: true }, { f: 3, x0: 0, x1: 0.9 }, { f: 1, x0: 9.1, x1: 10 }, { f: 2, x0: 0, x1: 0.6 },
+];
+const WINDOWS = [{ f: 4, x: 1.5 }, { f: 4, x: 3.2 }, { f: 4, x: 6.9 }, { f: 3, x: 2.0, board: 1 }, { f: 3, x: 8.2 }, { f: 2, x: 6.9, curtain: 1 }, { f: 2, x: 1.0 }, { f: 1, x: 2.0 }, { f: 1, x: 7.8, board: 1 }, { f: 0, x: 5.3, board: 1 }];
+const DECOR = [ // 其他陳設（只有畫面）
+  { f: 4, k: 'rubble', x: 8.9, w: 2.0 }, { f: 4, k: 'wardrobe2', x: 2.0 }, { f: 3, k: 'bed2', x: 8.25 }, { f: 3, k: 'chair', x: 5.9 }, { f: 3, k: 'frame', x: 7.2 }, { f: 3, k: 'frame', x: 3.9 }, { f: 2, k: 'rubble', x: 0.6, w: 1.1 }, { f: 2, k: 'chair', x: 7.9, tip: 1 }, { f: 1, k: 'rubble', x: 9.4, w: 1.2 }, { f: 1, k: 'table2', x: 1.2 }, { f: 1, k: 'frame', x: 4.0 }, { f: 0, k: 'mail', x: 2.0 }, { f: 0, k: 'rubble', x: 8.0, w: 1.0 }, { f: 4, k: 'bulb', x: 5.2 }, { f: 2, k: 'bulb', x: 4.6 }, { f: 1, k: 'bulb', x: 6.0 },
+];
+
+const S = {
+  phase: 'title', t: 0, night: 110, dawn: 110, ate: false,
+  p: { f: 0, x: 0.9, vx: 0, face: 1, hide: false, climb: 0, climbTo: 0, search: null, sk: 0, walk: 0 },
+  bag: [], cap: 4, caught: false, tookCouple: null, home: false,
+  sol: { f: 2, x: 8.8, dir: -1, mode: 'patrol', wait: 0, tx: 0, look: 0, alert: 0 },
+  beam: { t: 0 }, spot: 0, spotBy: '', boxes: BOXES.map((b) => ({ ...b, done: false })),
+};
+const IN = { l: false, r: false };
+
+/* ---------- 聲音（輕柔：腳步、翻找、心跳、風；沒有爆炸聲） ---------- */
+const AU = { ctx: null, noise: null, wind: null, hbT: 0 };
+function audioInit() {
+  if (AU.ctx) { AU.ctx.resume(); return; }
+  try { AU.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return; }
+  const c = AU.ctx; const buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; AU.noise = buf;
+  const src = c.createBufferSource(); src.buffer = buf; src.loop = true; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380; const gn = c.createGain(); gn.gain.value = 0.05; src.connect(f).connect(gn).connect(c.destination); src.start(); AU.wind = gn;
+}
+function tick(freq, len, vol, type = 'bandpass') { const c = AU.ctx; if (!c) return; const s = c.createBufferSource(); s.buffer = AU.noise; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = 1.2; const gn = c.createGain(); const t = c.currentTime; gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(0.0001, t + len); s.connect(f).connect(gn).connect(c.destination); s.start(t, Math.random()); s.stop(t + len + 0.02); }
+function thump(vol) { const c = AU.ctx; if (!c) return; const o = c.createOscillator(); o.frequency.value = 52; const gn = c.createGain(); const t = c.currentTime; gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(vol, t + 0.02); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.22); o.connect(gn).connect(c.destination); o.start(t); o.stop(t + 0.25); }
+
+/* ---------- 卡片（白天、兩難、早上） ---------- */
+function card(html, binds = {}, low = false) { const c = $('card'); c.classList.toggle('low', low); c.innerHTML = `<div class="sheet">${html}</div>`; c.hidden = false; for (const k in binds) { const b = c.querySelector(`[data-k="${k}"]`); if (b) b.onclick = () => { audioInit(); binds[k](); }; } }
+function hideCard() { $('card').hidden = true; $('card').innerHTML = ''; }
+function toast(t, ms = 1500) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(el._t); el._t = setTimeout(() => (el.style.opacity = 0), ms); }
+
+function title() {
+  S.phase = 'title';
+  card(`<h1>天亮之前</h1><h2>港灣市被圍的第 37 天</h2>
+    <p>城裡斷水斷電已經一個多月。你和十歲的妹妹小玥躲在家裡。</p>
+    <p>小玥昨晚開始發燒。</p>
+    <div class="row"><button data-k="go">開始<small>樣品：一個白天＋一個晚上，約 3 分鐘</small></button></div>`, { go: day });
+}
+function day() {
+  S.phase = 'day';
+  card(`<h1>白天</h1><h2>白天街上有狙擊手，不能出門</h2>
+    <p>小玥燒到 39 度，額頭燙手。家裡只剩<b>最後一個罐頭</b>。</p>
+    <p class="q">這個罐頭給誰吃？</p>
+    <div class="row two"><button data-k="sis">給妹妹<small>她需要體力撐過發燒</small></button><button data-k="me">自己吃<small>今晚翻找東西比較快</small></button></div>`,
+    { sis: () => { S.ate = false; plan(); }, me: () => { S.ate = true; plan(); } });
+}
+function plan() {
+  card(`<h1>入夜</h1><h2>天亮之前一定要回到家</h2>
+    <p>對面那棟被砲擊過的公寓，聽說還有人沒搬走，也有東西沒被搜走。</p>
+    <p class="q">今晚的目標：找到退燒藥。</p>
+    <p style="font-size:17px">◀ ▶ 左右走；靠近樓梯、櫃子、能躲的地方時，右邊的按鈕會變成「上樓／下樓」「搜」「躲」。<br>巡邏兵的手電筒和外面的探照燈照到你，就會被發現。</p>
+    <div class="row"><button data-k="go">出門</button></div>`, { go: startNight });
+}
+function startNight() { hideCard(); S.phase = 'night'; S.t = 0; $('ctl').hidden = false; toast('天亮前要回到一樓的門口', 2200); }
+
+let DLG = null; // 四樓老夫婦的兩難：限時 8 秒
+function coupleDilemma(box) {
+  S.phase = 'dlg'; DLG = { t: 8, box };
+  card(`<h1 style="font-size:26px">四樓・老夫婦的房間</h1>
+    <p>燭光下，床上的老先生在喘氣。你剛拿起桌上的藥盒，老太太就醒了。</p>
+    <p class="q">「那是他的心臟藥……只剩這一盒了。拜託。」</p>
+    <div class="timer" id="dTimer"></div>
+    <div class="row two"><button data-k="take">拿走<small>小玥需要藥</small></button><button data-k="leave">放回去<small>再去別的地方找</small></button></div>`,
+    { take: () => endDlg(true), leave: () => endDlg(false) }, true);
+}
+function endDlg(take) {
+  if (!DLG) return; const box = DLG.box; DLG = null; hideCard(); S.phase = 'night';
+  S.tookCouple = !!take; box.done = true;
+  if (take) { addLoot('藥'); toast('你把藥盒塞進背包，沒有回頭', 2200); }
+  else toast(take === false ? '你把藥盒放回桌上' : '你遲疑了，把藥盒放回桌上', 2000);
+}
+function addLoot(it) { if (S.bag.length >= S.cap) { toast('背包滿了'); return false; } S.bag.push(it); return true; }
+
+function caught(by) {
+  S.caught = true; S.phase = 'end'; S.lost = S.bag.length; S.bag = []; $('ctl').hidden = true; S.spotBy = by;
+  setTimeout(morning, 1400); toast(by === 'beam' ? '探照燈照到你了！' : '巡邏兵：「站住！」', 1400);
+}
+function goHome() { S.home = true; S.phase = 'end'; $('ctl').hidden = true; morning(); }
+function morning() {
+  const med = S.bag.includes('藥'), food = S.bag.filter((x) => x === '罐頭').length;
+  const lines = [];
+  if (S.caught) lines.push(`<p>${S.spotBy === 'beam' ? '外面的探照燈掃到你。' : '巡邏兵的手電筒照到你。'}你丟下背包，拚命跑回家，什麼都沒帶回來。</p>`);
+  else if (!S.home) lines.push('<p>天亮了。你只能躲在對面的公寓，等到天黑才敢回家，小玥多等了一整天。</p>');
+  else lines.push(`<p>天亮前，你回到家。背包裡：${S.bag.length ? S.bag.join('、') : '什麼也沒有'}。</p>`);
+  lines.push(med && !S.caught ? '<p>小玥吃了藥。中午，她的燒退了一點，說想喝水。</p>' : `<p>小玥燒到 40 度，整個早上都在說胡話。${S.ate ? '' : '昨天那個罐頭，她只吃了兩口。'}</p>`);
+  if (S.ate) lines.push('<p>昨天最後一個罐頭是你吃的。小玥已經一整天沒吃東西。</p>');
+  if (!S.caught && food) lines.push(`<p>多了 ${food} 個罐頭，你們可以再撐幾天。</p>`);
+  if (S.tookCouple === true) lines.push('<p class="q">對面四樓那扇窗，之後再也沒有亮過燭光。</p>');
+  else if (S.tookCouple === false) lines.push('<p>對面四樓那扇窗，今天晚上還亮著燭光。</p>');
+  card(`<h1>早上</h1><h2>被圍的第 38 天</h2>${lines.join('')}
+    <p class="note">樣品到這裡結束。完整版預計三天三夜；最後揭露全班的選擇（例如：全班有幾人拿走了老夫婦的藥）。</p>
+    <div class="row"><button data-k="again">再玩一次</button></div>`, { again: () => location.reload() });
+}
+
+/* ---------- 遊戲邏輯 ---------- */
+const near = (f, x, r) => S.p.f === f && Math.abs(S.p.x - x) < r;
+function context() { // 右邊按鈕現在能做什麼
+  const p = S.p; if (p.climb > 0 || p.search) return null;
+  if (p.hide) return { k: 'unhide', t: '出來' };
+  if (near(EXIT.f, EXIT.x, 0.5)) return { k: 'home', t: '回家', s: S.bag.length ? `帶著 ${S.bag.length} 樣東西` : '空手' };
+  for (const s of STAIRS) { if (near(s.f, s.x, 0.45)) return { k: 'up', t: '上樓', st: s }; if (near(s.f + 1, s.x, 0.45)) return { k: 'down', t: '下樓', st: s }; }
+  for (const b of S.boxes) if (!b.done && near(b.f, b.x, 0.5)) return { k: 'search', t: '搜', s: b.n, b };
+  for (const h of HIDES) if (near(h.f, h.x, 0.5)) return { k: 'hide', t: '躲', s: h.n };
+  return null;
+}
+function act() {
+  audioInit(); if (S.phase !== 'night') return; const c = context(); if (!c) return; const p = S.p;
+  if (c.k === 'home') goHome();
+  else if (c.k === 'up' || c.k === 'down') { p.climb = 0.8; p.climbFrom = p.f; p.climbTo = c.k === 'up' ? c.st.f + 1 : c.st.f; tick(500, 0.12, 0.25); }
+  else if (c.k === 'search') { if (c.b.couple) { coupleDilemma(c.b); return; } p.search = { b: c.b, t: 0, need: S.ate ? 1.7 : 2.6 }; }
+  else if (c.k === 'hide') { p.hide = true; p.vx = 0; }
+  else if (c.k === 'unhide') p.hide = false;
+}
+function update(dt) {
+  if (S.phase === 'dlg' && DLG) { DLG.t -= dt; const el = $('dTimer'); if (el) el.style.transform = `scaleX(${Math.max(0, DLG.t / 8)})`; if (DLG.t <= 0) endDlg(null); }
+  if (S.phase !== 'night' && S.phase !== 'dlg') return;
+  S.t += dt; S.dawn = Math.max(0, S.night - S.t);
+  if (S.dawn <= 0 && S.phase === 'night') { S.phase = 'end'; $('ctl').hidden = true; morning(); return; }
+  const p = S.p;
+  // 移動
+  const want = S.phase === 'night' && !p.hide && p.climb <= 0 && !p.search ? (IN.r ? 1 : 0) - (IN.l ? 1 : 0) : 0;
+  p.vx = lerp(p.vx, want * 1.7, Math.min(1, dt * 10)); if (want) p.face = want;
+  p.x = clamp(p.x + p.vx * dt, 0.35, 9.65);
+  if (Math.abs(p.vx) > 0.3) { p.walk += dt * 9; if (Math.sin(p.walk) * Math.sin(p.walk - dt * 9) < 0) tick(900 + Math.random() * 300, 0.06, 0.12); }
+  if (p.climb > 0) { p.climb -= dt; p.walk += dt * 9; if (p.climb <= 0.4 && p.f !== p.climbTo) p.f = p.climbTo; }
+  // 搜索（會出聲：同一層的巡邏兵聽得到）
+  if (p.search) { p.search.t += dt; if (Math.random() < dt * 6) tick(2200 + Math.random() * 1500, 0.08, 0.1, 'highpass');
+    const sol = S.sol; if (sol.f === p.f && Math.abs(sol.x - p.x) < 4.2 && sol.mode !== 'chase') { sol.mode = 'listen'; sol.tx = p.x; sol.wait = 0; }
+    if (p.search.t >= p.search.need) { const b = p.search.b; b.done = true; p.search = null; if (!b.loot.length) toast(`${b.n}：空的`); else { const got = []; for (const it of b.loot) if (addLoot(it)) got.push(it); if (got.length) toast(`找到：${got.join('、')}`); } } }
+  // 巡邏兵（三樓）：來回走、在兩端停下來張望；聽到聲音就走過來看
+  const sol = S.sol; sol.look += dt;
+  if (sol.mode === 'patrol') { if (sol.wait > 0) { sol.wait -= dt; if (sol.wait < 1.0 && sol.wait + dt >= 1.0) sol.dir = -sol.dir; } else { sol.x += sol.dir * 0.85 * dt; if (sol.x < 1.0 || sol.x > 9.2) { sol.x = clamp(sol.x, 1.0, 9.2); sol.wait = 2.2; } } }
+  else if (sol.mode === 'listen') { const d = sol.tx - sol.x; if (Math.abs(d) > 0.6) { sol.dir = Math.sign(d); sol.x += sol.dir * 1.15 * dt; } else { sol.mode = 'look'; sol.wait = 3; } }
+  else if (sol.mode === 'look') { sol.wait -= dt; if (Math.floor(sol.wait * 1.2) % 2 === 0) sol.dir = Math.sin(sol.look * 2) > 0 ? 1 : -1; if (sol.wait <= 0) sol.mode = 'patrol'; }
+  // 被看到：手電筒（同一層、前方 3.2 單位內）或探照燈（五樓窗戶）
+  let seen = 0, by = '';
+  if (!p.hide && p.climb <= 0.4 && sol.f === p.f) { const dx = (p.x - sol.x) * sol.dir; if (dx > 0.15 && dx < 3.2) { seen = 1.6 - dx * 0.25; by = 'sol'; } }
+  S.beam.t += dt; const bx = beamX();
+  if (!p.hide && p.f === 4 && bx !== null && Math.abs(p.x - bx) < 0.7 && WINDOWS.some((w) => w.f === 4 && Math.abs(w.x - p.x) < 0.8)) { seen = Math.max(seen, 1.5); by = by || 'beam'; }
+  if (seen) { S.spot += seen * dt; S.spotBy = by; } else S.spot = Math.max(0, S.spot - dt * 0.7);
+  if (S.spot > 0.05) { AU.hbT -= dt; if (AU.hbT <= 0) { AU.hbT = 0.55 - S.spot * 0.3; thump(0.18 + S.spot * 0.4); } }
+  if (S.spot >= 1 && S.phase === 'night') caught(S.spotBy);
+  if (AU.wind && AU.ctx) AU.wind.gain.value = 0.05;
+}
+// 探照燈：從外面掃過五樓，往返一趟 9 秒；中間有 2 秒熄掉
+function beamX() { const T = 9, t = S.beam.t % T; if (t > 7) return null; const k = t / 7; return 0.3 + (k < 0.5 ? k * 2 : 2 - k * 2) * 9.4; }
+
+/* ---------- 畫面 ---------- */
+const X = (x) => L.bx + x * L.u, FY = (f) => L.by + (4 - f) * L.fh; // FY：該層天花板的 y
+const BASE = (f) => FY(f) + L.fh - L.fh * 0.085; // 地板面
+let ST = null; // 不會動的部分（建築、家具）先畫在另一張畫布上
+function rl(d, x1, y1, x2, y2, col, w = 2) { d.strokeStyle = col; d.lineWidth = w; d.beginPath(); if (STYLE === 1) { const n = Math.max(2, Math.round(Math.hypot(x2 - x1, y2 - y1) / 16)); d.moveTo(x1 + jit(), y1 + jit()); for (let i = 1; i <= n; i++) { const t = i / n; d.lineTo(lerp(x1, x2, t) + jit(), lerp(y1, y2, t) + jit()); } } else { d.moveTo(x1, y1); d.lineTo(x2, y2); } d.stroke(); }
+function box(d, x, y, w, h, fill, lw = 2) { d.fillStyle = fill; d.fillRect(x, y, w, h); if (STYLE === 1) { d.save(); d.globalAlpha = 0.28; d.fillStyle = HATCH; d.fillRect(x, y, w, h); d.restore(); } const k = PAL.ink; rl(d, x, y, x + w, y, k, lw); rl(d, x + w, y, x + w, y + h, k, lw); rl(d, x, y + h, x + w, y + h, k, lw); rl(d, x, y, x, y + h, k, lw); }
+function buildStatic() {
+  ST = document.createElement('canvas'); ST.width = cv.width; ST.height = cv.height; const d = ST.getContext('2d'); d.setTransform(DPR, 0, 0, DPR, 0, 0); SEED = 11;
+  const P = PAL, u = L.u, fh = L.fh;
+  // 夜空、月亮、遠方的城市
+  if (STYLE === 2) { const gr = d.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#2a3550'); gr.addColorStop(1, '#0d1016'); d.fillStyle = gr; } else d.fillStyle = STYLE === 3 ? P.ink : '#c9c2b3'; d.fillRect(0, 0, W, H);
+  d.fillStyle = STYLE === 3 ? P.lite : P.moon; d.beginPath(); d.arc(W - 40, L.top + 30, 15, 0, 7); d.fill(); d.fillStyle = STYLE === 2 ? '#2a3550' : STYLE === 3 ? P.ink : '#c9c2b3'; d.beginPath(); d.arc(W - 33, L.top + 25, 13, 0, 7); d.fill();
+  d.fillStyle = STYLE === 2 ? '#161b26' : STYLE === 3 ? '#2b2620' : '#aaa293';
+  for (let x = -10; x < W + 20; x += 22 + srnd() * 26) { const h = 50 + srnd() * 140; d.fillRect(x, L.by + L.bh - h, 20 + srnd() * 24, h); if (srnd() < 0.5) { d.beginPath(); d.moveTo(x, L.by + L.bh - h); d.lineTo(x + 8 + srnd() * 10, L.by + L.bh - h - 10 - srnd() * 14); d.lineTo(x + 22, L.by + L.bh - h); d.fill(); } }
+  // 各層：牆面（不同房間不同牆紙）、裂縫、窗、隔間、地板
+  for (let f = 0; f < 5; f++) {
+    const y = FY(f), base = BASE(f);
+    d.fillStyle = f % 2 ? P.wall : P.wallD; d.fillRect(L.bx, y, L.bw, fh);
+    if (STYLE !== 3) { d.save(); d.globalAlpha = STYLE === 2 ? 0.25 : 0.12; d.strokeStyle = P.ink; d.lineWidth = 1; const st = f % 2 ? 9 : 14; for (let x = L.bx + (f * 5) % st; x < L.bx + L.bw; x += st) { d.beginPath(); d.moveTo(x, y + 2); d.lineTo(x, base - fh * 0.2); d.stroke(); } d.restore(); }
+    // 牆裙
+    d.fillStyle = STYLE === 3 ? P.ink : P.wallD; d.globalAlpha = STYLE === 3 ? 1 : 0.6; d.fillRect(L.bx, base - fh * 0.16, L.bw, fh * 0.16); d.globalAlpha = 1; if (STYLE === 3) { d.fillStyle = P.wall; d.fillRect(L.bx, base - fh * 0.16, L.bw, 2); }
+    // 天花板的陰影
+    if (STYLE === 1) { d.save(); d.globalAlpha = 0.45; d.fillStyle = HATCH; d.fillRect(L.bx, y, L.bw, fh * 0.18); d.restore(); }
+    // 裂縫
+    for (let k = 0; k < 2; k++) { let cx = X(0.8 + srnd() * 8.4), cy = y + fh * (0.12 + srnd() * 0.3); d.strokeStyle = P.ink; d.lineWidth = 1.4; d.beginPath(); d.moveTo(cx, cy); for (let j = 0; j < 5; j++) { cx += (srnd() - 0.4) * 10; cy += 5 + srnd() * 7; d.lineTo(cx, cy); } d.stroke(); }
+    for (const w of WINDOWS) if (w.f === f) win(d, w);
+    for (const r of ROOM_WALLS) if (r.f === f) { d.fillStyle = STYLE === 3 ? P.ink : P.mid; d.fillRect(X(r.x) - 3, y, 6, fh * 0.5); const by = y + fh * 0.5; d.beginPath(); d.moveTo(X(r.x) - 3, by); d.lineTo(X(r.x) - 1, by + 7); d.lineTo(X(r.x) + 2, by + 3); d.lineTo(X(r.x) + 3, by + 9); d.lineTo(X(r.x) + 3, by); d.fill(); }
+    for (const dc of DECOR) if (dc.f === f && dc.k !== 'rubble') decor(d, dc);
+    for (const h of HIDES) if (h.f === f) hideObj(d, h);
+    for (const b of BOXES) if (b.f === f) furn(d, b);
+    for (const dc of DECOR) if (dc.f === f && dc.k === 'rubble') decor(d, dc);
+    // 地板（樓板斷面）
+    d.fillStyle = P.floor; d.fillRect(L.bx - 6, base, L.bw + 12, fh * 0.085); rl(d, L.bx - 6, base, L.bx + L.bw + 6, base, P.ink, 2.5);
+    if (STYLE !== 3) { d.fillStyle = STYLE === 2 ? '#3a3c40' : '#7a7266'; for (let x = L.bx; x < L.bx + L.bw; x += 18) d.fillRect(x + 4, base + 3, 3, 3); }
+    // 樓層標示
+    d.fillStyle = STYLE === 3 ? P.mid : P.mid; d.font = '900 12px "Noto Serif TC", serif'; d.textAlign = 'right'; d.fillText(['一樓', '二樓', '三樓', '四樓', '五樓'][f], L.bx + L.bw - 6, y + 15);
+  }
+  // 樓梯（之字形，有扶手）
+  for (const s of STAIRS) { const b0 = BASE(s.f), b1 = BASE(s.f + 1) + fh * 0.085, dir = s.x > 5 ? -1 : 1, x0 = X(s.x) - dir * u * 0.7, x1 = X(s.x) + dir * u * 0.7; const n = 7;
+    d.fillStyle = STYLE === 3 ? P.ink : P.mid; d.beginPath(); d.moveTo(x0, b0); for (let i = 0; i < n; i++) { const xa = lerp(x0, x1, i / n), xb = lerp(x0, x1, (i + 1) / n), ya = lerp(b0, b1, (i + 1) / n); d.lineTo(xa, ya); d.lineTo(xb, ya); } d.lineTo(x1, b0); d.closePath(); d.fill();
+    d.strokeStyle = P.ink; d.lineWidth = 2; d.beginPath(); d.moveTo(x0, b0); for (let i = 0; i < n; i++) { const xa = lerp(x0, x1, i / n), xb = lerp(x0, x1, (i + 1) / n), ya = lerp(b0, b1, (i + 1) / n); d.lineTo(xa, ya); d.lineTo(xb, ya); } d.stroke();
+    rl(d, x0, b0 - fh * 0.32, x1, b1 - fh * 0.32, P.ink, 2.5); for (let i = 0; i <= 3; i++) { const t = i / 3; rl(d, lerp(x0, x1, t), lerp(b0, b1, t) - fh * 0.32, lerp(x0, x1, t), lerp(b0, b1, t), P.ink, 1.5); }
+    // 上一層地板的樓梯口（挖開）
+    d.fillStyle = f2col(); d.fillRect(Math.min(x0, x1) + (dir > 0 ? u * 0.6 : 0), b1 - 1, u * 0.8, fh * 0.085 + 2);
+  }
+  // 破洞（月光、天空）
+  for (const h of HOLES) { const y = FY(h.f); d.fillStyle = STYLE === 2 ? '#2a3550' : STYLE === 3 ? P.ink : '#c9c2b3'; d.beginPath(); if (h.top) { d.moveTo(X(h.x0), y - 2); d.lineTo(X(h.x1) + 6, y - 2); d.lineTo(X(h.x1) + 6, y + fh * 0.92); d.lineTo(X(h.x0) + u * 1.1, y + fh * 0.55); d.lineTo(X(h.x0) + u * 0.4, y + fh * 0.4); d.lineTo(X(h.x0) + u * 0.5, y + fh * 0.15); } else { const L0 = h.x0 === 0; const xe = L0 ? X(0) - 6 : X(10) + 6, xi = L0 ? X(h.x1) : X(h.x0); d.moveTo(xe, y + fh * 0.12); d.lineTo(xi, y + fh * 0.22); d.lineTo(xi + (L0 ? -u * 0.25 : u * 0.25), y + fh * 0.5); d.lineTo(xi, y + fh * 0.78); d.lineTo(xe, y + fh * 0.88); } d.closePath(); d.fill(); }
+  // 外牆、屋頂
+  rl(d, L.bx, L.by, L.bx, L.by + L.bh, P.ink, 5); rl(d, L.bx + L.bw, L.by + L.fh * 0.95, L.bx + L.bw, L.by + L.bh, P.ink, 5); rl(d, L.bx - 6, L.by, X(8.3), L.by, P.ink, 5);
+  // 一樓左邊的門（回家的路）
+  { const x = X(0.12), y = BASE(0) - fh * 0.62; d.fillStyle = STYLE === 2 ? '#2a3550' : STYLE === 3 ? P.ink : '#c9c2b3'; d.fillRect(x - 6, y, u * 0.75, fh * 0.62); rl(d, x + u * 0.69, y, x + u * 0.69, BASE(0), P.ink, 3); rl(d, x - 6, y, x + u * 0.69, y, P.ink, 3); }
+  for (const dc of DECOR) if (dc.k === 'rubble') {} // 已畫
+}
+function f2col() { return STYLE === 3 ? PAL.ink : PAL.wallD; }
+function win(d, w) {
+  const P = PAL, x = X(w.x) - L.u * 0.55, y = FY(w.f) + L.fh * 0.2, ww = L.u * 1.1, hh = L.fh * 0.42;
+  d.fillStyle = STYLE === 2 ? '#24304a' : STYLE === 3 ? P.ink : '#cfc8b9'; d.fillRect(x, y, ww, hh);
+  if (STYLE !== 3 && !w.board) { d.fillStyle = STYLE === 2 ? '#3b4a6a' : '#e4dfd2'; d.beginPath(); d.moveTo(x, y); d.lineTo(x + ww * 0.45, y); d.lineTo(x + ww * 0.15, y + hh * 0.55); d.closePath(); d.fill(); d.beginPath(); d.moveTo(x + ww, y + hh); d.lineTo(x + ww * 0.6, y + hh); d.lineTo(x + ww, y + hh * 0.5); d.closePath(); d.fill(); }
+  d.lineWidth = 3; d.strokeStyle = P.ink; d.strokeRect(x, y, ww, hh); rl(d, x + ww / 2, y, x + ww / 2, y + hh, P.ink, 2); rl(d, x - 4, y + hh + 2, x + ww + 4, y + hh + 2, P.ink, 3);
+  if (w.board) { d.fillStyle = STYLE === 3 ? P.lite : P.furn; for (const [a, b2] of [[0.15, 0.85], [0.85, 0.2]]) { d.save(); d.translate(x + ww / 2, y + hh / 2); d.rotate((a < b2 ? -1 : 1) * 0.42); d.fillRect(-ww * 0.62, -4, ww * 1.24, 8); d.strokeStyle = P.ink; d.lineWidth = 1.5; d.strokeRect(-ww * 0.62, -4, ww * 1.24, 8); d.restore(); } }
+  if (w.curtain) { d.fillStyle = STYLE === 3 ? P.ink : P.furn; d.beginPath(); d.moveTo(x - 6, y - 6); d.lineTo(x + ww * 0.42, y - 6); for (let i = 0; i <= 6; i++) d.lineTo(x + ww * 0.42 + Math.sin(i * 1.4) * 4, y + (hh + L.fh * 0.3) * i / 6); d.lineTo(x - 6, BASE(w.f) - 2); d.closePath(); d.fill(); d.strokeStyle = P.ink; d.lineWidth = 1.5; for (let i = 1; i < 4; i++) { d.beginPath(); d.moveTo(x - 6 + i * ww * 0.12, y - 4); d.lineTo(x - 6 + i * ww * 0.12 + Math.sin(i) * 3, BASE(w.f) - 4); d.stroke(); } }
+}
+function furn(d, b) { // 可以搜的家具
+  const P = PAL, u = L.u, fh = L.fh, x = X(b.x), base = BASE(b.f), F = STYLE === 3 ? P.ink : P.furn, K = P.ink, lite = STYLE === 3 ? P.lite : P.wall;
+  switch (b.k) {
+    case 'cabinetDown': { d.save(); d.translate(x, base); d.rotate(-0.12); box(d, -u * 0.7, -fh * 0.2, u * 1.4, fh * 0.2, F); rl(d, -u * 0.1, -fh * 0.2, -u * 0.1, 0, K, 1.5); d.restore(); d.fillStyle = lite; d.fillRect(x + u * 0.5, base - 6, 10, 5); d.fillRect(x - u * 0.8, base - 4, 7, 4); break; }
+    case 'carton': { box(d, x - u * 0.4, base - fh * 0.24, u * 0.8, fh * 0.24, STYLE === 3 ? F : '#b09a76'); rl(d, x - u * 0.4, base - fh * 0.24, x - u * 0.55, base - fh * 0.34, K, 2); rl(d, x + u * 0.4, base - fh * 0.24, x + u * 0.58, base - fh * 0.32, K, 2); break; }
+    case 'kitchen': { box(d, x - u * 0.8, base - fh * 0.3, u * 1.6, fh * 0.3, F); d.fillStyle = K; d.fillRect(x - u * 0.85, base - fh * 0.32, u * 1.7, 4); rl(d, x, base - fh * 0.3, x, base, K, 1.5); box(d, x - u * 0.75, FY(b.f) + fh * 0.18, u * 1.5, fh * 0.18, F); d.fillStyle = lite; d.fillRect(x - u * 0.5, base - fh * 0.42, 7, 10); break; }
+    case 'wardrobe': { box(d, x - u * 0.55, base - fh * 0.62, u * 1.1, fh * 0.62, F); rl(d, x, base - fh * 0.62, x, base, K, 1.5); d.fillStyle = K; d.fillRect(x - 5, base - fh * 0.35, 3, 8); d.fillRect(x + 2, base - fh * 0.35, 3, 8); break; }
+    case 'pack': { d.fillStyle = STYLE === 3 ? P.ink : '#4f5940'; d.beginPath(); d.ellipse(x, base - fh * 0.11, u * 0.32, fh * 0.12, 0.15, 0, 7); d.fill(); d.strokeStyle = K; d.lineWidth = 2; d.stroke(); d.fillRect(x - u * 0.15, base - fh * 0.21, u * 0.3, fh * 0.06); rl(d, x + u * 0.5, base - 2, x + u * 1.0, base - 6, K, 3); break; }
+    case 'drawers': { box(d, x - u * 0.5, base - fh * 0.38, u * 1.0, fh * 0.38, F); for (let i = 1; i < 3; i++) rl(d, x - u * 0.5, base - fh * 0.38 * i / 3, x + u * 0.5, base - fh * 0.38 * i / 3, K, 1.5); d.fillStyle = F; d.fillRect(x - u * 0.35, base - fh * 0.15, u * 0.7, fh * 0.06); break; }
+    case 'books': { box(d, x - u * 0.6, base - fh * 0.66, u * 1.2, fh * 0.66, F); for (let i = 1; i < 4; i++) { const yy = base - fh * 0.66 * i / 4; rl(d, x - u * 0.6, yy, x + u * 0.6, yy, K, 1.5); for (let j = 0; j < 7; j++) { if (srnd() < 0.3) continue; d.fillStyle = STYLE === 3 ? P.lite : (j % 2 ? P.mid : P.wallD); d.fillRect(x - u * 0.55 + j * u * 0.15, yy - fh * 0.13, u * 0.1, fh * 0.13); } } break; }
+    case 'table': { d.fillStyle = F; d.fillRect(x - u * 0.6, base - fh * 0.26, u * 1.2, 5); rl(d, x - u * 0.6, base - fh * 0.26, x + u * 0.6, base - fh * 0.26, K, 2.5); rl(d, x - u * 0.5, base - fh * 0.26, x - u * 0.5, base, K, 3); rl(d, x + u * 0.5, base - fh * 0.26, x + u * 0.5, base, K, 3); break; }
+    case 'fridge': { box(d, x - u * 0.45, base - fh * 0.66, u * 0.9, fh * 0.66, STYLE === 3 ? F : '#cdc8bb'); rl(d, x - u * 0.45, base - fh * 0.44, x + u * 0.45, base - fh * 0.44, K, 1.5); d.fillStyle = K; d.fillRect(x + u * 0.3, base - fh * 0.6, 3, fh * 0.12); break; }
+    case 'bed': { box(d, x - u * 0.95, base - fh * 0.2, u * 1.9, fh * 0.1, F); d.fillStyle = STYLE === 3 ? P.lite : '#d8d0bf'; d.fillRect(x - u * 0.9, base - fh * 0.26, u * 1.8, fh * 0.07); rl(d, x - u * 0.95, base - fh * 0.38, x - u * 0.95, base, K, 4); rl(d, x + u * 0.95, base - fh * 0.28, x + u * 0.95, base, K, 4); break; }
+  }
+}
+function decor(d, dc) {
+  const P = PAL, u = L.u, fh = L.fh, x = X(dc.x), base = BASE(dc.f), F = STYLE === 3 ? P.ink : P.furn, K = P.ink, y = FY(dc.f);
+  if (dc.k === 'rubble') { d.fillStyle = STYLE === 3 ? P.ink : P.mid; const w = (dc.w || 1) * u; for (let i = 0; i < 9; i++) { const cx = x + (srnd() - 0.5) * w, s = 6 + srnd() * 14, cy = base - s * 0.4 - srnd() * fh * 0.08 * (1 - Math.abs(cx - x) / w * 2); d.beginPath(); d.moveTo(cx - s, base); d.lineTo(cx - s * 0.3, cy - s * 0.6); d.lineTo(cx + s * 0.6, cy - s * 0.3); d.lineTo(cx + s, base); d.closePath(); d.fill(); d.strokeStyle = K; d.lineWidth = 1.5; d.stroke(); } rl(d, x - w * 0.3, base - 4, x + w * 0.2, base - fh * 0.3, K, 3); }
+  else if (dc.k === 'wardrobe2') { box(d, x - u * 0.5, base - fh * 0.64, u * 1.0, fh * 0.64, F); rl(d, x, base - fh * 0.64, x, base, K, 1.5); }
+  else if (dc.k === 'bed2') { box(d, x - u * 0.95, base - fh * 0.18, u * 1.9, fh * 0.1, F); d.fillStyle = STYLE === 3 ? P.lite : '#d8d0bf'; d.fillRect(x - u * 0.9, base - fh * 0.25, u * 1.8, fh * 0.07); rl(d, x + u * 0.95, base - fh * 0.42, x + u * 0.95, base, K, 4); rl(d, x - u * 0.95, base - fh * 0.28, x - u * 0.95, base, K, 4); }
+  else if (dc.k === 'chair') { d.save(); d.translate(x, base); if (dc.tip) d.rotate(1.35); rl(d, -u * 0.18, -fh * 0.42, -u * 0.18, 0, K, 3); rl(d, -u * 0.18, -fh * 0.2, u * 0.2, -fh * 0.2, K, 3); rl(d, u * 0.2, -fh * 0.2, u * 0.2, 0, K, 3); d.restore(); }
+  else if (dc.k === 'frame') { d.save(); d.translate(x, y + fh * 0.34); d.rotate((srnd() - 0.5) * 0.4); d.fillStyle = STYLE === 3 ? P.lite : P.wallD; d.fillRect(-u * 0.22, -fh * 0.1, u * 0.44, fh * 0.2); d.strokeStyle = K; d.lineWidth = 2.5; d.strokeRect(-u * 0.22, -fh * 0.1, u * 0.44, fh * 0.2); d.restore(); }
+  else if (dc.k === 'table2') { rl(d, x - u * 0.5, base - fh * 0.24, x + u * 0.5, base - fh * 0.24, K, 4); rl(d, x - u * 0.4, base - fh * 0.24, x - u * 0.4, base, K, 3); rl(d, x + u * 0.4, base - fh * 0.24, x + u * 0.4, base, K, 3); }
+  else if (dc.k === 'mail') { box(d, x - u * 0.6, y + fh * 0.25, u * 1.2, fh * 0.32, F, 2); for (let i = 1; i < 4; i++) rl(d, x - u * 0.6 + u * 0.3 * i, y + fh * 0.25, x - u * 0.6 + u * 0.3 * i, y + fh * 0.57, K, 1); rl(d, x - u * 0.6, y + fh * 0.41, x + u * 0.6, y + fh * 0.41, K, 1); }
+  else if (dc.k === 'bulb') { rl(d, x, y, x + 2, y + fh * 0.22, K, 1.5); d.fillStyle = STYLE === 3 ? P.lite : P.wall; d.beginPath(); d.arc(x + 2, y + fh * 0.25, 4, 0, 7); d.fill(); d.strokeStyle = K; d.lineWidth = 1.5; d.stroke(); }
+}
+function hideObj(d, h) { // 能躲的地方：半開的門、窗簾（窗簾已在窗戶畫）、倒下的櫃子
+  const P = PAL, u = L.u, fh = L.fh, x = X(h.x), base = BASE(h.f), K = P.ink;
+  if (h.k === 'door') { d.fillStyle = STYLE === 3 ? P.ink : '#3e3a35'; d.fillRect(x - u * 0.38, base - fh * 0.62, u * 0.76, fh * 0.62); d.fillStyle = STYLE === 3 ? P.mid : P.furn; d.beginPath(); d.moveTo(x + u * 0.38, base - fh * 0.62); d.lineTo(x + u * 0.62, base - fh * 0.66); d.lineTo(x + u * 0.62, base + 2); d.lineTo(x + u * 0.38, base); d.closePath(); d.fill(); d.strokeStyle = K; d.lineWidth = 2; d.stroke(); rl(d, x - u * 0.4, base - fh * 0.62, x + u * 0.4, base - fh * 0.62, K, 3); rl(d, x - u * 0.4, base - fh * 0.62, x - u * 0.4, base, K, 3); }
+  else if (h.k === 'tipped') { d.save(); d.translate(x + u * 0.15, base); d.rotate(-0.05); box(d, -u * 0.55, -fh * 0.3, u * 1.1, fh * 0.3, STYLE === 3 ? P.ink : P.furn); d.restore(); }
+}
+
+function draw() {
+  if (!ST || ST.width !== cv.width || ST.height !== cv.height) buildStatic();
+  g.drawImage(ST, 0, 0, W, H); SEED = 7;
+  if (S.phase === 'title' || S.phase === 'day') { darkness(true); hud(); return; }
+  // 會變的東西：藥盒、蠟燭、搜過的櫃子
+  const tb = S.boxes.find((b) => b.couple); if (!tb.done || S.tookCouple === false) { g.fillStyle = STYLE === 3 ? PAL.lite : '#efe9da'; g.fillRect(X(6.5) - 7, BASE(3) - L.fh * 0.26 - 8, 14, 8); g.strokeStyle = PAL.ink; g.lineWidth = 1.5; g.strokeRect(X(6.5) - 7, BASE(3) - L.fh * 0.26 - 8, 14, 8); }
+  g.fillStyle = STYLE === 3 ? PAL.lite : '#efe9da'; g.fillRect(X(6.85) - 3, BASE(3) - L.fh * 0.26 - 14, 6, 14); if (S.tookCouple !== true) { g.fillStyle = '#f2b648'; g.beginPath(); g.ellipse(X(6.85), BASE(3) - L.fh * 0.26 - 18, 3, 6 + Math.sin(S.t * 13) * 1.2, 0, 0, 7); g.fill(); }
+  darkness(false);
+  // 人物（在暗處加一圈淡淡的輪廓，看得到）
+  person(X(8.3), BASE(3) - L.fh * 0.25, L.fh * 0.5, 1, 'lie');
+  person(X(7.05), BASE(3), L.fh * 0.5, -1, 'sit');
+  const sol = S.sol; person(X(sol.x), BASE(sol.f), L.fh * 0.56, sol.dir, 'soldier');
+  if (S.spot > 0.05 && S.spotBy === 'sol') { g.fillStyle = PAL.acc; g.font = `900 ${Math.round(L.fh * 0.34)}px serif`; g.textAlign = 'center'; g.fillText('！', X(sol.x), BASE(sol.f) - L.fh * 0.64); }
+  const p = S.p; let y = BASE(p.f); if (p.climb > 0) y = lerp(BASE(p.climbFrom), BASE(p.climbTo), 1 - p.climb / 0.8);
+  person(X(p.x), y, L.fh * 0.52, p.face, p.hide ? 'crouch' : p.search ? 'search' : Math.abs(p.vx) > 0.3 || p.climb > 0 ? 'walk' : 'stand', true);
+  // 附近可以搜、可以躲的地方
+  for (const b of S.boxes) if (S.p.f === b.f && Math.abs(S.p.x - b.x) < 2.2) { g.globalAlpha = b.done ? 0.45 : 1; marker(X(b.x), BASE(b.f) - L.fh * 0.74, b.done ? '✕' : '?'); g.globalAlpha = 1; }
+  for (const h of HIDES) if (near(h.f, h.x, 1.2) && !S.p.hide) label(X(h.x), BASE(h.f) - L.fh * 0.74, '可以躲');
+  hud();
+}
+function darkness(idle) {
+  if (!darkness.c) darkness.c = document.createElement('canvas'); const c = darkness.c; if (c.width !== cv.width || c.height !== cv.height) { c.width = cv.width; c.height = cv.height; }
+  const m = c.getContext('2d'); m.setTransform(DPR, 0, 0, DPR, 0, 0); m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, W, H);
+  const R = [L.bx - 6, L.by - 2, L.bw + 12, L.bh + 4];
+  if (STYLE === 1) { m.fillStyle = 'rgba(40,36,31,0.50)'; m.fillRect(...R); m.globalAlpha = 0.85; m.fillStyle = HATCH; m.fillRect(...R); m.globalAlpha = 1; }
+  else { m.fillStyle = PAL.dark; m.fillRect(...R); }
+  m.globalCompositeOperation = 'destination-out';
+  const soft = STYLE !== 3; const u = L.u, fh = L.fh;
+  const poly = (pts, a) => { m.fillStyle = `rgba(0,0,0,${soft ? a : 1})`; m.beginPath(); pts.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill(); };
+  const glow = (x, y, r, a) => { if (!soft) { m.fillStyle = '#000'; m.beginPath(); for (let i = 0; i < 14; i++) { const ang = i / 14 * Math.PI * 2, rr = r * (i % 2 ? 0.62 : 0.85); m.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr); } m.closePath(); m.fill(); return; } const gr = m.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); m.fillStyle = gr; m.beginPath(); m.arc(x, y, r, 0, 7); m.fill(); };
+  // 月光：從右上方斜斜照進窗戶、破洞，落在地板上
+  for (const w of WINDOWS) { if (w.board) { poly([[X(w.x) - u * 0.2, FY(w.f) + fh * 0.3], [X(w.x) + u * 0.1, FY(w.f) + fh * 0.3], [X(w.x) - u * 0.4, BASE(w.f)], [X(w.x) - u * 0.7, BASE(w.f)]], 0.35); continue; } const x0 = X(w.x) - u * 0.55, x1 = X(w.x) + u * 0.55, y0 = FY(w.f) + fh * 0.2, b = BASE(w.f), dx = (b - y0) * 0.55; poly([[x0, y0], [x1, y0], [x1 - dx, b], [x0 - dx, b]], w.curtain ? 0.3 : 0.62); }
+  for (const h of HOLES) { const y0 = FY(h.f), b = BASE(h.f), x0 = X(h.x0), x1 = X(h.x1), dx = (b - y0) * 0.55; poly(h.top ? [[x0, y0], [x1 + 6, y0], [x1 + 6, b], [x0 - dx, b]] : [[x0, y0 + fh * 0.12], [x1, y0 + fh * 0.22], [x1 - dx * 0.6, b], [x0 - dx * 0.6, b]], 0.8); }
+  if (idle) { m.globalCompositeOperation = 'source-over'; g.drawImage(c, 0, 0, W, H); return; }
+  // 老夫婦的燭光（藥被拿走後就熄了）
+  if (S.tookCouple !== true) glow(X(6.85), BASE(3) - fh * 0.4, u * 1.7, 0.95);
+  // 自己身邊一點點
+  if (soft) glow(X(S.p.x), BASE(S.p.f) - fh * 0.3, u * 0.7, 0.45);
+  // 巡邏兵的手電筒
+  const s = S.sol, sx = X(s.x) + s.dir * fh * 0.15, sy = BASE(s.f) - fh * 0.36, len = u * 3.2; const cone = [[sx, sy], [sx + s.dir * len, sy - fh * 0.34], [sx + s.dir * len, BASE(s.f)], [sx + s.dir * u * 0.5, BASE(s.f)]];
+  if (soft) { const gr = m.createLinearGradient(sx, sy, sx + s.dir * len, sy); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0.2)'); m.fillStyle = gr; m.beginPath(); cone.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill(); } else poly(cone, 1);
+  // 外面的探照燈（五樓）
+  const bx = beamX(); if (bx !== null) { const y0 = FY(4) - 40, b = BASE(4); poly([[X(bx) - u * 0.2, y0], [X(bx) + u * 0.2, y0], [X(bx) + u * 0.75, b], [X(bx) - u * 0.75, b]], 0.95); }
+  m.globalCompositeOperation = 'source-over'; g.drawImage(c, 0, 0, W, H);
+  // 暖色光暈（照片、素描樣式）
+  if (soft) { g.save(); g.globalCompositeOperation = STYLE === 2 ? 'lighter' : 'source-over'; g.globalAlpha = STYLE === 2 ? 0.18 : 0.16; g.fillStyle = PAL.lite; g.beginPath(); cone.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill();
+    if (bx !== null) { g.globalAlpha = STYLE === 2 ? 0.22 : 0.2; g.fillStyle = STYLE === 2 ? '#dfe8ff' : '#fffaf0'; g.beginPath(); g.moveTo(X(bx) - u * 0.2, FY(4) - 40); g.lineTo(X(bx) + u * 0.2, FY(4) - 40); g.lineTo(X(bx) + u * 0.75, BASE(4)); g.lineTo(X(bx) - u * 0.75, BASE(4)); g.closePath(); g.fill(); }
+    if (S.tookCouple !== true) { g.globalAlpha = 1; const gr = g.createRadialGradient(X(6.85), BASE(3) - fh * 0.4, 0, X(6.85), BASE(3) - fh * 0.4, u * 1.4); gr.addColorStop(0, STYLE === 2 ? 'rgba(255,170,80,0.38)' : 'rgba(255,225,160,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(X(5), FY(3), u * 3.8, fh); }
+    g.restore(); }
+  else if (bx !== null) { /* 版畫：探照燈只是挖亮 */ }
+}
+function marker(x, y, t) { const r = 12; g.fillStyle = STYLE === 2 ? '#e3dccd' : '#f4f0e6'; g.strokeStyle = PAL.ink; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); g.fillStyle = PAL.ink; g.font = '900 16px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x, y + 1); g.textBaseline = 'alphabetic'; }
+function label(x, y, t) { g.font = '900 14px "Noto Serif TC", serif'; g.textAlign = 'center'; const w = g.measureText(t).width + 12; g.fillStyle = STYLE === 2 ? '#e3dccd' : '#f4f0e6'; g.fillRect(x - w / 2, y - 15, w, 21); g.strokeStyle = PAL.ink; g.lineWidth = 2; g.strokeRect(x - w / 2, y - 15, w, 21); g.fillStyle = PAL.ink; g.fillText(t, x, y + 1); }
+// 人物剪影：頭、身體、腿；士兵戴頭盔、拿手電筒；玩家揹背包、衣服是紅色
+function person(x, base, h, dir, pose, me) {
+  const rim = STYLE === 2 ? 'rgba(160,170,190,0.55)' : STYLE === 3 ? PAL.lite : 'rgba(244,240,230,0.85)';
+  fig(x, base, h, dir, pose, me, rim, 3.2); fig(x, base, h, dir, pose, me, null, 0);
+}
+function fig(x, base, h, dir, pose, me, rim, extra) {
+  const P = PAL; const ink = rim || P.ink; const body = rim || (me ? P.acc : P.ink);
+  g.save(); g.translate(x, base); g.scale(dir, 1); g.strokeStyle = ink; g.fillStyle = ink; g.lineCap = 'round'; g.lineJoin = 'round'; const lw = Math.max(2.4, h * 0.085) + extra; g.lineWidth = lw;
+  if (pose === 'lie') { // 躺在床上、蓋著被子
+    g.beginPath(); g.arc(-h * 0.42, -h * 0.1, h * 0.1 + extra / 2, 0, 7); g.fill();
+    g.fillStyle = rim || (STYLE === 3 ? P.lite : STYLE === 2 ? '#6b665c' : '#cfc6b3'); g.beginPath(); g.moveTo(-h * 0.32, 0); g.quadraticCurveTo(-h * 0.3, -h * 0.2, -h * 0.05, -h * 0.17); g.quadraticCurveTo(h * 0.25, -h * 0.15, h * 0.42, -h * 0.1); g.quadraticCurveTo(h * 0.58, -h * 0.06, h * 0.6, 0); g.closePath(); g.fill(); if (!rim) { g.strokeStyle = P.ink; g.lineWidth = 2; g.stroke(); }
+    g.restore(); return; }
+  const crouch = pose === 'crouch' || pose === 'search', sit = pose === 'sit'; const k = crouch ? 0.66 : sit ? 0.74 : 1; const t = pose === 'walk' ? Math.sin(S.p.walk) : 0; const lean = crouch ? h * 0.1 : 0;
+  const hip = -h * 0.46 * k, sh = -h * 0.82 * k, head = -h * 0.95 * k;
+  g.beginPath(); if (sit) { g.moveTo(0, hip); g.lineTo(h * 0.22, hip); g.lineTo(h * 0.24, 0); } else { g.moveTo(0, hip); g.lineTo(h * 0.13 * t + (crouch ? h * 0.16 : 0), crouch ? -h * 0.05 : 0); g.moveTo(0, hip); g.lineTo(-h * 0.13 * t - (crouch ? h * 0.04 : 0), 0); } g.stroke();
+  g.lineWidth = Math.max(4, h * 0.17) + extra; g.strokeStyle = body; g.beginPath(); g.moveTo(0, hip); g.lineTo(lean, sh); g.stroke(); g.strokeStyle = ink; g.lineWidth = lw;
+  g.beginPath(); g.arc(lean * 1.2, head, h * 0.105 + extra / 2, 0, 7); g.fill();
+  if (pose === 'soldier') { g.beginPath(); g.arc(0, head - h * 0.02, h * 0.14 + extra / 2, Math.PI, 0); g.fill(); g.beginPath(); g.moveTo(0, sh + h * 0.06); g.lineTo(h * 0.27, sh + h * 0.1); g.stroke(); g.beginPath(); g.moveTo(-h * 0.04, sh + h * 0.08); g.lineTo(h * 0.36, sh + h * 0.2); g.stroke(); if (!rim) { g.fillStyle = P.lite; g.fillRect(h * 0.25, sh + h * 0.06, h * 0.09, h * 0.07); } }
+  else if (me) { g.fillStyle = ink; g.fillRect(-h * 0.22 - extra / 2, sh + h * 0.02 - extra / 2, h * 0.14 + extra, h * 0.26 + extra); g.beginPath(); g.moveTo(lean * 0.8, sh + h * 0.06); g.lineTo(crouch ? h * 0.26 : h * 0.1, pose === 'search' ? hip + h * 0.05 : sh + h * 0.32); g.stroke(); }
+  else { g.beginPath(); g.moveTo(0, sh + h * 0.06); g.lineTo(h * 0.15, sh + h * 0.3); g.stroke(); }
+  g.restore();
+}
+function hud() {
+  const P = PAL; const y = 12; const bg = STYLE === 2 ? '#e3dccd' : '#f4f0e6';
+  if (STYLE === 2) { g.save(); g.globalAlpha = 0.08; g.fillStyle = HATCH; g.translate((Math.random() * 48) | 0, (Math.random() * 48) | 0); g.fillRect(-48, -48, W + 96, H + 96); g.restore(); const vg = g.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.3, W / 2, H * 0.45, Math.max(W, H) * 0.72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.6)'); g.fillStyle = vg; g.fillRect(0, 0, W, H); }
+  if (STYLE === 1) { if (!hud.paper) { const c = document.createElement('canvas'); c.width = c.height = 128; const h = c.getContext('2d'); const d = h.createImageData(128, 128); for (let i = 0; i < d.data.length; i += 4) { const v = 200 + Math.random() * 55; d.data[i] = v; d.data[i + 1] = v - 4; d.data[i + 2] = v - 12; d.data[i + 3] = 30; } h.putImageData(d, 0, 0); hud.paper = g.createPattern(c, 'repeat'); } g.fillStyle = hud.paper; g.fillRect(0, 0, W, H); }
+  g.fillStyle = bg; g.fillRect(10, y, W - 20, 50); g.strokeStyle = P.ink; g.lineWidth = 3; g.strokeRect(10, y, W - 20, 50);
+  g.fillStyle = P.ink; g.textAlign = 'left'; g.font = '900 20px "Noto Serif TC", serif'; g.textBaseline = 'middle';
+  const s = Math.ceil(S.dawn); g.fillText(S.phase === 'title' || S.phase === 'day' ? '被圍第 37 天' : `天亮前 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, 22, y + 25);
+  g.textAlign = 'right'; g.font = '900 18px "Noto Serif TC", serif';
+  g.fillText(`${S.bag.length ? S.bag.join(' ') : '背包空的'}（${S.bag.length}/${S.cap}）`, W - 22, y + 25);
+  if (S.spot > 0.02) { g.fillStyle = P.acc; g.fillRect(10, y + 50, (W - 20) * Math.min(1, S.spot), 8); g.font = '900 14px "Noto Serif TC", serif'; g.textAlign = 'left'; g.fillStyle = P.acc; g.fillText('快被發現了', 14, y + 70); }
+  const p = S.p; if (p.search) { const k = p.search.t / p.search.need; const x0 = X(p.x) - 28, y0 = BASE(p.f) - L.fh * 0.86; g.fillStyle = bg; g.fillRect(x0, y0, 56, 10); g.fillStyle = P.ink; g.fillRect(x0, y0, 56 * k, 10); g.strokeStyle = P.ink; g.lineWidth = 2; g.strokeRect(x0, y0, 56, 10); }
+  g.textBaseline = 'alphabetic';
+}
+
+/* ---------- 按鈕 ---------- */
+function bindHold(id, k) { const b = $(id); const on = (e) => { e.preventDefault(); audioInit(); IN[k] = true; b.classList.add('on'); }; const off = () => { IN[k] = false; b.classList.remove('on'); }; b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); }
+bindHold('bL', 'l'); bindHold('bR', 'r');
+$('bAct').addEventListener('pointerdown', (e) => { e.preventDefault(); act(); });
+addEventListener('keydown', (e) => { if (e.repeat) return; if (e.code === 'ArrowLeft' || e.code === 'KeyA') IN.l = true; if (e.code === 'ArrowRight' || e.code === 'KeyD') IN.r = true; if (['Space', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS', 'KeyE', 'Enter'].includes(e.code)) { e.preventDefault(); act(); } });
+addEventListener('keyup', (e) => { if (e.code === 'ArrowLeft' || e.code === 'KeyA') IN.l = false; if (e.code === 'ArrowRight' || e.code === 'KeyD') IN.r = false; });
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+function renderAct() { const c = S.phase === 'night' ? context() : null; const b = $('bAct'); const html = c ? `${c.t}${c.s ? `<small>${c.s}</small>` : ''}` : '　'; if (b._h !== html) { b._h = html; b.innerHTML = html; } b.classList.toggle('off', !c); }
+
+/* ---------- 主迴圈 ---------- */
+let last = performance.now();
+function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; update(dt); draw(); renderAct(); requestAnimationFrame(loop); }
+resize(); title(); requestAnimationFrame(loop);
+window.__N = { S, IN, act, update, draw, context, startNight, endDlg, beamX, setStyle: () => {} };
+</script>
+</body>
+</html>
