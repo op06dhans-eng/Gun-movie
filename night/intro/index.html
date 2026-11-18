@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>天亮之前・背景故事</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  /* 戰爭漫畫的頁面：泛黃的紙、粗黑框、黃底旁白框、紅色狀聲字 */
+  html, body { margin: 0; height: 100%; background: #14110d; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  body { font-family: "Noto Sans TC", "PingFang TC", sans-serif; color: #0d0d0f; }
+  #page { position: fixed; inset: 0; display: grid; place-items: center; background: #d9cdb2; background-image: radial-gradient(rgba(60,40,10,0.10) 1px, transparent 1.2px); background-size: 6px 6px; }
+  #stage { position: relative; width: min(100vw, 56dvh); height: 100dvh; }
+  .panel { position: absolute; left: 4%; width: 92%; border: 5px solid #0d0d0f; box-shadow: 6px 6px 0 #0d0d0f; overflow: hidden; background: #0d0d0f; opacity: 0; transform: translateY(18px) rotate(var(--r, 0deg)); transition: opacity .5s, transform .5s; }
+  .panel.on { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
+  .panel img { display: block; width: 100%; height: 100%; object-fit: cover; transform-origin: var(--ox, 50%) var(--oy, 50%); }
+  .panel.on img { animation: kb var(--d, 12s) linear forwards; }
+  @keyframes kb { from { transform: scale(1.0); } to { transform: scale(1.08); } }
+  .cap { position: absolute; max-width: 86%; background: #f7d23c; border: 4px solid #0d0d0f; box-shadow: 4px 4px 0 #0d0d0f; padding: 8px 12px; font-weight: 900; font-size: clamp(17px, 2.5dvh, 23px); line-height: 1.5; opacity: 0; transform: scale(.92); transition: opacity .35s, transform .35s; z-index: 3; }
+  .cap.w { background: #fffaf0; }
+  .cap.k { background: #0d0d0f; color: #fffaf0; }
+  .cap.on { opacity: 1; transform: scale(1); }
+  .sfx { position: absolute; font-weight: 900; font-size: clamp(40px, 8dvh, 70px); color: #d8261c; -webkit-text-stroke: 8px #0d0d0f; paint-order: stroke fill; color: #f7d23c; transform: rotate(-9deg) scale(.3); opacity: 0; transition: transform .25s cubic-bezier(.2,2,.4,1), opacity .2s; z-index: 4; letter-spacing: 2px; }
+  .sfx.on { opacity: 1; transform: rotate(-9deg) scale(1); }
+  #ttl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+  #ttl h1 { font-size: clamp(44px, 9dvh, 76px); margin: 0; font-weight: 900; letter-spacing: 6px; background: #f7d23c; border: 6px solid #0d0d0f; box-shadow: 8px 8px 0 #0d0d0f; padding: 6px 22px; transform: rotate(-2deg); }
+  #ttl p { font-size: 20px; font-weight: 900; margin: 22px 0 0; }
+  button { font: 900 22px "Noto Sans TC", sans-serif; background: #fffaf0; color: #0d0d0f; border: 4px solid #0d0d0f; box-shadow: 5px 5px 0 #0d0d0f; padding: 14px 26px; margin-top: 26px; }
+  button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #0d0d0f; }
+  #skip { position: fixed; right: 12px; top: 12px; margin: 0; font-size: 15px; padding: 6px 12px; box-shadow: 3px 3px 0 #0d0d0f; z-index: 9; }
+  #bar { position: fixed; left: 0; bottom: 0; height: 6px; background: #d8261c; width: 0; z-index: 9; }
+  #pg { position: fixed; left: 14px; top: 16px; font-weight: 900; font-size: 15px; z-index: 9; opacity: .7; }
+</style>
+</head>
+<body>
+<div id="page"><div id="stage"></div></div>
+<button id="skip" hidden>跳過 ▶▶</button><div id="pg"></div><div id="bar"></div>
+<script>
+'use strict';
+/* 背景故事：一頁一頁的戰爭漫畫。每一頁有幾格畫面、旁白框依時間出現。全長約 105 秒。
+   panels：[圖, 上緣%, 高度%, 傾斜, 放大的中心]；caps：[第幾秒出現, 文字, 位置（top%/left%）, 樣式] */
+const PAGES = [
+  { t: 13, panels: [['p1.jpg', 16, 52, -1, '50% 50%']], caps: [[0.6, '港灣市。戰爭的第二年。', 6, 4], [3.6, '敵軍包圍了整座城。', 62, 30, 'w'], [6.6, '所有對外的道路，都被封死。<br>沒有人進得來，也沒有人出得去。', 74, 6]] },
+  { t: 13, panels: [['p2.jpg', 12, 60, 1, '40% 80%']], caps: [[0.6, '先是停電。', 5, 4], [3.0, '然後，水龍頭再也流不出一滴水。', 64, 14, 'w'], [6.6, '糧食一天比一天少。<br>藥，早就沒有了。', 78, 6]] },
+  { t: 15, panels: [['p3.jpg', 10, 62, -1, '50% 5%']], sfx: [[4.4, '砰', 30, 54]], caps: [[0.6, '街口的高樓上，有狙擊手。', 4, 4], [5.4, '倒下的是提水的人、排隊領麵包的人。', 62, 10, 'w'], [9.6, '沒有人知道，扣扳機的是敵軍——<br>還是我們自己的人。', 76, 6, 'k']] },
+  { t: 16, panels: [['p4.jpg', 20, 34, 1, '70% 50%']], caps: [[0.6, '夜裡，有人挨家挨戶搜刮。', 8, 4], [4.2, '有的穿著敵軍的制服。<br>有的，穿著我軍的制服。', 57, 14, 'w'], [9.4, '仗打久了，<br>人有時候就不再是人。', 74, 8, 'k']] },
+  { t: 14, panels: [['p5.jpg', 14, 56, -1, '25% 85%']], caps: [[0.6, '被圍的第 22 天。', 5, 4], [3.0, '爸爸說，他去找點吃的，天亮前回來。', 62, 8, 'w'], [8.4, '他沒有回來。', 78, 40, 'k']] },
+  { t: 14, panels: [['p6.jpg', 16, 50, 1, '35% 70%']], caps: [[0.6, '媽媽等了五天。', 6, 4], [3.2, '第 27 天，她把門鎖好，也出門去找他。', 60, 8, 'w'], [8.4, '她也沒有回來。', 76, 36, 'k']] },
+  { t: 18, panels: [['p7.jpg', 18, 40, -1, '65% 60%']], caps: [[0.6, '今天是第 37 天。<br>媽媽離開後的第十天。', 5, 4], [5.0, '家裡只剩下你，和十歲的妹妹。', 62, 12, 'w'], [9.2, '昨晚，她開始發燒。', 73, 30], [13.0, '家裡沒有藥。<br>今晚，你得出門。', 84, 24, 'k']] },
+];
+const stage = document.getElementById('stage'), bar = document.getElementById('bar'), pg = document.getElementById('pg');
+const TOTAL = PAGES.reduce((a, p) => a + p.t, 0);
+for (const p of PAGES) for (const q of p.panels) { const i = new Image(); i.src = q[0]; } // 先載入
+let timers = [], AC = null;
+function wind() { try { AC = new (window.AudioContext || window.webkitAudioContext)(); const b = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = AC.createBufferSource(); s.buffer = b; s.loop = true; const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 320; const g = AC.createGain(); g.gain.value = 0.06; s.connect(f).connect(g).connect(AC.destination); s.start(); const o = AC.createOscillator(); o.frequency.value = 55; const g2 = AC.createGain(); g2.gain.value = 0.035; o.connect(g2).connect(AC.destination); o.start(); } catch (e) {} } // 只有風聲和很低的嗡鳴，沒有爆炸聲
+function later(s, f) { timers.push(setTimeout(f, s * 1000)); }
+function show(n, t0) {
+  stage.innerHTML = ''; const P = PAGES[n]; pg.textContent = `${n + 1} / ${PAGES.length}`;
+  for (const [src, top, h, rot, org] of P.panels) { const d = document.createElement('div'); d.className = 'panel'; d.style.cssText = `top:${top}%;height:${h}%;--r:${rot * 0.6}deg;--d:${P.t + 1}s`; const [ox, oy] = org.split(' '); d.style.setProperty('--ox', ox); d.style.setProperty('--oy', oy); d.innerHTML = `<img src="${src}" alt="">`; stage.appendChild(d); requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('on'))); }
+  for (const [at, text, top, left, cls] of P.caps) { const c = document.createElement('div'); c.className = 'cap ' + (cls || ''); c.style.cssText = `top:${top}%;left:${left}%`; c.innerHTML = text; stage.appendChild(c); later(at, () => c.classList.add('on')); }
+  for (const [at, text, top, left] of P.sfx || []) { const c = document.createElement('div'); c.className = 'sfx'; c.style.cssText = `top:${top}%;left:${left}%`; c.textContent = text; stage.appendChild(c); later(at, () => c.classList.add('on')); }
+  later(P.t, () => (n + 1 < PAGES.length ? show(n + 1, t0 + P.t) : fin()));
+}
+function fin() { timers.forEach(clearTimeout); timers = []; document.getElementById('skip').hidden = true; pg.textContent = ''; bar.style.transition = 'none'; bar.style.width = '100%';
+  stage.innerHTML = `<div id="ttl"><div><h1>天亮之前</h1><p>被圍的第 37 天</p><button id="go">開始第一關</button></div></div>`; document.getElementById('go').onclick = () => { location.href = '../?play=1'; }; }
+function start() { wind(); document.getElementById('skip').hidden = false; bar.style.transition = `width ${TOTAL}s linear`; requestAnimationFrame(() => (bar.style.width = '100%')); show(0, 0); }
+stage.innerHTML = `<div id="ttl"><div><h1>天亮之前</h1><p>背景故事（約 ${Math.round(TOTAL / 5) * 5} 秒）</p><button id="go">開始播放</button></div></div>`;
+document.getElementById('go').onclick = start; document.getElementById('skip').onclick = fin;
+window.__I = { start, fin, show, PAGES, TOTAL, clear: () => { timers.forEach(clearTimeout); timers = []; } };
+</script>
+</body>
+</html>

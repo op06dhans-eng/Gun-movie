@@ -168,8 +168,8 @@ function title() {
   card(`<h1>天亮之前</h1><h2>港灣市被圍的第 37 天</h2>
     <p>城裡斷水斷電已經一個多月。你和十歲的妹妹躲在家裡。</p>
     <p>妹妹昨晚開始發燒。</p>
-    <div class="row"><button data-k="go">開始<small>樣品：一個白天＋一個晚上，約 5 分鐘</small></button></div>
-    <p class="credit">畫面素材（皆為公開授權）：家具模型取自 Khronos 範例庫（Wayfair、Darmstadt、Microsoft）；牆面材質 ambientCG、Poly Haven；人物 Microsoft Rocketbox；動作 Quaternius；步槍模型 xlisov。</p>`, { go: day });
+    <div class="row"><button data-k="story">看背景故事<small>漫畫，約 100 秒</small></button><button data-k="go">直接開始<small>第一關，約 5 分鐘</small></button></div>
+    <p class="credit">畫面素材（皆為公開授權）：家具模型取自 Khronos 範例庫（Wayfair、Darmstadt、Microsoft）；牆面材質 ambientCG、Poly Haven；人物 Microsoft Rocketbox；動作 Quaternius；步槍模型 xlisov。</p>`, { go: day, story: () => { location.href = 'intro/'; } });
 }
 function day() {
   S.phase = 'day';
@@ -183,7 +183,7 @@ function plan() {
   card(`<h1>入夜</h1><h2>天亮之前一定要回到家</h2>
     <p>對面那棟被砲擊過的公寓，聽說還有人沒搬走，也有東西沒被搜走。</p>
     <p class="q">今晚的目標：找到退燒藥。</p>
-    <p style="font-size:17px">◀ ▶ 左右走；靠近樓梯、櫃子、能躲的地方時，右邊的按鈕會變成「上樓／下樓」「搜」「躲」。<br>巡邏兵的手電筒和外面的探照燈照到你，就會被發現。搜東西會發出聲音，搜到一半可以先停手，進度會留著。<br>聽說三樓那個兵，每巡兩趟就會到窗邊抽根菸。</p>
+    <p style="font-size:17px">◀ ▶ 左右走；靠近樓梯、櫃子、能躲的地方時，右邊的按鈕會變成「上樓／下樓」「搜」「躲」。<br>一旦被巡邏兵的手電筒或外面的探照燈照到，你就會暴露。搜東西會發出聲音，搜到一半可以先停手，進度會留著。<br>聽說三樓那個兵，每巡兩趟，就會到窗邊抽一根菸。</p>
     <div class="row"><button data-k="go">出門</button></div>`, { go: startNight });
 }
 function startNight() { hideCard(); S.phase = 'night'; S.t = 0; $('ctl').hidden = false; toast('天亮前要回到一樓的門口', 2200); }
@@ -427,7 +427,7 @@ function renderAct() { const c = S.phase === 'night' ? context() : null; const b
 /* ---------- 主迴圈 ---------- */
 let last = performance.now();
 function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; update(dt); draw(); renderAct(); requestAnimationFrame(loop); }
-resize(); title(); requestAnimationFrame(loop);
+resize(); if (/[?&]play=1/.test(location.search)) day(); else title(); requestAnimationFrame(loop);
 window.__N = { S, IN, act, update, draw, context, startNight, endDlg, beamX, setStyle: () => {} };
 </script>
 </body>

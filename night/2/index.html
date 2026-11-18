@@ -86,7 +86,7 @@ const CFG = {
     { f: 0, x: 17.7, n: '架上的藥', loot: ['抗生素'], need: 3.0, shelf: true },
   ],
   theme: { font: '"Noto Serif TC", serif', ink: '#1f1d1a', hudBg: '#ebe6da', mk: '#ebe6da', bubble: '#f1ece0', bg0: '#1c1b19', vignette: 0.32, glow: 'rgba(240,232,210,0.85)', pdark: 0, fxFill: '#ebe6da', fxStroke: '#1f1d1a', warnInk: '#ebe6da' },
-  spotText: () => '狙擊手看到你了',
+  spotText: () => '你暴露在瞄準鏡裡',
   hooks: {},
 };
 function L_vhmHalf() { return ENG.L.vhm / 2; }
@@ -115,7 +115,7 @@ function plan() {
   ENG.card(`<h1>入夜</h1><h2>城西，被炸毀的藥局</h2>
     <p>聽說藥局的地下室還住著人，也許還有藥。</p>
     <p>出門前，你把家裡能拿去換的東西都裝進背包：<b>${CARRY.length ? CARRY.join('、') : '什麼也沒有'}</b>。${HOME0['繃帶'] ? '繃帶留在家裡。' : ''}</p>
-    <p style="font-size:16px">路口有狙擊手。遠處那棟高樓上<b>有反光的時候，就是他在看</b>；等反光消失再過去，或躲在護欄後面。</p>
+    <p style="font-size:16px">路口有狙擊手。遠處高樓上<b>出現鏡片反光，代表他正盯著路口</b>；等反光消失再通過，或先躲到護欄後面。</p>
     <div class="row"><button data-k="go">出門</button></div>`, { go: () => { S.bag = CARRY.slice(); ENG.startNight(); ENG.toast('天亮前要回到家門口', 2200); } });
 }
 // 跟女人說話
@@ -216,10 +216,10 @@ CFG.hooks.drawFront = () => {
   // 遠方高樓上的反光（狙擊手在看）
   if (sniperWatching()) { const x = X(SNIPE.glint.x), y = WY(SNIPE.glint.y), u = ENG.L.u; const k = 0.6 + 0.4 * Math.abs(Math.sin(S.t * 7)); g.save(); g.globalCompositeOperation = 'lighter'; const gr = g.createRadialGradient(x, y, 0, x, y, u * 0.7 * k); gr.addColorStop(0, 'rgba(255,250,230,0.95)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - u, y - u, u * 2, u * 2); g.strokeStyle = 'rgba(255,250,230,0.8)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - u * 0.6 * k, y); g.lineTo(x + u * 0.6 * k, y); g.moveTo(x, y - u * 0.4 * k); g.lineTo(x, y + u * 0.4 * k); g.stroke(); g.restore(); }
 };
-CFG.hooks.labels = (LB) => { const p = S.p; if (p.f === 1 && p.x > 6.5 && p.x < 13.5) LB.push([X(10.55), BASE(1) - ENG.L.fh * 1.05, sniperWatching() ? '狙擊手在看' : '現在沒在看']); };
+CFG.hooks.labels = (LB) => { const p = S.p; if (p.f === 1 && p.x > 6.5 && p.x < 13.5) LB.push([X(10.55), BASE(1) - ENG.L.fh * 1.05, sniperWatching() ? '他正盯著路口' : '他移開了視線']); };
 CFG.hooks.end = (why) => {
   const p = S.p; p.search = null;
-  if (why === 'caught') { ENG.thump(0.6); ENG.tick(3000, 0.12, 0.35, 'highpass'); ENG.toast('啪！子彈打在你腳邊。', 1600); setTimeout(() => morning('caught'), 1500); }
+  if (why === 'caught') { ENG.thump(0.6); ENG.tick(3000, 0.12, 0.35, 'highpass'); ENG.toast('一發子彈打在你腳邊的碎石上。', 1600); setTimeout(() => morning('caught'), 1500); }
   else morning(why);
 };
 function finalRoute() { if (WOM.route !== 'none') return WOM.route; return WOM.seen ? 'leave' : 'none'; }
