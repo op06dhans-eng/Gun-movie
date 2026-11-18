@@ -55,7 +55,7 @@ const ENG = (function () {
   const climbK = (p) => 1 - p.climb / CLIMB;
   function climbY(p) { const k = climbK(p); const t = k < 0.15 ? 0 : (k - 0.15) / 0.85; return lerp(p.climbFrom, p.climbTo, t) * HF; }
   const upZone = (s) => s.dir < 0 ? [s.x - 0.05, s.xb + 0.3] : [s.xb - 0.3, s.x + 0.05], downZone = (s) => s.dir < 0 ? [s.xt - 0.4, s.xt + 0.5] : [s.xt - 0.5, s.xt + 0.4];
-  function addLoot(it) { if (S.bag.length >= S.cap) { toast(`背包滿了（${S.cap} 格），${it}帶不走`); return false; } S.bag.push(it); return true; }
+  function addLoot(it) { if (S.bag.filter((x) => x !== '抗生素').length >= S.cap) { toast(`背包滿了（${S.cap} 格），${it}帶不走`); return false; } S.bag.push(it); return true; }
   function context() {
     const p = S.p; if (S.phase !== 'night' || p.climb > 0) return null;
     if (p.search) return { k: 'stop', t: '停手', s: '進度會留著' };
@@ -116,8 +116,8 @@ const ENG = (function () {
     const ln = A.lens && A.lens[i]; return ln ? [x + dir * (ln[0] * k - info.ox * L.u), base + info.foot * L.u - h + ln[1] * k] : null;
   }
   function player() { const p = S.p; let y = BASE(p.f), x = X(p.x), nm = 'p_idle', fr = 0;
-    if (p.climb > 0) { y = WY(climbY(p)); nm = climbK(p) < 0.15 ? 'p_walk' : 'p_climb'; fr = p.walk * 1.1; }
-    else if (p.anim) { nm = p.anim; fr = p.walk; } else if (p.hide || p.search) nm = 'p_crouch'; else if (Math.abs(p.vx) > 0.3) { nm = 'p_walk'; fr = p.walk * 1.1; }
+    if (p.climb > 0) { y = WY(climbY(p)); nm = climbK(p) < 0.15 ? (C.theme.walk || 'p_walk') : 'p_climb'; fr = p.walk * 1.1; }
+    else if (p.anim) { nm = p.anim; fr = p.walk; } else if (p.hide || p.search) nm = 'p_crouch'; else if (Math.abs(p.vx) > 0.3) { nm = C.theme.walk || 'p_walk'; fr = p.walk * 1.1; }
     if (C.theme.glow && !p.hide) { g.save(); g.shadowColor = C.theme.glow; g.shadowBlur = 7; }
     sprite(IMG.spr, C.spr, nm, fr, x, y, p.face, p.hide ? 0.55 : C.theme.pdark || 0, C.theme.ptint); if (C.theme.glow && !p.hide) g.restore(); }
 
@@ -156,7 +156,7 @@ const ENG = (function () {
     g.fillStyle = th.hudBg; g.fillRect(10, y, W - 20, 50); g.strokeStyle = th.ink; g.lineWidth = 3; g.strokeRect(10, y, W - 20, 50);
     g.fillStyle = th.ink; g.textAlign = 'left'; g.font = '900 20px ' + th.font; g.textBaseline = 'middle';
     const s = Math.ceil(S.dawn); g.fillText(S.phase === 'night' || S.phase === 'end' || S.phase === 'dlg' ? `天亮前 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : C.dayLabel, 22, y + 25);
-    g.textAlign = 'right'; g.font = '900 17px ' + th.font; g.fillText(`${S.bag.length ? S.bag.join(' ') : '背包空的'}（${S.bag.length}/${S.cap}）`, W - 22, y + 25);
+    g.textAlign = 'right'; g.font = '900 17px ' + th.font; { const cnt = {}; for (const it of S.bag) cnt[it] = (cnt[it] || 0) + 1; const txt = Object.keys(cnt).map((k) => cnt[k] > 1 ? `${k}×${cnt[k]}` : k).join(' '); const used = S.bag.filter((x) => x !== '抗生素').length; let fs = 17; g.font = `900 ${fs}px ` + th.font; const full = `${txt || '背包空的'}（${used}/${S.cap}）`; while (fs > 11 && g.measureText(full).width > W - 190) { fs--; g.font = `900 ${fs}px ` + th.font; } g.fillText(full, W - 22, y + 25); }
     if (S.spot > 0.02) { g.fillStyle = '#b5402f'; g.fillRect(10, y + 50, (W - 20) * Math.min(1, S.spot), 8); g.font = '900 15px ' + th.font; g.textAlign = 'left'; g.fillStyle = th.warnInk || th.hudBg; g.fillText(C.spotText ? C.spotText(S.spotBy) : '快被發現了', 14, y + 74); }
     const p = S.p; if (p && p.search) { const k = p.search.t / p.search.need; const x0 = X(p.x) - 28, y0 = BASE(p.f) - L.fh * 0.86; g.fillStyle = th.hudBg; g.fillRect(x0, y0, 56, 10); g.fillStyle = th.ink; g.fillRect(x0, y0, 56 * k, 10); g.strokeStyle = th.ink; g.lineWidth = 2; g.strokeRect(x0, y0, 56, 10); }
     g.textBaseline = 'alphabetic';
