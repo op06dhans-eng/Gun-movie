@@ -370,7 +370,7 @@ function draw() {
   soldier(); smokeDraw(Math.min(0.05, S.dtLast || 0.016));
   // 光的顏色：手電筒偏暖、探照燈偏冷
   g.save(); g.globalCompositeOperation = 'lighter';
-  if (sh.cone) { g.globalAlpha = 0.16; g.fillStyle = '#ffd9a0'; g.beginPath(); sh.cone.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
+  if (sh.cone) { g.save(); g.beginPath(); g.rect(X(-0.15), FY(S.sol.f), X(10.15) - X(-0.15), BASE(S.sol.f) - FY(S.sol.f)); g.clip(); g.globalAlpha = 0.16; g.fillStyle = '#ffd9a0'; g.beginPath(); sh.cone.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); g.restore(); }
   if (sh.beam) { g.globalAlpha = 0.2; g.fillStyle = '#dfe8ff'; g.beginPath(); sh.beam.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
   g.restore();
   dust();
