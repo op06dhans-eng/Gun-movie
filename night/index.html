@@ -65,7 +65,7 @@ const L = { top: 66, bot: 132, bx: 0, by: 0, bw: 0, bh: 0, fh: 0, u: 0 };
 const HF = 3.25, BGV = { x0: -1.4, y1: 17.9, pxm: 110 }, VIEW = { x0: -0.45, x1: 10.55, y0: -0.45, y1: 16.75 }; // 背景圖（每公尺 110 像素）與畫面上要顯示的範圍（公尺）
 const IMG = {}; for (const [k, f] of [['bg', 'bg.jpg'], ['bgl', 'bgl.jpg'], ['bgo', 'bgo.jpg'], ['fg', 'fg.webp'], ['fgl', 'fgl.webp'], ['spr', 'sprites.webp']]) { IMG[k] = new Image(); IMG[k].src = f; }
 const OUT = { x0: -0.3, x1: 10.4, y0: 3 * HF - 0.05, y1: 4 * HF - 0.25 }; // 燭光熄滅後要換掉的那一塊（四樓右邊房間）
-const SPR = {"cw":300,"ch":340,"pxm":150,"foot":0.12,"ox":0.74,"anims":{"p_walk":{"row":0,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_climb":{"row":1,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_idle":{"row":2,"n":1,"lens":[null]},"p_crouch":{"row":3,"n":1,"lens":[null]},"s_walk":{"row":4,"n":10,"lens":[[279,125],[279,125],[279,121],[279,119],[279,122],[279,126],[279,126],[279,122],[279,119],[279,121]]},"s_idle":{"row":5,"n":1,"lens":[[268,114]]}}};
+const SPR = {"cw":300,"ch":340,"pxm":150,"foot":0.12,"ox":0.74,"anims":{"p_walk":{"row":0,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_climb":{"row":1,"n":10,"lens":[null,null,null,null,null,null,null,null,null,null]},"p_idle":{"row":2,"n":1,"lens":[null]},"p_crouch":{"row":3,"n":1,"lens":[null]},"s_walk":{"row":4,"n":10,"lens":[[279,125],[279,125],[279,121],[279,119],[279,122],[279,126],[279,126],[279,122],[279,119],[279,121]]},"s_idle":{"row":5,"n":1,"lens":[[268,114]]},"s_rest":{"row":6,"n":1,"lens":[null]}}};
 function resize() {
   DPR = Math.min(3, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; g.setTransform(DPR, 0, 0, DPR, 0, 0);
   const aw = W, ah = H - L.top - L.bot, vw = VIEW.x1 - VIEW.x0; const s = Math.min(aw / vw, 60); // 寬度填滿，上下跟著人捲動
@@ -129,7 +129,7 @@ const DECOR = [ // 其他陳設（只有畫面）
 ];
 
 const S = {
-  phase: 'title', t: 0, night: 110, dawn: 110, ate: false,
+  phase: 'title', t: 0, night: 240, dawn: 240, ate: false,
   p: { f: 0, x: 0.9, vx: 0, face: 1, hide: false, climb: 0, climbTo: 0, search: null, sk: 0, walk: 0 },
   bag: [], cap: 4, caught: false, tookCouple: null, home: false,
   sol: { f: 2, x: 8.8, dir: -1, mode: 'patrol', wait: 0, tx: 0, look: 0, alert: 0 },
@@ -158,7 +158,7 @@ function title() {
   card(`<h1>天亮之前</h1><h2>港灣市被圍的第 37 天</h2>
     <p>城裡斷水斷電已經一個多月。你和十歲的妹妹小玥躲在家裡。</p>
     <p>小玥昨晚開始發燒。</p>
-    <div class="row"><button data-k="go">開始<small>樣品：一個白天＋一個晚上，約 3 分鐘</small></button></div>
+    <div class="row"><button data-k="go">開始<small>樣品：一個白天＋一個晚上，約 5 分鐘</small></button></div>
     <p class="credit">畫面素材（皆為公開授權）：家具模型取自 Khronos 範例庫（Wayfair、Darmstadt、Microsoft）；牆面材質 ambientCG、Poly Haven；人物 Microsoft Rocketbox；動作 Quaternius；步槍模型 xlisov。</p>`, { go: day });
 }
 function day() {
@@ -173,7 +173,7 @@ function plan() {
   card(`<h1>入夜</h1><h2>天亮之前一定要回到家</h2>
     <p>對面那棟被砲擊過的公寓，聽說還有人沒搬走，也有東西沒被搜走。</p>
     <p class="q">今晚的目標：找到退燒藥。</p>
-    <p style="font-size:17px">◀ ▶ 左右走；靠近樓梯、櫃子、能躲的地方時，右邊的按鈕會變成「上樓／下樓」「搜」「躲」。<br>巡邏兵的手電筒和外面的探照燈照到你，就會被發現。</p>
+    <p style="font-size:17px">◀ ▶ 左右走；靠近樓梯、櫃子、能躲的地方時，右邊的按鈕會變成「上樓／下樓」「搜」「躲」。<br>巡邏兵的手電筒和外面的探照燈照到你，就會被發現。搜東西會發出聲音，搜到一半可以先停手，進度會留著。<br>聽說三樓那個兵，每巡兩趟就會到窗邊抽根菸。</p>
     <div class="row"><button data-k="go">出門</button></div>`, { go: startNight });
 }
 function startNight() { hideCard(); S.phase = 'night'; S.t = 0; $('ctl').hidden = false; toast('天亮前要回到一樓的門口', 2200); }
@@ -222,7 +222,7 @@ const near = (f, x, r) => S.p.f === f && Math.abs(S.p.x - x) < r;
 const climbK = (p) => 1 - p.climb / CLIMB; // 0→1
 function climbY(p) { const k = climbK(p); const t = k < 0.15 ? 0 : (k - 0.15) / 0.85; return lerp(p.climbFrom, p.climbTo, t) * HF; }
 function context() { // 右邊按鈕現在能做什麼
-  const p = S.p; if (p.climb > 0 || p.search) return null;
+  const p = S.p; if (p.climb > 0) return null; if (p.search) return { k: 'stop', t: '停手', s: '進度會留著' };
   if (p.hide) return { k: 'unhide', t: '出來' };
   if (near(EXIT.f, EXIT.x, 0.5)) return { k: 'home', t: '回家', s: S.bag.length ? `帶著 ${S.bag.length} 樣東西` : '空手' };
   for (const s of STAIRS) { const u = upZone(s), d = downZone(s); if (p.f === s.f && p.x >= u[0] && p.x <= u[1]) return { k: 'up', t: '上樓', st: s }; if (p.f === s.f + 1 && p.x >= d[0] && p.x <= d[1]) return { k: 'down', t: '下樓', st: s }; }
@@ -234,7 +234,8 @@ function act() {
   audioInit(); if (S.phase !== 'night') return; const c = context(); if (!c) return; const p = S.p;
   if (c.k === 'home') goHome();
   else if (c.k === 'up' || c.k === 'down') { const st = c.st, up = c.k === 'up'; p.climb = CLIMB; p.climbFrom = p.f; p.climbTo = up ? st.f + 1 : st.f; p.cx0 = p.x; p.cx1 = up ? st.xt : st.xb; p.cxa = up ? st.xb : st.xt; p.face = Math.sign(p.cx1 - p.cxa); p.vx = 0; tick(500, 0.12, 0.25); }
-  else if (c.k === 'search') { if (c.b.couple) { coupleDilemma(c.b); return; } p.search = { b: c.b, t: 0, need: S.ate ? 1.7 : 2.6 }; }
+  else if (c.k === 'search') { if (c.b.couple) { coupleDilemma(c.b); return; } p.search = { b: c.b, t: c.b.prog || 0, need: S.ate ? 1.7 : 2.6 }; }
+  else if (c.k === 'stop') { p.search.b.prog = p.search.t; p.search = null; }
   else if (c.k === 'hide') { p.hide = c.h; p.hx = p.x; p.vx = 0; tick(700, 0.1, 0.12); toast(c.h.k === 'wardrobe' ? '你躲進衣櫃，屏住呼吸' : `你躲在${c.h.n}，屏住呼吸`); }
   else if (c.k === 'unhide') { p.x = p.hx; p.hide = false; }
 }
@@ -253,16 +254,17 @@ function update(dt) {
   if (p.hide) p.x = lerp(p.x, p.hide.x + (p.hide.k === 'door' ? 0.12 : 0), Math.min(1, dt * 8));
   // 搜索（會出聲：同一層的巡邏兵聽得到）
   if (p.search) { p.search.t += dt; if (Math.random() < dt * 6) tick(2200 + Math.random() * 1500, 0.08, 0.1, 'highpass');
-    const sol = S.sol; if (sol.f === p.f && Math.abs(sol.x - p.x) < 4.2 && sol.mode !== 'chase') { sol.mode = 'listen'; sol.tx = p.x; sol.wait = 0; }
+    const sol = S.sol; if (sol.f === p.f && Math.abs(sol.x - p.x) < (sol.mode === 'rest' ? 1.8 : 4.2) && sol.mode !== 'chase') { if (sol.mode === 'rest') toast('巡邏兵把菸丟了，轉過頭來', 1600); sol.mode = 'listen'; sol.tx = p.x; sol.wait = 0; }
     if (p.search.t >= p.search.need) { const b = p.search.b; b.done = true; p.search = null; if (!b.loot.length) toast(`${b.n}：空的`); else { const got = []; for (const it of b.loot) if (addLoot(it)) got.push(it); if (got.length) toast(`找到：${got.join('、')}`); } } }
   // 巡邏兵（三樓）：來回走、在兩端停下來張望；聽到聲音就走過來看
   const sol = S.sol; sol.look += dt;
-  if (sol.mode === 'patrol') { if (sol.wait > 0) { sol.wait -= dt; if (sol.wait < 1.0 && sol.wait + dt >= 1.0) sol.dir = -sol.dir; } else { sol.x += sol.dir * 0.85 * dt; if (sol.x < 1.0 || sol.x > 9.2) { sol.x = clamp(sol.x, 1.0, 9.2); sol.wait = 2.2; } } }
+  if (sol.mode === 'patrol') { if (sol.wait > 0) { sol.wait -= dt; if (sol.wait < 1.0 && sol.wait + dt >= 1.0) sol.dir = -sol.dir; } else { sol.x += sol.dir * 0.85 * dt; if (sol.x < 1.0 || sol.x > 9.2) { const left = sol.x < 1.0; sol.x = clamp(sol.x, 1.0, 9.2); sol.wait = 2.2; if (left) { sol.legs = (sol.legs || 0) + 1; if (sol.legs % 2 === 0) { sol.mode = 'rest'; sol.dir = -1; sol.wait = 12; } } } } }
   else if (sol.mode === 'listen') { const d = sol.tx - sol.x; if (Math.abs(d) > 0.6) { sol.dir = Math.sign(d); sol.x += sol.dir * 1.15 * dt; } else { sol.mode = 'look'; sol.wait = 3; } }
+  else if (sol.mode === 'rest') { sol.wait -= dt; if (sol.wait <= 0) { sol.mode = 'patrol'; sol.dir = 1; sol.wait = 0.6; } } // 在窗邊抽菸：面向窗外、手電筒關掉
   else if (sol.mode === 'look') { sol.wait -= dt; if (Math.floor(sol.wait * 1.2) % 2 === 0) sol.dir = Math.sin(sol.look * 2) > 0 ? 1 : -1; if (sol.wait <= 0) sol.mode = 'patrol'; }
   // 被看到：手電筒（同一層、前方 3.2 單位內）或探照燈（五樓窗戶）
   let seen = 0, by = '';
-  if (!p.hide && (p.climb <= 0 || climbK(p) > 0.75) && sol.f === p.f) { const dx = (p.x - sol.x) * sol.dir; if (dx > 0.15 && dx < 3.2) { seen = 1.6 - dx * 0.25; by = 'sol'; } }
+  if (!p.hide && sol.mode !== 'rest' && (p.climb <= 0 || climbK(p) > 0.75) && sol.f === p.f) { const dx = (p.x - sol.x) * sol.dir; if (dx > 0.15 && dx < 3.2) { seen = 1.6 - dx * 0.25; by = 'sol'; } }
   S.beam.t += dt; const bx = beamX();
   if (!p.hide && p.f === 4 && bx !== null && Math.abs(p.x - bx) < 0.7 && WINDOWS.some((w) => w.f === 4 && Math.abs(w.x - p.x) < 0.8)) { seen = Math.max(seen, 1.5); by = by || 'beam'; }
   if (seen) { S.spot += seen * dt; S.spotBy = by; } else S.spot = Math.max(0, S.spot - dt * 0.7);
@@ -289,6 +291,8 @@ function sprite(name, frame, x, base, dir, dark = 0) { // x、base＝腳的位�
   const ln = A.lens[i]; return ln ? [x + dir * (ln[0] * k - SPR.ox * L.u), base + SPR.foot * L.u - h + ln[1] * k] : null;
 }
 function soldier() { const sol = S.sol, moving = sol.mode === 'patrol' ? sol.wait <= 0 : sol.mode === 'listen'; sol.anim = (sol.anim || 0) + (moving ? 0.17 : 0);
+  if (sol.mode === 'rest') { sprite('s_rest', 0, X(sol.x), BASE(sol.f), sol.dir, 0.3); // 抽菸：嘴邊一點火光，吸的時候變亮
+    const pulse = 0.5 + 0.5 * Math.max(0, Math.sin(S.t * 1.3)) ** 8, ex = X(sol.x) + sol.dir * L.u * 0.16, ey = BASE(sol.f) - L.u * 1.56; g.save(); g.globalCompositeOperation = 'lighter'; const r = L.u * (0.25 + pulse * 0.25); const gr = g.createRadialGradient(ex, ey, 0, ex, ey, r); gr.addColorStop(0, `rgba(255,140,60,${0.35 + pulse * 0.4})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(ex - r, ey - r, r * 2, r * 2); g.restore(); g.fillStyle = '#ffb060'; g.fillRect(ex - 1.5, ey - 1.5, 3, 3); return null; }
   return sprite(moving ? 's_walk' : 's_idle', moving ? sol.anim : 0, X(sol.x), BASE(sol.f), sol.dir, 0.25); }
 function player() { const p = S.p; let y = BASE(p.f), x = X(p.x), nm = 'p_idle', fr = 0;
   if (p.climb > 0) { y = WY(climbY(p)); nm = climbK(p) < 0.15 ? 'p_walk' : 'p_climb'; fr = p.walk * 1.1; }
@@ -303,11 +307,12 @@ function lightMask(m, lens) { const u = L.u, fh = L.fh; m.globalCompositeOperati
   const glow = (x, y, r, a) => { const gr = m.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); m.fillStyle = gr; m.fillRect(x - r, y - r, r * 2, r * 2); };
   const p = S.p; glow(X(p.x), (p.climb > 0 ? WY(climbY(p)) : BASE(p.f)) - fh * 0.32, u * 1.25, p.hide ? 0.15 : 0.42);
   const s = S.sol, [sx, sy] = lens || [X(s.x) + s.dir * u * 0.9, BASE(s.f) - u * 1.35], len = u * 3.4; const cone = [[sx, sy - u * 0.04], [sx + s.dir * len, sy - fh * 0.32], [sx + s.dir * len, BASE(s.f) + 2], [sx + s.dir * u * 0.5, BASE(s.f) + 2]];
-  const gr = m.createLinearGradient(sx, sy, sx + s.dir * len, sy); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.75)'); gr.addColorStop(1, 'rgba(0,0,0,0.15)'); m.fillStyle = gr; m.beginPath(); cone.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill();
+  if (s.mode === 'rest') return { cone: null, beam: beamMask(m) }; const gr = m.createLinearGradient(sx, sy, sx + s.dir * len, sy); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.75)'); gr.addColorStop(1, 'rgba(0,0,0,0.15)'); m.fillStyle = gr; m.beginPath(); cone.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill();
   glow(sx + s.dir * u * 2.2, BASE(s.f) - fh * 0.25, u * 1.4, 0.35);
-  const bx = beamX(); let beam = null; if (bx !== null) { beam = [[X(bx) - u * 0.22, FY(4) - u * 0.6], [X(bx) + u * 0.22, FY(4) - u * 0.6], [X(bx) + u * 0.75, BASE(4)], [X(bx) - u * 0.75, BASE(4)]]; m.fillStyle = 'rgba(0,0,0,0.9)'; m.beginPath(); beam.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill(); }
+  const beam = beamMask(m);
   return { cone, beam };
 }
+function beamMask(m) { const u = L.u;const bx = beamX(); let beam = null; if (bx !== null) { beam = [[X(bx) - u * 0.22, FY(4) - u * 0.6], [X(bx) + u * 0.22, FY(4) - u * 0.6], [X(bx) + u * 0.75, BASE(4)], [X(bx) - u * 0.75, BASE(4)]]; m.fillStyle = 'rgba(0,0,0,0.9)'; m.beginPath(); beam.forEach(([x, y], i) => (i ? m.lineTo(x, y) : m.moveTo(x, y))); m.closePath(); m.fill(); } return beam; }
 const LC = document.createElement('canvas'), LCG = LC.getContext('2d');
 function lit(img, lens, clip) { // 把 img（照亮版）透過光的形狀疊上去；clip＝只畫這個世界座標長方形
   if (LC.width !== cv.width || LC.height !== cv.height) { LC.width = cv.width; LC.height = cv.height; }
@@ -339,12 +344,12 @@ function draw() {
   soldier();
   // 光的顏色：手電筒偏暖、探照燈偏冷
   g.save(); g.globalCompositeOperation = 'lighter';
-  g.globalAlpha = 0.16; g.fillStyle = '#ffd9a0'; g.beginPath(); sh.cone.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill();
+  if (sh.cone) { g.globalAlpha = 0.16; g.fillStyle = '#ffd9a0'; g.beginPath(); sh.cone.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
   if (sh.beam) { g.globalAlpha = 0.2; g.fillStyle = '#dfe8ff'; g.beginPath(); sh.beam.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
   g.restore();
   dust();
   if (S.spot > 0.05 && S.spotBy === 'sol') { g.fillStyle = '#ff5a48'; g.font = `900 ${Math.round(L.fh * 0.3)}px serif`; g.textAlign = 'center'; g.fillText('！', X(S.sol.x), BASE(S.sol.f) - L.fh * 0.7); }
-  for (const b of S.boxes) if (S.p.f === b.f && Math.abs(S.p.x - b.x) < 2.2) { g.globalAlpha = b.done ? 0.45 : 1; marker(X(b.x), BASE(b.f) - L.fh * 0.78, b.done ? '✕' : '?'); g.globalAlpha = 1; }
+  for (const b of S.boxes) if (S.p.f === b.f && Math.abs(S.p.x - b.x) < 2.2) { g.globalAlpha = b.done ? 0.45 : 1; marker(X(b.x), BASE(b.f) - L.fh * 0.78, b.done ? '✕' : '?'); g.globalAlpha = 1; if (!b.done && b.prog > 0 && !(S.p.search && S.p.search.b === b)) { const need = S.ate ? 1.7 : 2.6, x0 = X(b.x) - 16, y0 = BASE(b.f) - L.fh * 0.78 + 16; g.fillStyle = 'rgba(22,24,27,0.85)'; g.fillRect(x0, y0, 32, 6); g.fillStyle = '#e8e1d0'; g.fillRect(x0, y0, 32 * Math.min(1, b.prog / need), 6); g.strokeStyle = '#e8e1d0'; g.lineWidth = 1.5; g.strokeRect(x0, y0, 32, 6); } }
   const LB = [];
   for (const h of HIDES) if (near(h.f, h.x, 1.4) && !S.p.hide) LB.push([X(h.x), BASE(h.f) - L.fh * 0.78, '可以躲']);
   if (S.p.climb <= 0 && !S.p.hide) for (const st of STAIRS) { const u = upZone(st), d = downZone(st); if (near(st.f, st.xb, 2.4)) LB.push([X((u[0] + u[1]) / 2), BASE(st.f) - L.fh * 0.78, '▲ 上樓']); if (near(st.f + 1, st.xt, 2.4)) LB.push([X((d[0] + d[1]) / 2), BASE(st.f + 1) - L.fh * 0.78, '▼ 下樓']); }
