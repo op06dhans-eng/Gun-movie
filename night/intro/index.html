@@ -1,78 +1,89 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>天亮之前・背景故事</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  /* 戰爭漫畫的頁面：泛黃的紙、粗黑框、黃底旁白框、紅色狀聲字 */
-  html, body { margin: 0; height: 100%; background: #14110d; overflow: hidden; -webkit-user-select: none; user-select: none; }
-  body { font-family: "Noto Sans TC", "PingFang TC", sans-serif; color: #0d0d0f; }
-  #page { position: fixed; inset: 0; display: grid; place-items: center; background: #d9cdb2; background-image: radial-gradient(rgba(60,40,10,0.10) 1px, transparent 1.2px); background-size: 6px 6px; }
-  #stage { position: relative; width: min(100vw, 56dvh); height: 100dvh; }
-  .panel { position: absolute; border: 5px solid #0d0d0f; box-shadow: 5px 6px 0 #0d0d0f; overflow: hidden; background: #0d0d0f; opacity: 0; outline: 3px solid #d9cdb2; transform: translateY(18px) rotate(var(--r, 0deg)); transition: opacity .5s, transform .5s; }
-  .panel.on { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
-  .panel img { display: block; width: 100%; height: 100%; object-fit: cover; transform-origin: var(--ox, 50%) var(--oy, 50%); }
-  .panel.on img { animation: kb var(--d, 12s) linear forwards; }
-  @keyframes kb { from { transform: scale(1.0); } to { transform: scale(1.08); } }
-  .cap { position: absolute; max-width: 86%; background: #f7d23c; border: 4px solid #0d0d0f; box-shadow: 4px 4px 0 #0d0d0f; padding: 8px 12px; font-weight: 900; font-size: clamp(17px, 2.5dvh, 23px); line-height: 1.5; opacity: 0; transform: scale(.92); transition: opacity .35s, transform .35s; z-index: 3; }
-  .cap.w { background: #fffaf0; }
-  .cap.k { background: #0d0d0f; color: #fffaf0; }
-  .cap.on { opacity: 1; transform: scale(1); }
-  .cap.say { background: #fffaf0; border-radius: 46% / 50%; padding: 16px 26px; text-align: center; box-shadow: none; white-space: nowrap; }
-  .cap.say::after { content: ''; position: absolute; bottom: -26px; width: 0; height: 0; border-style: solid; }
-  .cap.say.tl::after { left: 26%; border-width: 26px 6px 0 20px; border-color: #0d0d0f transparent transparent transparent; }
-  .cap.say.tr::after { right: 26%; border-width: 26px 20px 0 6px; border-color: #0d0d0f transparent transparent transparent; }
-  .cap { white-space: nowrap; }
-  .sfx { position: absolute; font-weight: 900; font-size: clamp(40px, 8dvh, 70px); color: #d8261c; -webkit-text-stroke: 8px #0d0d0f; paint-order: stroke fill; color: #f7d23c; transform: rotate(-9deg) scale(.3); opacity: 0; transition: transform .25s cubic-bezier(.2,2,.4,1), opacity .2s; z-index: 4; letter-spacing: 2px; }
-  .sfx.on { opacity: 1; transform: rotate(-9deg) scale(1); }
-  #ttl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
-  #ttl h1 { font-size: clamp(44px, 9dvh, 76px); margin: 0; font-weight: 900; letter-spacing: 6px; background: #f7d23c; border: 6px solid #0d0d0f; box-shadow: 8px 8px 0 #0d0d0f; padding: 6px 22px; transform: rotate(-2deg); }
-  #ttl p { font-size: 20px; font-weight: 900; margin: 22px 0 0; }
-  button { font: 900 22px "Noto Sans TC", sans-serif; background: #fffaf0; color: #0d0d0f; border: 4px solid #0d0d0f; box-shadow: 5px 5px 0 #0d0d0f; padding: 14px 26px; margin-top: 26px; }
-  button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #0d0d0f; }
-  #skip { position: fixed; right: 12px; top: 12px; margin: 0; font-size: 15px; padding: 6px 12px; box-shadow: 3px 3px 0 #0d0d0f; z-index: 9; }
-  #bar { position: fixed; left: 0; bottom: 0; height: 6px; background: #d8261c; width: 0; z-index: 9; }
-  #pg { position: fixed; left: 14px; top: 6px; font-weight: 900; font-size: 15px; z-index: 9; opacity: .7; }
-</style>
-</head>
-<body>
-<div id="page"><div id="stage"></div></div>
-<button id="skip" hidden>跳過 ▶▶</button><div id="pg"></div><div id="bar"></div>
+  /* 天亮之前・背景故事（電影式）：一格一格全螢幕畫面，鏡頭慢慢推移，字幕一句一句出現在下方 */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #000; color: #f2ede4; font-family: "Noto Sans TC", "PingFang TC", sans-serif; overflow: hidden; }
+  #film { position: fixed; inset: 0; }
+  /* 畫面：手機直式時佔上方，留下方給字幕；寬螢幕時置中 */
+  .shot { position: absolute; left: 0; right: 0; top: 0; height: 72%; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; }
+  .shot.on { opacity: 1; }
+  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: var(--o, 50% 50%); transform: scale(1.04) translate(0, 0); }
+  .shot.on img { animation: kb var(--d, 10s) linear forwards; }
+  @keyframes kb { from { transform: scale(var(--s0, 1.04)) translate(var(--x0, 0), var(--y0, 0)); } to { transform: scale(var(--s1, 1.14)) translate(var(--x1, 0), var(--y1, 0)); } }
+  .shot::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(transparent, #000); }
+  @media (min-aspect-ratio: 4/5) { .shot { left: 50%; right: auto; width: min(100vw, calc(72vh * 0.75)); transform: translateX(-50%); } }
+  #sub { position: fixed; left: 0; right: 0; top: 70%; bottom: 0; display: grid; place-items: start center; padding: 18px 20px 0; }
+  .line { grid-area: 1 / 1; max-width: 640px; text-align: center; font-weight: 900; font-size: clamp(21px, 3.1dvh, 28px); line-height: 1.6; opacity: 0; transform: translateY(8px); transition: opacity .9s ease, transform .9s ease; text-wrap: balance; }
+  .line.on { opacity: 1; transform: none; }
+  .line.say { color: #f3d79a; font-family: "Noto Serif TC", serif; }
+  #day { position: fixed; left: 0; right: 0; top: max(14px, env(safe-area-inset-top)); text-align: center; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 18px; letter-spacing: 8px; color: #e9dcc0; text-shadow: 0 1px 6px #000; opacity: 0; transition: opacity 1.2s; z-index: 2; }
+  #day.on { opacity: .95; }
+  #skip { position: fixed; right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); z-index: 5; font: 900 16px "Noto Sans TC", sans-serif; color: #f2ede4; background: rgba(0,0,0,.4); border: 2px solid rgba(242,237,228,.6); border-radius: 6px; padding: 8px 14px; }
+  #bar { position: fixed; left: 0; bottom: 0; height: 3px; width: 0; background: #b8452e; z-index: 5; }
+  #ttl { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; z-index: 6; background: radial-gradient(circle at 50% 40%, #1b1a1d, #000 70%); transition: opacity 1.2s; }
+  #ttl h1 { font-family: "Noto Serif TC", serif; font-weight: 900; font-size: clamp(46px, 10vw, 80px); letter-spacing: 10px; margin: 0; }
+  #ttl p { font-weight: 700; font-size: 19px; color: #c9bfae; margin: 14px 0 0; }
+  #ttl button { margin-top: 34px; font: 900 22px "Noto Sans TC", sans-serif; color: #000; background: #f2ede4; border: 0; border-radius: 6px; padding: 14px 34px; }
+  #ttl small { display: block; margin-top: 18px; font-size: 15px; color: #8d8577; font-weight: 700; }
+</style></head><body>
+<div id="film"></div>
+<div id="day"></div>
+<div id="sub"></div>
+<button id="skip" hidden>跳過 ▶▶</button>
+<div id="bar"></div>
+<div id="ttl"><div><h1>天亮之前</h1><p>被圍的城裡，一個哥哥的故事</p><button id="go">開始播放</button><small>約 2 分鐘・建議開聲音</small></div></div>
 <script>
-'use strict';
-/* 背景故事：一頁一頁的戰爭漫畫。每一頁有幾格畫面、旁白框依時間出現。全長約 115 秒。
-   panels：[圖, 上緣%, 高度%, 傾斜, 放大的中心]；caps：[第幾秒出現, 文字, 位置（top%/left%）, 樣式] */
-const PAGES = [
-  { t: 15, panels: [['s1.jpg', 3, 9, 94, 50, -0.6, 0, '50% 30%'], ['p1.jpg', 50, 55, 46, 30, 2.5, 5.2, '50% 50%']], caps: [[0.8, '我住的城，叫港灣市。', 5, 5], [3.2, '戰爭打到第二年，<br>敵軍的裝甲車堵住了每一條出城的路。', 48, 3, 'w'], [7.2, '沒有人進得來，<br>也沒有人出得去。', 64, 3], [10.6, '那是 37 天前。<br>那天早上，媽媽還在煮稀飯。', 83, 14, 'k']] },
-  { t: 15, panels: [['s2.jpg', 3, 12, 94, 44, 0.6, 0, '70% 60%']], caps: [[0.8, '先是停電。', 7, 5], [2.8, '然後，水龍頭再也流不出一滴水。', 56, 6, 'w'], [6.0, '天還沒亮，爸爸就帶我去排隊提水。<br>他說：「桶子別裝太滿，你會走不動。」', 66, 3], [10.6, '米缸一天比一天淺。<br>藥，早就沒有了。', 84, 12, 'k']] },
-  { t: 17, panels: [['s3.jpg', 3, 8, 60, 46, -0.8, 0, '22% 62%'], ['s4.jpg', 20, 56, 77, 30, 1, 6.0, '30% 60%']], sfx: [[5.6, '砰', 40, 64]], caps: [[0.8, '街口那棟<br>高樓上，<br>有狙擊手。', 12, 64], [3.2, '他挑的，<br>是提著水的人。', 27, 64, 'w'], [7.4, '倒下的是三樓的陳伯伯。<br>那桶水，一路流進了水溝。', 57, 3, 'w'], [10.6, '沒有人知道，開槍的是敵軍——', 87, 4, 'k'], [12.8, '還是我們自己的人。', 93, 44, 'k']] },
-  { t: 16, panels: [['s5.jpg', 4, 9, 92, 62, 0.5, 0, '35% 40%']], caps: [[0.8, '夜裡，有人挨家挨戶敲門。', 4, 5], [3.8, '有的穿敵軍的制服，<br>有的，穿我們的。', 58, 30, 'w'], [7.4, '他們拿走了隔壁阿姨家最後一袋米。<br>她抱著女兒，一句話都不敢說。', 73, 3], [11.6, '仗打久了，<br>有些人就不再是人了。', 87, 10, 'k']] },
-  { t: 15, panels: [['s6.jpg', 8, 10, 84, 62, -0.6, 0, '55% 60%']], caps: [[0.8, '第 22 天。爸爸把最後半塊餅乾，<br>塞進妹妹的手裡。', 3, 4], [3.8, '我去找點吃的。<br>天亮前回來。', 22, 44, 'say tl'], [7.2, '我們站在門口，看著他走遠。', 75, 8, 'w'], [10.6, '那天晚上，爸爸沒有回來。', 86, 18, 'k']] },
-  { t: 16, panels: [['s7.jpg', 5, 10, 90, 60, 0.8, 0, '60% 45%']], caps: [[0.8, '媽媽每天坐在窗邊，<br>一直看著街口。', 3, 5], [3.8, '五天後，她把頭巾綁好，<br>抱了我們很久很久。', 71, 4, 'w'], [7.0, '把門鎖好。除了我，<br>誰來都不要開。', 16, 8, 'say tr'], [10.6, '門關上的聲音，<br>我到現在都還記得。', 82, 30], [13.2, '媽媽也沒有回來。', 92, 6, 'k']] },
-  { t: 20, panels: [['s8.jpg', 3, 13, 94, 34, -0.5, 0, '58% 55%'], ['s9.jpg', 30, 46, 56, 44, 1.2, 11.0, '50% 40%']], caps: [[0.8, '今天，是第 37 天。<br>媽媽離開，已經十天了。', 3, 6], [4.2, '家裡只剩下我，和十歲的妹妹。', 41, 12, 'w'], [7.4, '昨晚，她開始發燒。<br>燒得迷迷糊糊，一直叫媽媽。', 50, 3], [12.2, '家裡沒有藥。<br>今晚，我得出門。', 76, 3], [15.4, '我跟她說：<br>天亮前，我一定回來。', 90, 22, 'k']] },
+/* 每一格：圖、秒數、鏡頭移動（起點與終點的縮放與位移、縮放中心）、上方日期、字幕 [出現秒數, 文字, 是否為對白] */
+const SHOTS = [
+  { img: '02', t: 7, o: '40% 40%', s0: 1.02, s1: 1.12, lines: [[0.6, '港灣市被圍的第一天，<br>媽媽還在廚房煮稀飯。'], [4.0, '爸爸說，過幾天就好了。']] },
+  { img: '01', t: 8, o: '50% 70%', s0: 1.15, s1: 1.02, y0: '-2%', y1: '0%', lines: [[0.6, '後來，出城的路全被堵死。'], [4.2, '沒有人進得來，<br>也沒有人出得去。']] },
+  { img: '03', t: 12, o: '35% 45%', s0: 1.03, s1: 1.13, x0: '2%', x1: '-2%', lines: [[0.6, '停電以後，是停水。'], [3.4, '天還沒亮，<br>爸爸就牽著我去排隊。'], [6.6, '他總是把重的那一桶，<br>留給自己。'], [9.6, '米缸見底那天，<br>媽媽把自己那一碗，分成兩半。']] },
+  { img: '04', t: 8, o: '55% 25%', s0: 1.02, s1: 1.2, lines: [[0.6, '街口的高樓上，有一把槍。'], [4.0, '三樓的陳伯伯，<br>每天都會對妹妹做鬼臉。']] },
+  { img: '05', t: 9, o: '30% 55%', s0: 1.12, s1: 1.02, lines: [[0.6, '那天，他倒在斑馬線上。<br>那桶水，一路流進了水溝。'], [4.4, '到現在我還是不知道，<br>開槍的是敵人——'], [6.9, '還是我們自己的人。']] },
+  { img: '06', t: 7, o: '50% 30%', s0: 1.02, s1: 1.12, lines: [[0.6, '夜裡，常有人踹門。'], [3.4, '有的穿敵人的制服，<br>有的，穿我們的。']] },
+  { img: '07', t: 7, o: '40% 40%', s0: 1.03, s1: 1.13, lines: [[0.6, '他們拿走隔壁阿姨最後一袋米。'], [3.6, '她抱著女兒，<br>連哭都不敢出聲。']] },
+  { img: '08', t: 10, o: '45% 45%', s0: 1.02, s1: 1.14, day: '第 22 天', lines: [[0.8, '爸爸把最後半塊餅乾塞給妹妹，<br>摸了摸我的頭。'], [5.0, '「照顧好妹妹。<br>天亮前，我就回來。」', 1]] },
+  { img: '09', t: 8, o: '60% 50%', s0: 1.12, s1: 1.02, lines: [[0.6, '我們等到天亮。<br>又等到天黑。'], [4.6, '爸爸沒有回來。']] },
+  { img: '10', t: 7, o: '35% 40%', s0: 1.02, s1: 1.12, lines: [[0.6, '媽媽每天坐在窗邊，<br>看著街口，一句話也不說。']] },
+  { img: '11', t: 8, o: '50% 40%', s0: 1.02, s1: 1.12, day: '第 27 天', lines: [[0.6, '第五天，她把頭巾綁好，<br>抱了我們很久很久。'], [4.2, '「把門鎖好。除了我，<br>誰來都不要開。」', 1]] },
+  { img: '12', t: 8, o: '60% 45%', s0: 1.1, s1: 1.02, lines: [[0.6, '她的腳步聲，<br>在樓梯間慢慢變小。'], [4.4, '媽媽也沒有回來。']] },
+  { img: '13', t: 12, o: '35% 45%', s0: 1.02, s1: 1.14, day: '第 37 天', lines: [[0.6, '媽媽走了，十天。'], [3.0, '妹妹燒了一整夜，<br>迷迷糊糊地喊媽媽。'], [6.4, '「哥，媽媽是不是<br>快回來了？」', 1], [9.6, '我說，快了。']] },
+  { img: '14', t: 9, o: '50% 35%', s0: 1.02, s1: 1.12, lines: [[0.6, '家裡沒有藥了。<br>今晚，我得出門。'], [4.8, '天亮前，我一定回來。']] },
 ];
-const stage = document.getElementById('stage'), bar = document.getElementById('bar'), pg = document.getElementById('pg');
-const TOTAL = PAGES.reduce((a, p) => a + p.t, 0);
-for (const p of PAGES) for (const q of p.panels) { const i = new Image(); i.src = q[0]; } // 先載入
-let timers = [], AC = null;
-function wind() { try { AC = new (window.AudioContext || window.webkitAudioContext)(); const b = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = AC.createBufferSource(); s.buffer = b; s.loop = true; const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 320; const g = AC.createGain(); g.gain.value = 0.06; s.connect(f).connect(g).connect(AC.destination); s.start(); const o = AC.createOscillator(); o.frequency.value = 55; const g2 = AC.createGain(); g2.gain.value = 0.035; o.connect(g2).connect(AC.destination); o.start(); } catch (e) {} } // 只有風聲和很低的嗡鳴，沒有爆炸聲
-function later(s, f) { timers.push(setTimeout(f, s * 1000)); }
-function show(n, t0) {
-  stage.innerHTML = ''; const P = PAGES[n]; pg.textContent = `${n + 1} / ${PAGES.length}`;
-  for (const [src, left, top, w, h, rot, delay, org] of P.panels) { const d = document.createElement('div'); d.className = 'panel'; d.style.cssText = `left:${left}%;top:${top}%;width:${w}%;height:${h}%;--r:${rot}deg;--d:${P.t + 1 - delay}s`; const [ox, oy] = org.split(' '); d.style.setProperty('--ox', ox); d.style.setProperty('--oy', oy); d.innerHTML = `<img src="${src}" alt="">`; stage.appendChild(d); later(delay + 0.05, () => d.classList.add('on')); }
-  for (const [at, text, top, left, cls] of P.caps) { const c = document.createElement('div'); c.className = 'cap ' + (cls || ''); c.style.cssText = `top:${top}%;left:${left}%`; c.innerHTML = text; stage.appendChild(c); later(at, () => c.classList.add('on')); }
-  for (const [at, text, top, left] of P.sfx || []) { const c = document.createElement('div'); c.className = 'sfx'; c.style.cssText = `top:${top}%;left:${left}%`; c.textContent = text; stage.appendChild(c); later(at, () => c.classList.add('on')); }
-  later(P.t, () => (n + 1 < PAGES.length ? show(n + 1, t0 + P.t) : fin()));
+const TOTAL = SHOTS.reduce((a, s) => a + s.t, 0);
+const film = document.getElementById('film'), sub = document.getElementById('sub'), day = document.getElementById('day'), bar = document.getElementById('bar');
+for (const s of SHOTS) { const i = new Image(); i.src = s.img + '.jpg'; } // 先載入
+let timers = [], AC = null, cur = -1;
+const later = (s, f) => timers.push(setTimeout(f, s * 1000));
+function wind() { try { AC = new (window.AudioContext || window.webkitAudioContext)(); const b = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = AC.createBufferSource(); s.buffer = b; s.loop = true; const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300; const g = AC.createGain(); g.gain.value = 0.06; s.connect(f).connect(g).connect(AC.destination); s.start(); const o = AC.createOscillator(); o.frequency.value = 55; const g2 = AC.createGain(); g2.gain.value = 0.03; o.connect(g2).connect(AC.destination); o.start(); } catch (e) {} } // 只有風聲和低沉的嗡鳴，沒有爆炸聲
+function show(n) {
+  cur = n; const S = SHOTS[n];
+  const el = document.createElement('div'); el.className = 'shot';
+  el.style.cssText = `--d:${S.t + 1.4}s;--o:${S.o};--s0:${S.s0};--s1:${S.s1};--x0:${S.x0 || 0};--x1:${S.x1 || 0};--y0:${S.y0 || 0};--y1:${S.y1 || 0}`;
+  el.innerHTML = `<img src="${S.img}.jpg" alt="">`; film.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
+  for (const old of [...film.children].slice(0, -1)) { old.classList.remove('on'); setTimeout(() => old.remove(), 1600); }
+  if (S.day) { day.textContent = S.day; day.classList.add('on'); later(4.5, () => day.classList.remove('on')); }
+  sub.innerHTML = '';
+  S.lines.forEach(([at, text, say], i) => { const d = document.createElement('div'); d.className = 'line' + (say ? ' say' : ''); d.innerHTML = text; sub.appendChild(d);
+    later(at, () => { [...sub.children].forEach((c) => c.classList.remove('on')); d.classList.add('on'); }); });
+  later(S.t - 0.5, () => [...sub.children].forEach((c) => c.classList.remove('on')));
+  later(S.t, () => (n + 1 < SHOTS.length ? show(n + 1) : fin()));
 }
-function fin() { timers.forEach(clearTimeout); timers = []; document.getElementById('skip').hidden = true; pg.textContent = ''; bar.style.transition = 'none'; bar.style.width = '100%';
-  stage.innerHTML = `<div id="ttl"><div><h1>天亮之前</h1><p>被圍的第 37 天</p><button id="go">開始第一關</button></div></div>`; document.getElementById('go').onclick = () => { location.href = '../?play=1'; }; }
-function start() { wind(); document.getElementById('skip').hidden = false; bar.style.transition = `width ${TOTAL}s linear`; requestAnimationFrame(() => (bar.style.width = '100%')); show(0, 0); }
-stage.innerHTML = `<div id="ttl"><div><h1>天亮之前</h1><p>背景故事（約 ${Math.round(TOTAL / 5) * 5} 秒）</p><button id="go">開始播放</button></div></div>`;
+function fin() {
+  timers.forEach(clearTimeout); timers = []; document.getElementById('skip').hidden = true; sub.innerHTML = ''; day.classList.remove('on'); bar.style.transition = 'none'; bar.style.width = '100%';
+  const t = document.getElementById('ttl'); t.innerHTML = `<div><h1>天亮之前</h1><p>被圍的第 37 天・晚上</p><button id="go">開始第一關</button></div>`; t.style.opacity = 1; t.hidden = false;
+  document.getElementById('go').onclick = () => { location.href = '../?play=1'; };
+}
+function start() {
+  wind(); const t = document.getElementById('ttl'); t.style.opacity = 0; setTimeout(() => (t.hidden = true), 1200);
+  document.getElementById('skip').hidden = false; bar.style.transition = `width ${TOTAL}s linear`; requestAnimationFrame(() => (bar.style.width = '100%')); show(0);
+}
 document.getElementById('go').onclick = start; document.getElementById('skip').onclick = fin;
-window.__I = { start, fin, show, PAGES, TOTAL, clear: () => { timers.forEach(clearTimeout); timers = []; } };
+window.__I = { start, fin, show, SHOTS, TOTAL, clear: () => { timers.forEach(clearTimeout); timers = []; } };
 </script>
-</body>
-</html>
+</body></html>
