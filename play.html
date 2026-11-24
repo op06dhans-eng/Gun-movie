@@ -2619,7 +2619,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '528664638395',
   appId: '1:528664638395:web:e478a9b393bbfe4b85ca9e',
 };
-const VERSION = '2.7.3（老師電腦沒回應時，學生畫面會提示；等待畫面說明更清楚）';
+const VERSION = '2.7.4（下載到電腦裡的檔案也能用「我自己下場當學生」）';
 const ROOT = 'sr/ct'; // 資料庫根節點（資料庫規則只開放 sr、rd 兩個根節點，所以放在 sr 底下的 ct）
 const ASSET = location.protocol === 'file:' ? 'https://op06dhans-eng.github.io/Gun-movie/' : '';
 (function checkNewer() {
@@ -2691,7 +2691,12 @@ const WEAPONS = {
    連線層（與其他兩款相同：Firebase，或同一台電腦的分頁互傳）
    ========================================================= */
 function makeLocalNet() {
-  const ch = new BroadcastChannel('film-set-local');
+  /* 2.7.4：從電腦裡的檔案（file:）開啟時，瀏覽器不讓分頁之間互傳訊息，改成頁面和它裡面藏的老師畫面直接互傳 */
+  const ch = location.protocol !== 'file:' ? new BroadcastChannel('film-set-local') : (() => {
+    const c = { onmessage: null, postMessage(d) { const m = { __fsl: 1, d }; try { if (parent !== window) parent.postMessage(m, '*'); } catch (_) {} for (let i = 0; i < frames.length; i++) try { frames[i].postMessage(m, '*'); } catch (_) {} } };
+    addEventListener('message', (e) => { if (e.data && e.data.__fsl && e.source !== window && c.onmessage) c.onmessage({ data: e.data.d }); });
+    return c;
+  })();
   let tree = {};
   const subs = new Set();
   const offs = [];
@@ -5863,7 +5868,7 @@ function botTick() {
 const CLS = { ifr: null, diff: Q.get('diff') === 'H' ? 'H' : 'N', want: true, ready: false };
 function classInit() {
   if (!CLASS_SIM || ROLE !== 'student') return;
-  const u = new URL('index.html', location.href); u.search = '?local&teacher&headless&q=low&noshadow' + (Q.get('sec') ? '&sec=' + Q.get('sec') : '') + (LOOK2 ? '&look2' : '');
+  const u = location.protocol === 'file:' ? new URL(location.href) : new URL('index.html', location.href); u.hash = ''; u.search = '?local&teacher&headless&q=low&noshadow' + (Q.get('sec') ? '&sec=' + Q.get('sec') : '') + (LOOK2 ? '&look2' : '');
   const f = document.createElement('iframe'); f.src = u.toString(); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
   f.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;border:0;opacity:0.01;pointer-events:none;z-index:-1';
   document.body.appendChild(f); CLS.ifr = f;
@@ -5875,6 +5880,7 @@ function classPickText() {
 }
 function classTeacher() { try { const w = CLS.ifr.contentWindow; return { T: w.__T, d: CLS.ifr.contentDocument }; } catch (_) { return null; } }
 function classTick() {
+  if (location.protocol === 'file:') return classTickFile();
   const c = classTeacher(); const msg = $('joinMsg'); const atPick = G.mode !== 'take' && ME.team < 0;
   if (!c || !c.T || !c.T.TS || !c.T.TS.sid) { if (msg && atPick) msg.textContent = '電腦正在準備模擬的全班同學（第一次約 10～40 秒）…先選好組別也可以。'; return; }
   const TS = c.T.TS, d = c.d, idle = TS.phase === 'lobby' || TS.phase === 'cut';
@@ -5884,6 +5890,28 @@ function classTick() {
   CLS.ready = TS.fake.length > 0;
   if (msg && atPick) msg.textContent = `電腦模擬全班：${TS.fake.length} 位假同學已就位（全班同一個城鎮，${DIFFS[CLS.diff].name}）。選一組加入，任務就自動開始。`;
   if (CLS.want && CLS.ready && idle && PLAYERS[ME.pid] && TS.diff === CLS.diff) { const b = d.getElementById('bStart'); if (b && !b.disabled) { CLS.want = false; b.click(); } }
+}
+/* 2.7.4：從電腦裡的檔案開啟時，瀏覽器不讓這一頁直接操作藏起來的老師畫面，改用傳訊息：這一頁說「要什麼難度、要不要開始」，老師畫面自己按按鈕並回報狀況 */
+const CLSF = { st: null };
+if (location.protocol === 'file:') addEventListener('message', (e) => { if (e.data && e.data.__clsS) CLSF.st = e.data.__clsS; });
+function classTickFile() {
+  const msg = $('joinMsg'); const atPick = G.mode !== 'take' && ME.team < 0; const st = CLSF.st;
+  try { CLS.ifr.contentWindow.postMessage({ __cls: { diff: CLS.diff, go: !!(CLS.want && PLAYERS[ME.pid]) } }, '*'); } catch (_) {}
+  if (!st || !st.sid) { if (msg && atPick) msg.textContent = '電腦正在準備模擬的全班同學（第一次約 10～40 秒）…先選好組別也可以。'; return; }
+  CLS.ready = st.n > 0;
+  if (msg && atPick) msg.textContent = `電腦模擬全班：${st.n} 位假同學已就位（全班同一個城鎮，${DIFFS[CLS.diff].name}）。選一組加入，任務就自動開始。`;
+  if (CLS.want && (st.ph === 'count' || st.ph === 'take')) CLS.want = false;
+}
+if (HIDDEN_T && location.protocol === 'file:') {
+  let want = null; addEventListener('message', (e) => { if (e.data && e.data.__cls) want = e.data.__cls; });
+  setInterval(() => {
+    try { parent.postMessage({ __clsS: { sid: TS.sid ? 1 : 0, n: TS.fake.length, ph: TS.phase } }, '*'); } catch (_) {}
+    if (!TS.sid || !want) return; const d = document, idle = TS.phase === 'lobby' || TS.phase === 'cut';
+    if (idle && TS.diff !== want.diff) d.querySelector(`[data-d="${want.diff}"]`)?.click();
+    if (idle && d.querySelector('[data-sh="1"]') && !TS.shared) d.querySelector('[data-sh="1"]').click();
+    if (idle && !TS.fake.length) d.getElementById('bFake')?.click();
+    if (want.go && TS.fake.length > 0 && idle && TS.diff === want.diff) { const b = d.getElementById('bStart'); if (b && !b.disabled) { want.go = false; b.click(); } }
+  }, 600);
 }
 function classAgainHTML() { return `<div class="pick" style="grid-template-columns:1fr 1fr"><button id="bAgainN" style="--c:#3fd17a">再來一回合：普通<span>同一批假同學</span></button><button id="bAgainH" style="--c:#ff5a4e">再來一回合：困難<span>敵人更多更準</span></button></div>`; }
 function classAgainBind() { for (const k of ['N', 'H']) { const b = $('bAgain' + k); if (b) b.onclick = () => { CLS.diff = k; CLS.want = true; b.innerHTML = '準備中…<span>幾秒後自動開始</span>'; }; } }
@@ -5929,7 +5957,7 @@ function renderPanel() {
   $('bFake').onclick = () => { if (TS.sid) addFake(12); }; $('bUnfake').onclick = removeFake;
   $('bBot').onclick = () => { const u = new URL(location.href); u.hash = 'student-bot'; u.searchParams.set('q', 'low'); const n = (TS.botN = (TS.botN || 0) + 1); const w = window.open(u.toString(), 'bot' + n + Date.now(), `popup,width=560,height=320,left=${40 + (n % 4) * 580},top=${60 + Math.floor(n / 4) * 360}`); if (!w) $('tTick').insertAdjacentHTML('afterbegin', '<div>瀏覽器擋住新視窗：請在網址列右邊允許「彈出式視窗」，再按一次</div>'); else tLog(-1, `開了第 ${n} 個自動遊玩的學生視窗`); };
   $('bClear').onclick = () => { if (TS.phase !== 'lobby' && TS.phase !== 'cut') return; newSession(); tLog(-1, '名單已清空：同學要重新選組'); };
-  $('bClass').onclick = () => { location.href = new URL('play.html?local&class', location.href).toString(); };
+  $('bClass').onclick = () => { if (location.protocol === 'file:') { const u = new URL(location.href); u.hash = ''; u.search = '?local&class&student'; location.href = u.toString(); return; } location.href = new URL('play.html?local&class', location.href).toString(); };
   $('bStu').onclick = () => { const u = new URL(location.href); u.hash = 'student'; const w = window.open(u.toString(), '_blank'); if (!w) { $('tTick').insertAdjacentHTML('afterbegin', `<div>瀏覽器擋住新分頁：請自己開新分頁貼上網址，後面加 #student</div>`); } };
   $('bSnd').onclick = () => { SFX.init(); SFX.toggle(); renderPanel(); }; $('bFs').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); };
   renderTick();
